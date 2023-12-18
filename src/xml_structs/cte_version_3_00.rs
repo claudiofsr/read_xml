@@ -29,10 +29,12 @@ use struct_iterable::Iterable;
 use crate::{
     StructExtension,
     excel::InfoExtension,
-    xml_structs::assinaturas::Signature,
+    xml_structs::assinaturas::{Signature, ProtSignature},
     xml_structs::integrated_dev_env::Ide,
     xml_structs::emitente::Emitente,
+    xml_structs::expedidor::Exped,
     xml_structs::destinatario::Destinatario,
+    xml_structs::recebedor::Receb,
     xml_structs::remetente::Remetente,
     xml_structs::impostos::Imposto,
     xml_structs::aut_xml::{AutXML, InfProtocolo, InfRespTec},
@@ -84,6 +86,12 @@ impl InfoExtension for InfoCte {}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CteProc {
+    #[serde(rename = "@dhConexao")]
+    pub dh_conexao: Option<String>,
+    #[serde(rename = "@ipTransmissor")]
+    pub ip_transmissor: Option<String>,
+    #[serde(rename = "@nPortaCon")]
+    pub n_porta_con: Option<String>,
     #[serde(rename = "@versao")]
     pub versao: Option<String>,
     #[serde(rename = "@xmlns")]
@@ -304,31 +312,53 @@ pub struct Cte {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct InfCteSupl {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "qrCodCTe")]
+    pub qr_cod_cte: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct InfCte {
     #[serde(rename = "@Id")]
     pub id: String,
     #[serde(rename = "@versao")]
     pub versao: String,
-    pub ide: Ide,
-    pub compl: Option<Compl>,
-    #[serde(rename = "emit")]
-    pub emit: Option<Emitente>,
-    #[serde(rename = "rem")]
-    pub rem: Option<Remetente>,
-    pub exped: Option<Exped>,
-    pub receb: Option<Receb>,
-    #[serde(rename = "dest")]
-    pub dest: Option<Destinatario>,
-    #[serde(rename = "vPrest")]
-    pub v_prest: VPrest,
-    #[serde(rename = "imp")]
-    pub imposto: Imposto,
-    #[serde(rename = "infCTeNorm")]
-    pub inf_cte_norm: Option<InfCteNorm>,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
     #[serde(rename = "autXML")]
     pub aut_xml: Option<Vec<AutXML>>,
+    #[serde(rename = "compl")]
+    pub compl: Option<Compl>,
+    #[serde(rename = "dest")]
+    pub dest: Option<Destinatario>,
+    #[serde(rename = "emit")]
+    pub emit: Option<Emitente>,
+    #[serde(rename = "exped")]
+    pub exped: Option<Exped>,
+    #[serde(rename = "ide")]
+    pub ide: Ide,
+    #[serde(rename = "imp")]
+    pub imp: Imposto,
+    #[serde(rename = "infCTeNorm")]
+    pub inf_cte_norm: Option<InfCteNorm>,
+    #[serde(rename = "infCteAnu")]
+    pub inf_cte_anu: Option<InfCteAnu>,
+    #[serde(rename = "infCteComp")]
+    pub inf_cte_comp: Option<InfCteComp>,
+    #[serde(rename = "infPAA")]
+    pub inf_paa: Option<InfPaa>,
     #[serde(rename = "infRespTec")]
     pub inf_resp_tec: Option<InfRespTec>,
+    #[serde(rename = "infSolicNFF")]
+    pub inf_solic_nff: Option<InfSolicNff>,
+    #[serde(rename = "receb")]
+    pub receb: Option<Receb>,
+    #[serde(rename = "rem")]
+    pub rem: Option<Remetente>,
+    #[serde(rename = "vPrest")]
+    pub v_prest: VPrest,
 }
 
 impl InfCte {
@@ -430,169 +460,172 @@ impl InfCte {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Compl {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
     #[serde(rename = "Entrega")]
     pub entrega: Option<Entrega>,
-    pub fluxo: Option<Fluxo>,
     #[serde(rename = "ObsCont")]
     pub obs_cont: Option<Vec<ObsCont>>,
+    #[serde(rename = "ObsFisco")]
+    pub obs_fisco: Option<ObsFisco>,
+    #[serde(rename = "destCalc")]
+    pub dest_calc: Option<String>,
+    #[serde(rename = "fluxo")]
+    pub fluxo: Option<Fluxo>,
+    #[serde(rename = "origCalc")]
+    pub orig_calc: Option<String>,
     #[serde(rename = "xCaracAd")]
     pub x_carac_ad: Option<String>,
+    #[serde(rename = "xCaracSer")]
+    pub x_carac_ser: Option<String>,
+    #[serde(rename = "xEmi")]
+    pub x_emi: Option<String>,
     #[serde(rename = "xObs")]
     pub x_obs: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Entrega {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
     #[serde(rename = "comData")]
     pub com_data: Option<ComData>,
-    #[serde(rename = "semData")]
-    pub sem_data: Option<SemData>,
     #[serde(rename = "comHora")]
     pub com_hora: Option<ComHora>,
+    #[serde(rename = "noInter")]
+    pub no_inter: Option<NoInter>,
+    #[serde(rename = "noPeriodo")]
+    pub no_periodo: Option<NoPeriodo>,
+    #[serde(rename = "semData")]
+    pub sem_data: Option<SemData>,
     #[serde(rename = "semHora")]
     pub sem_hora: Option<SemHora>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ComData {
-    #[serde(rename = "tpPer")]
-    pub tp_per: String,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
     #[serde(rename = "dProg")]
-    pub d_prog: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SemData {
+    pub d_prog: Option<String>,
     #[serde(rename = "tpPer")]
-    pub tp_per: String,
+    pub tp_per: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ComHora {
-    #[serde(rename = "tpHor")]
-    pub tp_hor: String,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
     #[serde(rename = "hProg")]
-    pub h_prog: String,
+    pub h_prog: Option<String>,
+    #[serde(rename = "tpHor")]
+    pub tp_hor: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NoInter {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "hFim")]
+    pub h_fim: Option<String>,
+    #[serde(rename = "hIni")]
+    pub h_ini: Option<String>,
+    #[serde(rename = "tpHor")]
+    pub tp_hor: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NoPeriodo {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "dFim")]
+    pub d_fim: Option<String>,
+    #[serde(rename = "dIni")]
+    pub d_ini: Option<String>,
+    #[serde(rename = "tpPer")]
+    pub tp_per: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SemData {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "tpPer")]
+    pub tp_per: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SemHora {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
     #[serde(rename = "tpHor")]
-    pub tp_hor: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Fluxo {
-    #[serde(rename = "xOrig")]
-    pub x_orig: Option<String>,
-    #[serde(rename = "xDest")]
-    pub x_dest: Option<String>,
+    pub tp_hor: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ObsCont {
-    #[serde(rename = "xTexto")]
-    pub x_texto: Option<String>,
     #[serde(rename = "@xCampo")]
-    pub x_campo: Option<String>,
+    pub x_campo: String,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "xTexto")]
+    pub x_texto: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Exped {
-    #[serde(rename = "CNPJ")]
-    pub cnpj: Option<String>,
-    #[serde(rename = "IE")]
-    pub ie: Option<String>,
-    #[serde(rename = "xNome")]
-    pub x_nome: String,
-    pub fone: Option<String>,
-    #[serde(rename = "enderExped")]
-    pub ender_exped: EnderExped,
+pub struct ObsFisco {
+    #[serde(rename = "@xCampo")]
+    pub x_campo: String,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "xTexto")]
+    pub x_texto: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct EnderExped {
-    #[serde(rename = "xLgr")]
-    pub x_lgr: String,
-    pub nro: String,
-    #[serde(rename = "xBairro")]
-    pub x_bairro: String,
-    #[serde(rename = "cMun")]
-    pub c_mun: String,
-    #[serde(rename = "xMun")]
-    pub x_mun: String,
-    #[serde(rename = "CEP")]
-    pub cep: Option<String>,
-    #[serde(rename = "UF")]
-    pub uf: String,
-    #[serde(rename = "cPais")]
-    pub c_pais: Option<String>,
-    #[serde(rename = "xPais")]
-    pub x_pais: Option<String>,
+pub struct Fluxo {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "pass")]
+    pub pass: Pass,
+    #[serde(rename = "xDest")]
+    pub x_dest: String,
+    #[serde(rename = "xOrig")]
+    pub x_orig: String,
+    #[serde(rename = "xRota")]
+    pub x_rota: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Receb {
-    #[serde(rename = "CNPJ")]
-    pub cnpj: Option<String>,
-    #[serde(rename = "IE")]
-    pub ie: Option<String>,
-    #[serde(rename = "xNome")]
-    pub x_nome: String,
-    pub fone: Option<String>,
-    #[serde(rename = "enderReceb")]
-    pub ender_receb: EnderReceb,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct EnderReceb {
-    #[serde(rename = "xLgr")]
-    pub x_lgr: String,
-    pub nro: String,
-    #[serde(rename = "xBairro")]
-    pub x_bairro: String,
-    #[serde(rename = "cMun")]
-    pub c_mun: String,
-    #[serde(rename = "xMun")]
-    pub x_mun: String,
-    #[serde(rename = "CEP")]
-    pub cep: Option<String>,
-    #[serde(rename = "UF")]
-    pub uf: String,
-    #[serde(rename = "cPais")]
-    pub c_pais: Option<String>,
-    #[serde(rename = "xPais")]
-    pub x_pais: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct VPrest {
-    #[serde(rename = "Comp")]
-    pub comp: Option<Vec<Comp>>,
-    #[serde(rename = "vRec")]
-    pub v_rec: f64,
-    #[serde(rename = "vTPrest")]
-    pub v_tprest: f64,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Comp {
-    #[serde(rename = "xNome")]
-    pub x_nome: String,
-    #[serde(rename = "vComp")]
-    pub v_comp: String,
+pub struct Pass {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "xPass")]
+    pub x_pass: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InfCteNorm {
-    #[serde(rename = "infCarga")]
-    pub inf_carga: InfCarga,
-    #[serde(rename = "infDoc")]
-    pub inf_doc: Option<InfDoc>,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "cobr")]
+    pub cobr: Option<Cobr>,
     #[serde(rename = "docAnt")]
     pub doc_ant: Option<DocAnt>,
+    #[serde(rename = "infCarga")]
+    pub inf_carga: Option<InfCarga>,
+    #[serde(rename = "infCteSub")]
+    pub inf_cte_sub: Option<InfCteSub>,
+    #[serde(rename = "infDoc")]
+    pub inf_doc: Option<InfDoc>,
+    #[serde(rename = "infGlobalizado")]
+    pub inf_globalizado: Option<InfGlobalizado>,
     #[serde(rename = "infModal")]
-    pub inf_modal: InfModal,
+    pub inf_modal: Option<InfModal>,
+    #[serde(rename = "infServVinc")]
+    pub inf_serv_vinc: Option<InfServVinc>,
+    #[serde(rename = "veicNovos")]
+    pub veic_novos: Option<VeicNovos>,
 }
 
 impl InfCteNorm {
@@ -612,68 +645,39 @@ impl InfCteNorm {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct InfCarga {
-    #[serde(rename = "vCarga")]
-    pub v_carga: String,
-    #[serde(rename = "proPred")]
-    pub pro_pred: String,
-    #[serde(rename = "xOutCat")]
-    pub x_out_cat: Option<String>,
-    #[serde(rename = "vCargaAverb")]
-    pub v_carga_averb: Option<String>,
-    #[serde(rename = "infQ")]
-    pub inf_q: Vec<InfQ>,
+pub struct Cobr {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "dup")]
+    pub dup: Option<Dup>,
+    #[serde(rename = "fat")]
+    pub fat: Option<Fat>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct InfQ {
-    #[serde(rename = "cUnid")]
-    pub c_unid: String,
-    #[serde(rename = "tpMed")]
-    pub tp_med: String,
-    #[serde(rename = "qCarga")]
-    pub q_carga: String,
+pub struct Dup {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "dVenc")]
+    pub d_venc: Option<String>,
+    #[serde(rename = "nDup")]
+    pub n_dup: Option<String>,
+    #[serde(rename = "vDup")]
+    pub v_dup: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct InfDoc {
-    #[serde(rename = "infNFe")]
-    pub inf_nfe: Option<Vec<InfNfe>>,
-    #[serde(rename = "infOutros")]
-    pub inf_outros: Option<InfOutros>,
-}
-
-impl InfDoc {
-    fn get_chaves_de_nfes(&self) -> Vec<String> {
-        match self.inf_nfe.as_ref() {
-            Some(vec_info_nfe) => {
-                vec_info_nfe
-                    .iter()
-                    .map(|i| i.chave.to_string())
-                    .collect::<Vec<String>>()
-            },
-            None => Vec::new(),
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct InfNfe {
-    pub chave: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct InfOutros {
-    #[serde(rename = "tpDoc")]
-    pub tp_doc: String,
-    #[serde(rename = "nDoc")]
-    pub n_doc: Option<String>,
-    #[serde(rename = "dEmi")]
-    pub d_emi: Option<String>,
-    #[serde(rename = "descOutros")]
-    pub desc_outros: Option<String>,
-    #[serde(rename = "vDocFisc")]
-    pub v_doc_fisc: Option<String>,
+pub struct Fat {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "nFat")]
+    pub n_fat: Option<String>,
+    #[serde(rename = "vDesc")]
+    pub v_desc: Option<String>,
+    #[serde(rename = "vLiq")]
+    pub v_liq: Option<String>,
+    #[serde(rename = "vOrig")]
+    pub v_orig: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -698,16 +702,20 @@ impl DocAnt {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EmiDocAnt {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
     #[serde(rename = "CNPJ")]
     pub cnpj: Option<String>,
+    #[serde(rename = "CPF")]
+    pub cpf: Option<String>,
     #[serde(rename = "IE")]
     pub ie: Option<String>,
     #[serde(rename = "UF")]
-    pub uf: String,
-    #[serde(rename = "xNome")]
-    pub x_nome: String,
+    pub uf: Option<String>,
     #[serde(rename = "idDocAnt")]
     pub id_doc_ant: IdDocAnt,
+    #[serde(rename = "xNome")]
+    pub x_nome: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -741,75 +749,552 @@ pub struct IdDocAntEle {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-// Documentos de transporte anterior de Papel?
 pub struct IdDocAntPap {
-    #[serde(rename = "tpDoc")]
-    pub tp_doc: Option<String>,
-    pub serie: Option<String>,
-    pub subser: Option<String>,
-    #[serde(rename = "nDoc")]
-    pub n_doc: Option<String>,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
     #[serde(rename = "dEmi")]
     pub d_emi: Option<String>,
+    #[serde(rename = "nDoc")]
+    pub n_doc: Option<String>,
+    #[serde(rename = "serie")]
+    pub serie: Option<String>,
+    #[serde(rename = "subser")]
+    pub subser: Option<String>,
+    #[serde(rename = "tpDoc")]
+    pub tp_doc: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfCarga {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "infQ")]
+    pub inf_q: Option<Vec<InfQ>>,
+    #[serde(rename = "proPred")]
+    pub pro_pred: String,
+    #[serde(rename = "vCarga")]
+    pub v_carga: String,
+    #[serde(rename = "vCargaAverb")]
+    pub v_carga_averb: String,
+    #[serde(rename = "xOutCat")]
+    pub x_out_cat: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfQ {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "cUnid")]
+    pub c_unid: String,
+    #[serde(rename = "qCarga")]
+    pub q_carga: String,
+    #[serde(rename = "tpMed")]
+    pub tp_med: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfCteSub {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "chCte")]
+    pub ch_cte: String,
+    #[serde(rename = "indAlteraToma")]
+    pub ind_altera_toma: String,
+    #[serde(rename = "refCteAnu")]
+    pub ref_cte_anu: String,
+    #[serde(rename = "tomaICMS")]
+    pub toma_icms: TomaIcms,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TomaIcms {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "refCte")]
+    pub ref_cte: String,
+    #[serde(rename = "refNF")]
+    pub ref_nf: RefNf,
+    #[serde(rename = "refNFe")]
+    pub ref_nfe: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RefNf {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "CNPJ")]
+    pub cnpj: String,
+    #[serde(rename = "CPF")]
+    pub cpf: String,
+    #[serde(rename = "dEmi")]
+    pub d_emi: String,
+    #[serde(rename = "mod")]
+    pub modelo: String,
+    #[serde(rename = "nro")]
+    pub nro: String,
+    #[serde(rename = "serie")]
+    pub serie: String,
+    #[serde(rename = "subserie")]
+    pub subserie: String,
+    #[serde(rename = "valor")]
+    pub valor: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfDoc {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "infNF")]
+    pub inf_nf: Option<InfNf>,
+    #[serde(rename = "infNFe")]
+    pub inf_nfe: Option<Vec<InfNfe>>,
+    #[serde(rename = "infOutros")]
+    pub inf_outros: Option<InfOutros>,
+}
+
+impl InfDoc {
+    fn get_chaves_de_nfes(&self) -> Vec<String> {
+        match self.inf_nfe.as_ref() {
+            Some(vec_info_nfe) => {
+                vec_info_nfe
+                    .iter()
+                    .map(|i| i.chave.to_string())
+                    .collect::<Vec<String>>()
+            },
+            None => Vec::new(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfNf {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "PIN")]
+    pub pin: Option<String>,
+    #[serde(rename = "dEmi")]
+    pub d_emi: Option<String>,
+    #[serde(rename = "dPrev")]
+    pub d_prev: Option<String>,
+    #[serde(rename = "infUnidCarga")]
+    pub inf_unid_carga: Option<InfDocCteInfNfCteInfUnidCarga>,
+    #[serde(rename = "infUnidTransp")]
+    pub inf_unid_transp: Option<InfNfCteInfUnidTransp>,
+    #[serde(rename = "mod")]
+    pub modelo: Option<String>,
+    #[serde(rename = "nCFOP")]
+    pub n_cfop: Option<String>,
+    #[serde(rename = "nDoc")]
+    pub n_doc: Option<String>,
+    #[serde(rename = "nPed")]
+    pub n_ped: Option<String>,
+    #[serde(rename = "nPeso")]
+    pub n_peso: Option<String>,
+    #[serde(rename = "nRoma")]
+    pub n_roma: Option<String>,
+    #[serde(rename = "serie")]
+    pub serie: Option<String>,
+    #[serde(rename = "vBC")]
+    pub v_bc: Option<String>,
+    #[serde(rename = "vBCST")]
+    pub v_bcst: Option<String>,
+    #[serde(rename = "vICMS")]
+    pub v_icms: Option<String>,
+    #[serde(rename = "vNF")]
+    pub v_nf: Option<String>,
+    #[serde(rename = "vProd")]
+    pub v_prod: Option<String>,
+    #[serde(rename = "vST")]
+    pub v_st: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfDocCteInfNfCteInfUnidCarga {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "idUnidCarga")]
+    pub id_unid_carga: Option<String>,
+    #[serde(rename = "lacUnidCarga")]
+    pub lac_unid_carga: Option<InfDocCteInfNfCteInfUnidCargaCteLacUnidCarga>,
+    #[serde(rename = "qtdRat")]
+    pub qtd_rat: Option<String>,
+    #[serde(rename = "tpUnidCarga")]
+    pub tp_unid_carga: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfDocCteInfNfCteInfUnidCargaCteLacUnidCarga {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "nLacre")]
+    pub n_lacre: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfNfCteInfUnidTransp {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "idUnidTransp")]
+    pub id_unid_transp: Option<String>,
+    #[serde(rename = "infUnidCarga")]
+    pub inf_unid_carga: Option<InfNfCteInfUnidTranspCteInfUnidCarga>,
+    #[serde(rename = "lacUnidTransp")]
+    pub lac_unid_transp: Option<InfNfCteInfUnidTranspCteLacUnidTransp>,
+    #[serde(rename = "qtdRat")]
+    pub qtd_rat: Option<String>,
+    #[serde(rename = "tpUnidTransp")]
+    pub tp_unid_transp: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfNfCteInfUnidTranspCteInfUnidCarga {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "idUnidCarga")]
+    pub id_unid_carga: Option<String>,
+    #[serde(rename = "lacUnidCarga")]
+    pub lac_unid_carga: Option<InfNfCteInfUnidTranspCteInfUnidCargaCteLacUnidCarga>,
+    #[serde(rename = "qtdRat")]
+    pub qtd_rat: Option<String>,
+    #[serde(rename = "tpUnidCarga")]
+    pub tp_unid_carga: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfNfCteInfUnidTranspCteInfUnidCargaCteLacUnidCarga {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "nLacre")]
+    pub n_lacre: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfNfCteInfUnidTranspCteLacUnidTransp {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "nLacre")]
+    pub n_lacre: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfNfe {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "PIN")]
+    pub pin: Option<String>,
+    #[serde(rename = "chave")]
+    pub chave: String,
+    #[serde(rename = "dPrev")]
+    pub d_prev: Option<String>,
+    #[serde(rename = "infUnidCarga")]
+    pub inf_unid_carga: Option<InfDocCteInfNfeCteInfUnidCarga>,
+    #[serde(rename = "infUnidTransp")]
+    pub inf_unid_transp: Option<InfNfeCteInfUnidTransp>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfDocCteInfNfeCteInfUnidCarga {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "idUnidCarga")]
+    pub id_unid_carga: Option<String>,
+    #[serde(rename = "lacUnidCarga")]
+    pub lac_unid_carga: Option<InfDocCteInfNfeCteInfUnidCargaCteLacUnidCarga>,
+    #[serde(rename = "qtdRat")]
+    pub qtd_rat: Option<String>,
+    #[serde(rename = "tpUnidCarga")]
+    pub tp_unid_carga: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfDocCteInfNfeCteInfUnidCargaCteLacUnidCarga {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "nLacre")]
+    pub n_lacre: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfNfeCteInfUnidTransp {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "idUnidTransp")]
+    pub id_unid_transp: Option<String>,
+    #[serde(rename = "infUnidCarga")]
+    pub inf_unid_carga: Option<InfNfeCteInfUnidTranspCteInfUnidCarga>,
+    #[serde(rename = "lacUnidTransp")]
+    pub lac_unid_transp: Option<InfNfeCteInfUnidTranspCteLacUnidTransp>,
+    #[serde(rename = "qtdRat")]
+    pub qtd_rat: Option<String>,
+    #[serde(rename = "tpUnidTransp")]
+    pub tp_unid_transp: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfNfeCteInfUnidTranspCteInfUnidCarga {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "idUnidCarga")]
+    pub id_unid_carga: Option<String>,
+    #[serde(rename = "lacUnidCarga")]
+    pub lac_unid_carga: Option<InfNfeCteInfUnidTranspCteInfUnidCargaCteLacUnidCarga>,
+    #[serde(rename = "qtdRat")]
+    pub qtd_rat: Option<String>,
+    #[serde(rename = "tpUnidCarga")]
+    pub tp_unid_carga: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfNfeCteInfUnidTranspCteInfUnidCargaCteLacUnidCarga {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "nLacre")]
+    pub n_lacre: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfNfeCteInfUnidTranspCteLacUnidTransp {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "nLacre")]
+    pub n_lacre: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfOutros {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "dEmi")]
+    pub d_emi: Option<String>,
+    #[serde(rename = "dPrev")]
+    pub d_prev: Option<String>,
+    #[serde(rename = "descOutros")]
+    pub desc_outros: Option<String>,
+    #[serde(rename = "infUnidCarga")]
+    pub inf_unid_carga: Option<InfDocCteInfOutrosCteInfUnidCarga>,
+    #[serde(rename = "infUnidTransp")]
+    pub inf_unid_transp: Option<InfOutrosCteInfUnidTransp>,
+    #[serde(rename = "nDoc")]
+    pub n_doc: Option<String>,
+    #[serde(rename = "tpDoc")]
+    pub tp_doc: Option<String>,
+    #[serde(rename = "vDocFisc")]
+    pub v_doc_fisc: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfDocCteInfOutrosCteInfUnidCarga {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "idUnidCarga")]
+    pub id_unid_carga: Option<String>,
+    #[serde(rename = "lacUnidCarga")]
+    pub lac_unid_carga: Option<InfDocCteInfOutrosCteInfUnidCargaCteLacUnidCarga>,
+    #[serde(rename = "qtdRat")]
+    pub qtd_rat: Option<String>,
+    #[serde(rename = "tpUnidCarga")]
+    pub tp_unid_carga: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfDocCteInfOutrosCteInfUnidCargaCteLacUnidCarga {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "nLacre")]
+    pub n_lacre: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfOutrosCteInfUnidTransp {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "idUnidTransp")]
+    pub id_unid_transp: Option<String>,
+    #[serde(rename = "infUnidCarga")]
+    pub inf_unid_carga: Option<InfOutrosCteInfUnidTranspCteInfUnidCarga>,
+    #[serde(rename = "lacUnidTransp")]
+    pub lac_unid_transp: Option<InfOutrosCteInfUnidTranspCteLacUnidTransp>,
+    #[serde(rename = "qtdRat")]
+    pub qtd_rat: Option<String>,
+    #[serde(rename = "tpUnidTransp")]
+    pub tp_unid_transp: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfOutrosCteInfUnidTranspCteInfUnidCarga {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "idUnidCarga")]
+    pub id_unid_carga: Option<String>,
+    #[serde(rename = "lacUnidCarga")]
+    pub lac_unid_carga: Option<InfOutrosCteInfUnidTranspCteInfUnidCargaCteLacUnidCarga>,
+    #[serde(rename = "qtdRat")]
+    pub qtd_rat: Option<String>,
+    #[serde(rename = "tpUnidCarga")]
+    pub tp_unid_carga: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfOutrosCteInfUnidTranspCteInfUnidCargaCteLacUnidCarga {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "nLacre")]
+    pub n_lacre: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfOutrosCteInfUnidTranspCteLacUnidTransp {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "nLacre")]
+    pub n_lacre: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfGlobalizado {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "xObs")]
+    pub x_obs: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InfModal {
     #[serde(rename = "@versaoModal")]
-    pub versao_modal: String,
-    pub rodo: Option<Rodo>,
-    pub multimodal: Option<Multimodal>,
+    pub versao_modal: Option<String>,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "AnyElement")]
+    pub any_element: Option<AnyElement>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Rodo {
-    #[serde(rename = "RNTRC")]
-    pub rntrc: String,
-    pub occ: Option<Occ>,
+pub struct AnyElement {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Multimodal {
-    #[serde(rename = "COTM")]
-    pub cotm: String,
-    #[serde(rename = "indNegociavel")]
-    pub ind_negociavel: String,
+pub struct InfServVinc {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "infCTeMultimodal")]
+    pub inf_cte_multimodal: Option<InfCteMultimodal>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Occ {
-    #[serde(rename = "nOcc")]
-    pub n_occ: String,
+pub struct InfCteMultimodal {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "chCTeMultimodal")]
+    pub ch_cte_multimodal: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct VeicNovos {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "cCor")]
+    pub c_cor: Option<String>,
+    #[serde(rename = "cMod")]
+    pub c_mod: Option<String>,
+    #[serde(rename = "chassi")]
+    pub chassi: Option<String>,
+    #[serde(rename = "vFrete")]
+    pub v_frete: Option<String>,
+    #[serde(rename = "vUnit")]
+    pub v_unit: Option<String>,
+    #[serde(rename = "xCor")]
+    pub x_cor: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfCteAnu {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "chCte")]
+    pub ch_cte: Option<String>,
     #[serde(rename = "dEmi")]
-    pub d_emi: String,
-    #[serde(rename = "emiOcc")]
-    pub emi_occ: Option<EmiOcc>,
+    pub d_emi: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct EmiOcc {
-    #[serde(rename = "CNPJ")]
-    pub cnpj: Option<String>,
-    #[serde(rename = "cInt")]
-    pub c_int: Option<String>,
-    #[serde(rename = "IE")]
-    pub ie: Option<String>,
-    #[serde(rename = "UF")]
-    pub uf: String,
+pub struct InfCteComp {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "chCTe")]
+    pub ch_cte: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct InfCteSupl {
-    #[serde(rename = "qrCodCTe")]
-    pub qr_cod_cte: String,
+pub struct InfPaa {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "CNPJPAA")]
+    pub cnpjpaa: Option<String>,
+    #[serde(rename = "PAASignature")]
+    pub paasignature: Option<Paasignature>,
+}
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Paasignature {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "RSAKeyValue")]
+    pub rsakey_value: RsakeyValue,
+    #[serde(rename = "SignatureValue")]
+    pub signature_value: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RsakeyValue {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "Exponent")]
+    pub exponent: String,
+    #[serde(rename = "Modulus")]
+    pub modulus: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfSolicNff {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "xSolic")]
+    pub x_solic: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct VPrest {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "Comp")]
+    pub comp: Option<Vec<Comp>>,
+    #[serde(rename = "vRec")]
+    pub v_rec: f64,
+    #[serde(rename = "vTPrest")]
+    pub v_tprest: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Comp {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "vComp")]
+    pub v_comp: String,
+    #[serde(rename = "xNome")]
+    pub x_nome: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProtCte {
     #[serde(rename = "@versao")]
     pub versao: String,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
     #[serde(rename = "infProt")]
     pub inf_prot: InfProtocolo,
+    #[serde(rename = "Signature")]
+    pub signature: Option<ProtSignature>,
 }
 
 #[cfg(test)]

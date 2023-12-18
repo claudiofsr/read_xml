@@ -3,7 +3,9 @@ mod aut_xml;
 mod impostos;
 mod integrated_dev_env;
 mod emitente;
+mod expedidor;
 mod destinatario;
+mod recebedor;
 mod remetente;
 mod ret_evento;
 

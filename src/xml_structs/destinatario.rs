@@ -1,6 +1,13 @@
 use claudiofsr_lib::StrExtension;
 use serde::{Deserialize, Serialize};
 
+/**
+Tomador do Serviço:
+    0-Remetente;
+    1-Expedidor;
+    2-Recebedor;
+    3-Destinatário
+*/
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Destinatario {
     #[serde(rename = "CNPJ")]

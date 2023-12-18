@@ -55,8 +55,6 @@ pub struct InfProtocolo {
 pub struct InfRespTec {
     #[serde(rename = "CNPJ")]
     pub cnpj: Option<String>,
-    #[serde(rename = "xContato")]
-    pub x_contato: Option<String>,
     #[serde(rename = "email")]
     pub email: Option<String>,
     #[serde(rename = "fone")]
@@ -67,4 +65,6 @@ pub struct InfRespTec {
     pub hash_csrt: Option<String>,
     #[serde(rename = "$text")]
     pub text: Option<String>,
+    #[serde(rename = "xContato")]
+    pub x_contato: Option<String>,
 }

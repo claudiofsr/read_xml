@@ -36,8 +36,6 @@ pub struct Ide {
     pub fin_nfe: Option<String>,
     #[serde(rename = "idDest")]
     pub id_dest: Option<String>,
-    #[serde(rename = "mod")] // Modelo do documento fiscal ; CT-e código 57
-    pub modelo: String,
     #[serde(rename = "indIEToma")]
     pub ind_ietoma: Option<String>,
     #[serde(rename = "indFinal")]
@@ -50,22 +48,30 @@ pub struct Ide {
     pub ind_pres: Option<String>,
     #[serde(rename = "modal")] // Modal: Preencher com:01-Rodoviário; 02-Aéreo;03-Aquaviário;04-Ferroviário;05-Dutoviário;06-Multimodal;
     pub modal: Option<String>,
+    #[serde(rename = "mod")] // Modelo do documento fiscal ; CT-e código 57
+    pub modelo: Option<String>,
     #[serde(rename = "nCT")] // Número do CT-e
     pub num_cte: Option<String>,
     #[serde(rename = "natOp")] // Natureza da Operação
     pub nat_operacao: String,
     #[serde(rename = "NFref")]
     pub nfref: Option<Vec<NFref>>,
+    #[serde(rename = "nCT")]
+    pub n_ct: Option<String>,
     #[serde(rename = "nNF")]
     pub n_nf: Option<String>,
     #[serde(rename = "procEmi")]
     pub proc_emi: Option<String>,
+    #[serde(rename = "retira")]
     pub retira: Option<String>,
+    #[serde(rename = "serie")]
     pub serie: String,
     #[serde(rename = "$text")]
     pub text: Option<String>,
     pub toma: Option<String>, // Tomador do Serviço
+    #[serde(rename = "toma3")]
     pub toma3: Option<Toma3>, // Indicador do "papel" do tomador do serviço no CT-e
+    #[serde(rename = "toma4")]
     pub toma4: Option<Toma4>, // Indicador do "papel" do tomador do serviço no CT-e
      #[serde(rename = "tpAmb")]
     pub tp_amb: String,
@@ -138,46 +144,60 @@ impl Ide {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Toma3 {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "toma")]
     pub toma: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Toma4 {
-    pub toma: String,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
     #[serde(rename = "CNPJ")]
     pub cnpj: Option<String>,
+    #[serde(rename = "CPF")]
+    pub cpf: Option<String>,
     #[serde(rename = "IE")]
     pub ie: Option<String>,
-    #[serde(rename = "xNome")]
-    pub x_nome: String,
-    #[serde(rename = "xFant")]
-    pub x_fant: Option<String>,
-    pub fone: Option<String>,
+    #[serde(rename = "email")]
+    pub email: Option<String>,
     #[serde(rename = "enderToma")]
     pub ender_toma: EnderToma,
+    #[serde(rename = "fone")]
+    pub fone: Option<String>,
+    #[serde(rename = "toma")]
+    pub toma: String,
+    #[serde(rename = "xFant")]
+    pub x_fant: Option<String>,
+    #[serde(rename = "xNome")]
+    pub x_nome: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EnderToma {
-    #[serde(rename = "xLgr")]
-    pub x_lgr: String,
-    pub nro: String,
-    #[serde(rename = "xCpl")]
-    pub x_cpl: Option<String>,
-    #[serde(rename = "xBairro")]
-    pub x_bairro: String,
-    #[serde(rename = "cMun")]
-    pub c_mun: String,
-    #[serde(rename = "xMun")]
-    pub x_mun: String,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
     #[serde(rename = "CEP")]
     pub cep: String,
     #[serde(rename = "UF")]
     pub uf: String,
+    #[serde(rename = "cMun")]
+    pub c_mun: String,
     #[serde(rename = "cPais")]
-    pub c_pais: Option<String>,
+    pub c_pais: String,
+    #[serde(rename = "nro")]
+    pub nro: String,
+    #[serde(rename = "xBairro")]
+    pub x_bairro: String,
+    #[serde(rename = "xCpl")]
+    pub x_cpl: String,
+    #[serde(rename = "xLgr")]
+    pub x_lgr: String,
+    #[serde(rename = "xMun")]
+    pub x_mun: String,
     #[serde(rename = "xPais")]
-    pub x_pais: Option<String>,
+    pub x_pais: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

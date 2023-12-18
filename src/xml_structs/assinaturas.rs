@@ -116,3 +116,114 @@ pub struct X509Data {
     #[serde(rename = "$text")]
     pub text: Option<String>,
 }
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProtSignature {
+    #[serde(rename = "@Id")]
+    pub id: String,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "KeyInfo")]
+    pub key_info: ProtSignatureXdKeyInfo,
+    #[serde(rename = "SignatureValue")]
+    pub signature_value: ProtSignatureXdSignatureValue,
+    #[serde(rename = "SignedInfo")]
+    pub signed_info: ProtSignatureXdSignedInfo,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProtSignatureXdKeyInfo {
+    #[serde(rename = "@Id")]
+    pub id: String,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "X509Data")]
+    pub x509_data: ProtSignatureXdKeyInfoXdX509Data,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProtSignatureXdKeyInfoXdX509Data {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "X509Certificate")]
+    pub x509_certificate: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProtSignatureXdSignatureValue {
+    #[serde(rename = "@Id")]
+    pub id: String,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProtSignatureXdSignedInfo {
+    #[serde(rename = "@Id")]
+    pub id: String,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "CanonicalizationMethod")]
+    pub canonicalization_method: ProtSignatureXdSignedInfoXdCanonicalizationMethod,
+    #[serde(rename = "Reference")]
+    pub reference: ProtSignatureXdSignedInfoXdReference,
+    #[serde(rename = "SignatureMethod")]
+    pub signature_method: ProtSignatureXdSignedInfoXdSignatureMethod,
+}
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProtSignatureXdSignedInfoXdCanonicalizationMethod {
+    #[serde(rename = "@Algorithm")]
+    pub algorithm: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProtSignatureXdSignedInfoXdReference {
+    #[serde(rename = "@Id")]
+    pub id: String,
+    #[serde(rename = "@Type")]
+    pub reference_type: String,
+    #[serde(rename = "@URI")]
+    pub uri: String,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "DigestMethod")]
+    pub digest_method: ProtSignatureXdSignedInfoXdReferenceXdDigestMethod,
+    #[serde(rename = "DigestValue")]
+    pub digest_value: String,
+    #[serde(rename = "Transforms")]
+    pub transforms: ProtSignatureXdSignedInfoXdReferenceXdTransforms,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProtSignatureXdSignedInfoXdReferenceXdDigestMethod {
+    #[serde(rename = "@Algorithm")]
+    pub algorithm: String,
+}
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProtSignatureXdSignedInfoXdReferenceXdTransforms {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "Transform")]
+    pub transform: Vec<ProtSignatureXdSignedInfoXdReferenceXdTransformsXdTransform>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProtSignatureXdSignedInfoXdReferenceXdTransformsXdTransform {
+    #[serde(rename = "@Algorithm")]
+    pub algorithm: String,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "XPath")]
+    pub xpath: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProtSignatureXdSignedInfoXdSignatureMethod {
+    #[serde(rename = "@Algorithm")]
+    pub algorithm: String,
+}

@@ -139,6 +139,10 @@ pub struct Icms {
     pub icmssn500: Option<Icmssn500>,
     #[serde(rename = "ICMSSN900")]
     pub icmssn900: Option<Icmssn900>,
+    #[serde(rename = "ICMSOutraUF")]
+    pub icmsoutra_uf: Option<IcmsoutraUf>,
+    #[serde(rename = "ICMSSN")]
+    pub icmssn: Option<Icmssn>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -442,6 +446,32 @@ pub struct Icms90 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct IcmsoutraUf {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "CST")]
+    pub cst: String,
+    #[serde(rename = "pICMSOutraUF")]
+    pub p_icmsoutra_uf: String,
+    #[serde(rename = "pRedBCOutraUF")]
+    pub p_red_bcoutra_uf: String,
+    #[serde(rename = "vBCOutraUF")]
+    pub v_bcoutra_uf: String,
+    #[serde(rename = "vICMSOutraUF")]
+    pub v_icmsoutra_uf: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Icmssn {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "CST")]
+    pub cst: String,
+    #[serde(rename = "indSN")]
+    pub ind_sn: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Icmspart {
     #[serde(rename = "orig")]
     pub orig: Option<String>,
@@ -687,6 +717,10 @@ pub struct Icmsuffim {
     pub v_icmsuffim: Option<String>,
     #[serde(rename = "vICMSUFIni")]
     pub v_icmsufini: Option<String>,
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "pICMSInterPart")]
+    pub p_icmsinter_part: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

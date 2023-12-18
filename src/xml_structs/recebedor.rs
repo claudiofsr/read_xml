@@ -9,30 +9,26 @@ Tomador do Serviço:
     3-Destinatário
 */
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Remetente {
+pub struct Receb {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
     #[serde(rename = "CNPJ")]
     pub cnpj: Option<String>,
     #[serde(rename = "CPF")]
     pub cpf: Option<String>,
-    #[serde(rename = "enderReme")]
-    pub ender_reme: Option<Endereco>,
-    /// Inscrição Estadual
     #[serde(rename = "IE")]
     pub ie: Option<String>,
-    #[serde(rename = "xFant")]
-    pub x_fant: Option<String>,
-    /// Razão Social ou Nome do destinatário
-    #[serde(rename = "xNome")]
-    pub x_nome: Option<String>,
-    #[serde(rename = "fone")]
-    pub fone: Option<String>,
     #[serde(rename = "email")]
     pub email: Option<String>,
-    #[serde(rename = "$text")]
-    pub text: Option<String>,
+    #[serde(rename = "enderReceb")]
+    pub ender_receb: Option<Endereco>,
+    #[serde(rename = "fone")]
+    pub fone: Option<String>,
+    #[serde(rename = "xNome")]
+    pub x_nome: Option<String>,
 }
 
-impl Remetente {
+impl Receb {
     pub fn get_cnpj(&self) -> Option<String> {
         self
             .cnpj
@@ -49,7 +45,7 @@ impl Remetente {
 
     pub fn get_endereco_municipio(&self) -> Option<String> {
         self
-            .ender_reme
+            .ender_receb
             .as_ref()
             .and_then(|endereco| {
                 endereco
@@ -61,7 +57,7 @@ impl Remetente {
 
     pub fn get_endereco_uf(&self) -> Option<String> {
         self
-            .ender_reme
+            .ender_receb
             .as_ref()
             .and_then(|endereco| {
                 endereco
