@@ -1,3 +1,5 @@
+// Not Used !!!!
+
 // excel_writer - A Polars extension to serialize dataframes to Excel xlsx files.
 //
 // SPDX-License-Identifier: MIT OR Apache-2.0
