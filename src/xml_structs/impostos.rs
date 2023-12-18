@@ -454,11 +454,11 @@ pub struct IcmsoutraUf {
     #[serde(rename = "pICMSOutraUF")]
     pub p_icmsoutra_uf: String,
     #[serde(rename = "pRedBCOutraUF")]
-    pub p_red_bcoutra_uf: String,
+    pub p_red_bcoutra_uf: Option<String>,
     #[serde(rename = "vBCOutraUF")]
-    pub v_bcoutra_uf: String,
+    pub v_bcoutra_uf: Option<String>,
     #[serde(rename = "vICMSOutraUF")]
-    pub v_icmsoutra_uf: String,
+    pub v_icmsoutra_uf: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -468,7 +468,7 @@ pub struct Icmssn {
     #[serde(rename = "CST")]
     pub cst: String,
     #[serde(rename = "indSN")]
-    pub ind_sn: String,
+    pub ind_sn: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
