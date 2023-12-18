@@ -1,0 +1,8 @@
+/target
+/schemas_xml
+*.txt
+*.xml
+*.xsd
+*.json
+*.zip
+*.xlsx
