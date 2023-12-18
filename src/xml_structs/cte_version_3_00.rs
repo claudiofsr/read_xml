@@ -587,13 +587,13 @@ pub struct Fluxo {
     #[serde(rename = "$text")]
     pub text: Option<String>,
     #[serde(rename = "pass")]
-    pub pass: Pass,
+    pub pass: Option<Pass>,
     #[serde(rename = "xDest")]
-    pub x_dest: String,
+    pub x_dest: Option<String>,
     #[serde(rename = "xOrig")]
-    pub x_orig: String,
+    pub x_orig: Option<String>,
     #[serde(rename = "xRota")]
-    pub x_rota: String,
+    pub x_rota: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -601,7 +601,7 @@ pub struct Pass {
     #[serde(rename = "$text")]
     pub text: Option<String>,
     #[serde(rename = "xPass")]
-    pub x_pass: String,
+    pub x_pass: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -771,11 +771,11 @@ pub struct InfCarga {
     #[serde(rename = "infQ")]
     pub inf_q: Option<Vec<InfQ>>,
     #[serde(rename = "proPred")]
-    pub pro_pred: String,
+    pub pro_pred: Option<String>,
     #[serde(rename = "vCarga")]
     pub v_carga: String,
     #[serde(rename = "vCargaAverb")]
-    pub v_carga_averb: String,
+    pub v_carga_averb: Option<String>,
     #[serde(rename = "xOutCat")]
     pub x_out_cat: Option<String>,
 }
@@ -785,11 +785,11 @@ pub struct InfQ {
     #[serde(rename = "$text")]
     pub text: Option<String>,
     #[serde(rename = "cUnid")]
-    pub c_unid: String,
+    pub c_unid: Option<String>,
     #[serde(rename = "qCarga")]
-    pub q_carga: String,
+    pub q_carga: Option<String>,
     #[serde(rename = "tpMed")]
-    pub tp_med: String,
+    pub tp_med: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

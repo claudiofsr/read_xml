@@ -8,6 +8,7 @@ mod destinatario;
 mod recebedor;
 mod remetente;
 mod ret_evento;
+mod tomador;
 
 pub mod cte_version_3_00;
 pub mod cte_evento;

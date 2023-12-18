@@ -1,7 +1,10 @@
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
-use crate::get_naive_date_from_yyyy_mm_dd;
+use crate::{
+    get_naive_date_from_yyyy_mm_dd,
+    xml_structs::tomador::Toma4,
+};
 
 // IDE: Integrated Development Environment
 
@@ -148,56 +151,6 @@ pub struct Toma3 {
     pub text: Option<String>,
     #[serde(rename = "toma")]
     pub toma: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Toma4 {
-    #[serde(rename = "$text")]
-    pub text: Option<String>,
-    #[serde(rename = "CNPJ")]
-    pub cnpj: Option<String>,
-    #[serde(rename = "CPF")]
-    pub cpf: Option<String>,
-    #[serde(rename = "IE")]
-    pub ie: Option<String>,
-    #[serde(rename = "email")]
-    pub email: Option<String>,
-    #[serde(rename = "enderToma")]
-    pub ender_toma: EnderToma,
-    #[serde(rename = "fone")]
-    pub fone: Option<String>,
-    #[serde(rename = "toma")]
-    pub toma: String,
-    #[serde(rename = "xFant")]
-    pub x_fant: Option<String>,
-    #[serde(rename = "xNome")]
-    pub x_nome: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct EnderToma {
-    #[serde(rename = "$text")]
-    pub text: Option<String>,
-    #[serde(rename = "CEP")]
-    pub cep: String,
-    #[serde(rename = "UF")]
-    pub uf: String,
-    #[serde(rename = "cMun")]
-    pub c_mun: String,
-    #[serde(rename = "cPais")]
-    pub c_pais: String,
-    #[serde(rename = "nro")]
-    pub nro: String,
-    #[serde(rename = "xBairro")]
-    pub x_bairro: String,
-    #[serde(rename = "xCpl")]
-    pub x_cpl: String,
-    #[serde(rename = "xLgr")]
-    pub x_lgr: String,
-    #[serde(rename = "xMun")]
-    pub x_mun: String,
-    #[serde(rename = "xPais")]
-    pub x_pais: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
