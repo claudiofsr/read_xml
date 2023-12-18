@@ -10,7 +10,7 @@ Tomador do Serviço:
     3-Destinatário
 */
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Toma4 {
+pub struct Tomador {
     #[serde(rename = "$text")]
     pub text: Option<String>,
     #[serde(rename = "CNPJ")]
@@ -23,6 +23,10 @@ pub struct Toma4 {
     pub email: Option<String>,
     #[serde(rename = "enderToma")]
     pub ender_toma: Option<Endereco>,
+    #[serde(rename = "enderToma3")]
+    pub ender_toma3: Option<Endereco>,
+    #[serde(rename = "enderToma4")]
+    pub ender_toma4: Option<Endereco>,
     #[serde(rename = "fone")]
     pub fone: Option<String>,
     #[serde(rename = "toma")]
@@ -33,7 +37,7 @@ pub struct Toma4 {
     pub x_nome: Option<String>,
 }
 
-impl Toma4 {
+impl Tomador {
     pub fn get_cnpj(&self) -> Option<String> {
         self
             .cnpj

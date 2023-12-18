@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     get_naive_date_from_yyyy_mm_dd,
-    xml_structs::tomador::Toma4,
+    xml_structs::tomador::Tomador,
 };
 
 // IDE: Integrated Development Environment
@@ -73,9 +73,9 @@ pub struct Ide {
     pub text: Option<String>,
     pub toma: Option<String>, // Tomador do Serviço
     #[serde(rename = "toma3")]
-    pub toma3: Option<Toma3>, // Indicador do "papel" do tomador do serviço no CT-e
+    pub toma3: Option<Tomador>, // Indicador do "papel" do tomador do serviço no CT-e
     #[serde(rename = "toma4")]
-    pub toma4: Option<Toma4>, // Indicador do "papel" do tomador do serviço no CT-e
+    pub toma4: Option<Tomador>, // Indicador do "papel" do tomador do serviço no CT-e
      #[serde(rename = "tpAmb")]
     pub tp_amb: String,
     #[serde(rename = "tpCTe")] // Tipo do CT-e: 0 - CT-e Normal; 1 - CT-e de Complemento de Valores; 2 - CT-e de Anulação; 3 - CT-e de Substituição
