@@ -62,6 +62,7 @@ use std::{
 
 use claudiofsr_lib::StrExtension;
 use chrono::NaiveDate;
+use rayon::prelude::*;
 use serde::{Serialize, Deserialize, Serializer, de::DeserializeOwned};
 use xml_schema_generator::{into_struct, Options};
 use walkdir::{WalkDir, DirEntry};
@@ -126,6 +127,8 @@ pub trait StructExtension {
         // Try to deserialize the XML file into struct T
         Ok(from_reader(&mut bufreader)?)
     }
+
+    fn get_information(&self, xml_path: &std::path::Path, arguments: &crate::Arguments) -> Information;
 
     /**
     Print error messages. Examples:
@@ -303,132 +306,54 @@ pub fn get_progressbar(total_size: usize) -> MyResult<MultiProgressBar> {
     })
 }
 
+pub fn get_all_info(
+    xml_entries: &[DirEntry],
+    multi_progressbar: &mut MultiProgressBar,
+    arguments: &Arguments
+) -> Vec<Information>
+{
+    let infos: Vec<Information> = xml_entries
+        .into_par_iter() // rayon parallel iterator
+        //.iter()
+        .map(|entry| {
+            multi_progressbar.a.inc(1);
+            let xml_path = entry.path();
+            analyze_file(xml_path, arguments)
+        })
+        .collect();
+
+    infos
+}
+
 pub fn analyze_file(xml_path: &Path, arguments: &Arguments) -> Information {
 
     match CteProc::xml_parse(xml_path) {
-        Ok(proc) => {
-            if arguments.verbose {
-                println!("cte xml_path: {xml_path:?}");
-                println!("cte_proc: {proc:#?}\n");
-            }
-            return Information::Cte(Box::new(proc.get_info()));
-        }
+        Ok(proc) => return proc.get_information(xml_path, arguments),
         Err(err) => CteProc::print_error_msgs(err, xml_path)
     }
 
     match NfeProc::xml_parse(xml_path) {
-        Ok(proc) => {
-            if arguments.verbose {
-                println!("nfe xml_path: {xml_path:?}");
-                println!("nfe_proc: {proc:#?}\n");
-            }
-            return Information::Nfe(proc.get_infos());
-        }
+        Ok(proc) => return proc.get_information(xml_path, arguments),
         Err(err) => NfeProc::print_error_msgs(err, xml_path)
     }
 
     match ProcEventoCte::xml_parse(xml_path) {
-        Ok(evento) => {
-            if arguments.verbose {
-                println!("evento cte xml_path: {xml_path:?}");
-                println!("proc_evento_cte: {evento:#?}\n");
-            }
-            return Information::EventoCte(Box::new(evento.get_info()));
-        }
+        Ok(evento) => return evento.get_information(xml_path, arguments),
         Err(err) => ProcEventoCte::print_error_msgs(err, xml_path)
     }
 
     match ProcEventoNfe::xml_parse(xml_path) {
-        Ok(evento) => {
-            if arguments.verbose {
-                println!("evento nfe xml_path: {xml_path:?}");
-                println!("proc_evento_nfe: {evento:#?}\n");
-            }
-            return Information::EventoNfe(Box::new(evento.get_info()));
-        }
+        Ok(evento) => return evento.get_information(xml_path, arguments),
         Err(err) => ProcEventoNfe::print_error_msgs(err, xml_path)
     }
 
     match EFinanceira::xml_parse(xml_path) {
-        Ok(efinanceira) => {
-            if arguments.verbose {
-                println!("eFinanceira xml_path: {xml_path:?}");
-                println!("eFinanceira: {efinanceira:#?}\n");
-            }
-            return Information::EFinanceira(efinanceira.get_infos());
-        }
+        Ok(efinanceira) => return efinanceira.get_information(xml_path, arguments),
         Err(err) => EFinanceira::print_error_msgs(err, xml_path)
     }
 
     Information::None
 }
-
-/*
-fn parse_cte(xml_path: &Path, arguments: &Arguments) -> Information {
-    match CteProc::xml_parse(xml_path) {
-        Ok(proc) => {
-            if arguments.verbose {
-                println!("cte xml_path: {xml_path:?}");
-                println!("cte_proc: {proc:#?}\n");
-            }
-            Information::Cte(Box::new(proc.get_info()))
-        }
-        Err(err) => CteProc::print_error_msgs(err, xml_path)
-    }
-}
-
-fn parse_nfe(xml_path: &Path, arguments: &Arguments) -> Information {
-    match NfeProc::xml_parse(xml_path) {
-        Ok(proc) => {
-            if arguments.verbose {
-                println!("nfe xml_path: {xml_path:?}");
-                println!("nfe_proc: {proc:#?}\n");
-            }
-            Information::Nfe(proc.get_infos())
-        }
-        Err(err) => NfeProc::print_error_msgs(err, xml_path)
-    }
-}
-
-fn parse_evento_cte(xml_path: &Path, arguments: &Arguments) -> Information {
-    match ProcEventoCte::xml_parse(xml_path) {
-        Ok(evento) => {
-            if arguments.verbose {
-                println!("evento cte xml_path: {xml_path:?}");
-                println!("proc_evento_cte: {evento:#?}\n");
-            }
-            Information::EventoCte(Box::new(evento.get_info()))
-        }
-        Err(err) => ProcEventoCte::print_error_msgs(err, xml_path)
-    }
-}
-
-fn parse_evento_nfe(xml_path: &Path, arguments: &Arguments) -> Information {
-    match ProcEventoNfe::xml_parse(xml_path) {
-        Ok(evento) => {
-            if arguments.verbose {
-                println!("evento nfe xml_path: {xml_path:?}");
-                println!("proc_evento_nfe: {evento:#?}\n");
-            }
-            Information::EventoNfe(Box::new(evento.get_info()))
-        }
-        Err(err) => ProcEventoNfe::print_error_msgs(err, xml_path)
-    }
-}
-
-fn parse_efinanceira(xml_path: &Path, arguments: &Arguments) -> Information {
-    match EFinanceira::xml_parse(xml_path) {
-        Ok(efinanceira) => {
-            if arguments.verbose {
-                println!("eFinanceira xml_path: {xml_path:?}");
-                println!("eFinanceira: {efinanceira:#?}\n");
-            }
-            Information::EFinanceira(efinanceira.get_infos())
-        }
-        Err(err) => EFinanceira::print_error_msgs(err, xml_path)
-    }
-}
-*/
 
 /// Print buffer to stdout
 pub fn my_print(buffer: &[u8]) {

@@ -31,7 +31,7 @@ use crate::{
     xml_structs::emitente::Emitente,
     xml_structs::ret_evento::RetEvento,
     get_naive_date_from_yyyy_mm_dd,
-    REGEX_CANCELAMENTO,
+    REGEX_CANCELAMENTO, Information,
 };
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
@@ -60,7 +60,15 @@ pub struct ProcEventoNfe {
 }
 
 /// <https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations>
-impl StructExtension for ProcEventoNfe {}
+impl StructExtension for ProcEventoNfe {
+    fn get_information(&self, xml_path: &std::path::Path, arguments: &crate::Arguments) -> Information {
+        if arguments.verbose {
+            println!("evento nfe xml_path: {xml_path:?}");
+            println!("proc_evento_nfe: {self:#?}\n");
+        }
+        Information::EventoNfe(Box::new(self.get_info()))
+    }
+}
 
 impl ProcEventoNfe {
     pub fn get_nfe(&self) -> Option<String> {

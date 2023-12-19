@@ -8,7 +8,7 @@ use crate::{
     xml_structs::assinaturas::Signature,
     xml_structs::emitente::Emitente,
     xml_structs::ret_evento::RetEvento,
-    get_naive_date_from_yyyy_mm_dd,
+    get_naive_date_from_yyyy_mm_dd, Information,
 };
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
@@ -37,7 +37,15 @@ pub struct ProcEventoCte {
 }
 
 /// <https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations>
-impl StructExtension for ProcEventoCte {}
+impl StructExtension for ProcEventoCte {
+    fn get_information(&self, xml_path: &std::path::Path, arguments: &crate::Arguments) -> Information {
+        if arguments.verbose {
+            println!("evento cte xml_path: {xml_path:?}");
+            println!("proc_evento_cte: {self:#?}\n");
+        }
+        Information::EventoCte(Box::new(self.get_info()))
+    }
+}
 
 impl ProcEventoCte {
     pub fn get_cte(&self) -> Option<String> {

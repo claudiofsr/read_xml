@@ -43,7 +43,7 @@ use crate::{
     xml_structs::destinatario::Destinatario,
     xml_structs::assinaturas::Signature,
     xml_structs::impostos::{Imposto, Total},
-    xml_structs::aut_xml::{AutXML, InfProtocolo, InfRespTec},
+    xml_structs::aut_xml::{AutXML, InfProtocolo, InfRespTec}, Information,
 };
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone, Iterable)]
@@ -139,7 +139,15 @@ pub struct NfeProc {
 }
 
 /// <https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations>
-impl StructExtension for NfeProc {}
+impl StructExtension for NfeProc {
+    fn get_information(&self, xml_path: &std::path::Path, arguments: &crate::Arguments) -> Information {
+        if arguments.verbose {
+            println!("nfe xml_path: {xml_path:?}");
+            println!("nfe_proc: {self:#?}\n");
+        }
+        Information::Nfe(self.get_infos())
+    }
+}
 
 impl NfeProc {
     pub fn get_nfe(&self) -> Option<String> {

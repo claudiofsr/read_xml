@@ -7,7 +7,6 @@ use read_xml::{
     InfoCteEvento,
     InfoNfeEvento,
     InfoEFinanceira,
-    analyze_file,
     get_progressbar,
     get_xml_entries,
     print_csv_file,
@@ -15,9 +14,9 @@ use read_xml::{
     configure_the_environment,
     atualizar_nfes_cancelados,
     atualizar_ctes_cancelados,
+    get_all_info,
 };
 
-use rayon::prelude::*;
 use std::time::Instant;
 use walkdir::DirEntry;
 
@@ -43,17 +42,13 @@ fn main() -> MyResult<()> {
     configure_the_environment();
     let arguments = Arguments::build()?;
     let xml_entries: Vec<DirEntry> = get_xml_entries(&arguments)?;
-    let multi_progressbar = get_progressbar(xml_entries.len())?;
+    let mut multi_progressbar = get_progressbar(xml_entries.len())?;
 
-    let infos: Vec<Information> = xml_entries
-        .into_par_iter() // rayon parallel iterator
-        //.iter()
-        .map(|entry| {
-            multi_progressbar.a.inc(1);
-            let xml_path = entry.path();
-            analyze_file(xml_path, &arguments)
-        })
-        .collect();
+    let infos: Vec<Information> = get_all_info(
+        &xml_entries, 
+        &mut multi_progressbar, 
+        &arguments
+    );
 
     multi_progressbar.a.finish();
 

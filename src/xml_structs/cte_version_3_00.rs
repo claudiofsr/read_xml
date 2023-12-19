@@ -38,7 +38,7 @@ use crate::{
     xml_structs::remetente::Remetente,
     xml_structs::impostos::Imposto,
     xml_structs::aut_xml::{AutXML, InfProtocolo, InfRespTec},
-    serialize_vec_string,
+    serialize_vec_string, Information,
 };
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone, Iterable)]
@@ -107,7 +107,15 @@ pub struct CteProc {
 }
 
 /// <https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations>
-impl StructExtension for CteProc {}
+impl StructExtension for CteProc {
+    fn get_information(&self, xml_path: &std::path::Path, arguments: &crate::Arguments) -> Information {
+        if arguments.verbose {
+            println!("cte xml_path: {xml_path:?}");
+            println!("cte_proc: {self:#?}\n");
+        }
+        Information::Cte(Box::new(self.get_info()))
+    }
+}
 
 impl CteProc {
     pub fn get_cte(&self) -> Option<String> {

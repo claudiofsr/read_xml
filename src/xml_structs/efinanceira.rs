@@ -27,7 +27,8 @@ use crate::{
     StructExtension,
     excel::InfoExtension,
     xml_structs::assinaturas::Signature,
-    get_naive_date_from_yyyymm,
+    get_naive_date_from_yyyymm, 
+    Information,
 };
 
 // https://stackoverflow.com/questions/29986057/is-there-a-way-to-get-the-field-names-of-a-struct-in-a-macro
@@ -106,7 +107,15 @@ pub struct EFinanceira {
 }
 
 /// <https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations>
-impl StructExtension for EFinanceira {}
+impl StructExtension for EFinanceira {
+    fn get_information(&self, xml_path: &std::path::Path, arguments: &crate::Arguments) -> Information {
+        if arguments.verbose {
+            println!("eFinanceira xml_path: {xml_path:?}");
+            println!("eFinanceira: {self:#?}\n");
+        }
+        Information::EFinanceira(self.get_infos())
+    }
+}
 
 impl EFinanceira {
     pub fn get_id(&self) -> String {
