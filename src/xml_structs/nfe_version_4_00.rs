@@ -50,15 +50,17 @@ use crate::{
 pub struct InfoNfe {
     #[serde(rename = "CNPJ do Emitente")]
     emitente_cnpj: Option<String>,
-    #[serde(rename = "Nome do Emitente")]
+    #[serde(rename = "Nome ou Razão Social do Emitente")]
     emitente_nome: Option<String>,
+    #[serde(rename = "Nome Fantasia do Emitente")]
+    emitente_fantasia: Option<String>,
     #[serde(rename = "Municípo do Emitente")]
     emitente_ender_municipio: Option<String>,
     #[serde(rename = "Estado do Emitente")]
     emitente_ender_estado: Option<String>,
     #[serde(rename = "CNPJ do Destinatário")]
     destinatario_cnpj: Option<String>,
-    #[serde(rename = "Nome do Destinatário")]
+    #[serde(rename = "Nome ou Razão Social do Destinatário")]
     destinatario_nome: Option<String>,
     #[serde(rename = "Municípo do Destinatário")]
     destinatario_ender_municipio: Option<String>,
@@ -86,6 +88,10 @@ pub struct InfoNfe {
     cfop: Option<u16>,
     #[serde(rename = "NCM (Nomenclatura Comum do Mercosul)")]
     ncm: Option<String>,
+    #[serde(rename = "Informações complementares de interesse do Contribuinte")]
+    info_adic_contribuinte: Option<String>,
+    #[serde(rename = "Informações adicionais de interesse do Fisco")]
+    info_adic_fisco: Option<String>,
     #[serde(rename = "Valor do Item")]
     v_prod: Option<f64>,
     #[serde(rename = "Valor Total")]
@@ -160,6 +166,16 @@ impl NfeProc {
             .as_ref()
             .and_then(|inf| {
                 inf.get_emit_nome()
+            })
+    }
+
+    pub fn get_emitente_fantasia(&self) -> Option<String> {
+        self
+            .nfe
+            .inf_nfe
+            .as_ref()
+            .and_then(|inf| {
+                inf.get_emit_fantasia()
             })
     }
 
@@ -287,6 +303,26 @@ impl NfeProc {
         }
     }
 
+    pub fn get_info_adic_cpl(&self) -> Option<String> {
+        self
+            .nfe
+            .inf_nfe
+            .as_ref()
+            .and_then(|inf| {
+                inf.get_info_adic_contribuinte()
+            })
+    }
+
+    pub fn get_info_adic_fisco(&self) -> Option<String> {
+        self
+            .nfe
+            .inf_nfe
+            .as_ref()
+            .and_then(|inf| {
+                inf.get_info_adic_fisco()
+            })
+    }
+
     pub fn get_infos(&self) -> Vec<InfoNfe> {
 
         let mut infos = Vec::new();
@@ -297,6 +333,7 @@ impl NfeProc {
             let info_nfe = InfoNfe {
                 emitente_cnpj: self.get_emitente_cnpj(),
                 emitente_nome: self.get_emitente_nome(),
+                emitente_fantasia: self.get_emitente_fantasia(),
                 emitente_ender_municipio: self.get_emitente_ender_municipio(),
                 emitente_ender_estado: self.get_emitente_ender_estado(),
                 destinatario_cnpj: self.get_destinatario_cnpj(),
@@ -314,6 +351,8 @@ impl NfeProc {
                 x_prod: item.x_prod,
                 cfop: item.cfop,
                 ncm: item.ncm,
+                info_adic_contribuinte: self.get_info_adic_cpl(),
+                info_adic_fisco: self.get_info_adic_fisco(),
                 v_prod: item.v_prod,
                 valor_total: self.get_value_total(),
                 v_pis: item.v_pis,
@@ -397,13 +436,23 @@ impl InfNfe {
             })
     }
 
-    /// Emitente: Nome
+    /// Emitente: Nome ou Razão Social
     fn get_emit_nome(&self) -> Option<String> {
         self
             .emit
             .as_ref()
             .and_then(|emitente| {
                 emitente.get_nome()
+            })
+    }
+
+    /// Emitente: Nome Fantasia
+    fn get_emit_fantasia(&self) -> Option<String> {
+        self
+            .emit
+            .as_ref()
+            .and_then(|emitente| {
+                emitente.get_fantasia()
             })
     }
 
@@ -464,6 +513,32 @@ impl InfNfe {
             .as_ref()
             .and_then(|destinatario| {
                 destinatario.get_endereco_uf()
+            })
+    }
+
+    /// Informações complementares de interesse do Contribuinte
+    fn get_info_adic_contribuinte(&self) -> Option<String> {
+        self
+            .inf_adic
+            .as_ref()
+            .and_then(|informacoes| {
+                informacoes
+                    .inf_cpl
+                    .as_ref()
+                    .map(|i| i.trim().replace_multiple_whitespaces())
+            })
+    }
+
+    /// Informações adicionais de interesse do Fisco
+    fn get_info_adic_fisco(&self) -> Option<String> {
+        self
+            .inf_adic
+            .as_ref()
+            .and_then(|informacoes| {
+                informacoes
+                    .inf_ad_fisco
+                    .as_ref()
+                    .map(|i| i.trim().replace_multiple_whitespaces())
             })
     }
 }

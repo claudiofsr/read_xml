@@ -65,6 +65,13 @@ impl Emitente {
             .map(|c| c.trim().to_string())
     }
 
+    pub fn get_fantasia(&self) -> Option<String> {
+        self
+            .x_fant
+            .as_ref()
+            .map(|c| c.trim().to_string())
+    }
+
     pub fn get_endereco_municipio(&self) -> Option<String> {
         self
             .ender_emit

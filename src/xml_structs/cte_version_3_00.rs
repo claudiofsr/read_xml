@@ -45,15 +45,17 @@ use crate::{
 pub struct InfoCte {
     #[serde(rename = "CNPJ do Remetente")]
     remetente_cnpj: Option<String>,
-    #[serde(rename = "Nome do Remetente")]
+    #[serde(rename = "Nome ou Razão Social do Remetente")]
     remetente_nome: Option<String>,
+    #[serde(rename = "Nome Fantasia do Remetente")]
+    remetente_fantasia: Option<String>,
     #[serde(rename = "Municípo do Remetente")]
     remetente_ender_municipio: Option<String>,
     #[serde(rename = "Estado do Remetente")]
     remetente_ender_estado: Option<String>,
     #[serde(rename = "CNPJ do Destinatário")]
     destinatario_cnpj: Option<String>,
-    #[serde(rename = "Nome do Destinatário")]
+    #[serde(rename = "Nome ou Razão Social do Destinatário")]
     destinatario_nome: Option<String>,
     #[serde(rename = "Municípo do Destinatário")]
     destinatario_ender_municipio: Option<String>,
@@ -134,6 +136,16 @@ impl CteProc {
             .as_ref()
             .and_then(|inf| {
                 inf.get_rem_nome()
+            })
+    }
+
+    pub fn get_remetente_fantasia(&self) -> Option<String> {
+        self
+            .cte
+            .inf_cte
+            .as_ref()
+            .and_then(|inf| {
+                inf.get_rem_fantasia()
             })
     }
 
@@ -279,6 +291,7 @@ impl CteProc {
         InfoCte {
             remetente_cnpj: self.get_remetente_cnpj(),
             remetente_nome: self.get_remetente_nome(),
+            remetente_fantasia: self.get_remetente_fantasia(),
             remetente_ender_municipio: self.get_remetente_ender_municipio(),
             remetente_ender_estado: self.get_remetente_ender_estado(),
             destinatario_cnpj: self.get_destinatario_cnpj(),
@@ -373,7 +386,7 @@ impl InfCte {
             })
     }
 
-    /// Remetente: None
+    /// Remetente: None ou Razão Social do Remetente
     fn get_rem_nome(&self) -> Option<String> {
         self
             .rem
@@ -382,6 +395,16 @@ impl InfCte {
                 remetente.get_nome()
             })
     }
+
+        /// Remetente: None Fantasia do Remetente
+        fn get_rem_fantasia(&self) -> Option<String> {
+            self
+                .rem
+                .as_ref()
+                .and_then(|remetente| {
+                    remetente.get_fantasia()
+                })
+        }
 
     /// Remetente: Endereço do Município
     fn get_rem_ender_municipio(&self) -> Option<String> {

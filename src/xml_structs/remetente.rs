@@ -20,6 +20,7 @@ pub struct Remetente {
     #[serde(rename = "IE")]
     pub ie: Option<String>,
     #[serde(rename = "xFant")]
+    /// Nome Fantasia
     pub x_fant: Option<String>,
     /// Razão Social ou Nome do destinatário
     #[serde(rename = "xNome")]
@@ -43,6 +44,13 @@ impl Remetente {
     pub fn get_nome(&self) -> Option<String> {
         self
             .x_nome
+            .as_ref()
+            .map(|c| c.trim().to_string())
+    }
+
+    pub fn get_fantasia(&self) -> Option<String> {
+        self
+            .x_fant
             .as_ref()
             .map(|c| c.trim().to_string())
     }
