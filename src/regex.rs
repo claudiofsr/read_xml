@@ -18,7 +18,8 @@ pub static REGEX_CENTER: Lazy<Regex> = Lazy::new(||
     Regex::new(r"(?ix)
         # non-capturing group: (?:regex)
         ^(:?
-            CNPJ|CPF|Chave|NCM|
+            CNPJ|CPF|CST|
+            Chave|NCM|
             Registro|Identifica|
             Cancelado|
             Estado

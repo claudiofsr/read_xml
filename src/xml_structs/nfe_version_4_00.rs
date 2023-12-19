@@ -94,6 +94,10 @@ pub struct InfoNfe {
     info_adic_contribuinte: Option<String>,
     #[serde(rename = "Informações adicionais de interesse do Fisco")]
     info_adic_fisco: Option<String>,
+    #[serde(rename = "CST PIS/PASEP")]
+    cst_pis: Option<u8>,
+    #[serde(rename = "CST COFINS")]
+    cst_cofins: Option<u8>,
     #[serde(rename = "Valor do Item")]
     v_prod: Option<f64>,
     #[serde(rename = "Valor Total")]
@@ -115,6 +119,8 @@ pub struct Item {
     x_prod: String,
     cfop: Option<u16>,
     ncm: Option<String>,
+    cst_pis: Option<u8>,
+    cst_cofins: Option<u8>,
     v_prod: Option<f64>,
     v_pis: Option<f64>,
     v_cofins: Option<f64>,
@@ -320,6 +326,8 @@ impl NfeProc {
                             x_prod: produto.x_prod.replace_multiple_whitespaces().to_uppercase(),
                             cfop: produto.cfop.as_ref().and_then(|c| c.remove_non_digits().parse().ok()),
                             ncm: produto.ncm.as_ref().map(|n| n.trim().format_ncm()),
+                            cst_pis: imposto.get_cst_pis(),
+                            cst_cofins: imposto.get_cst_cofins(),
                             v_prod: produto.v_prod,
                             v_pis: imposto.get_v_pis(),
                             v_cofins: imposto.get_v_cofins(),
@@ -383,6 +391,8 @@ impl NfeProc {
                 ncm: item.ncm,
                 info_adic_contribuinte: self.get_info_adic_cpl(),
                 info_adic_fisco: self.get_info_adic_fisco(),
+                cst_pis: item.cst_pis,
+                cst_cofins: item.cst_cofins,
                 v_prod: item.v_prod,
                 valor_total: self.get_value_total(),
                 v_pis: item.v_pis,

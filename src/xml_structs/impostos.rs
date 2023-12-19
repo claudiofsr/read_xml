@@ -46,6 +46,18 @@ impl Imposto {
             })
     }
 
+    pub fn get_cst_pis(&self) -> Option<u8> {
+        self
+            .get_pis_outr()
+            .as_ref()
+            .and_then(|outro| {
+                outro
+                    .cst
+                    .as_ref()
+                    .and_then(|v| v.trim().parse().ok())
+            })
+    }
+
     pub fn get_v_pis(&self) -> Option<f64> {
         self
             .get_pis_outr()
@@ -64,6 +76,18 @@ impl Imposto {
             .as_ref()
             .and_then(|c| {
                 c.cofinsoutr.as_ref()
+            })
+    }
+
+    pub fn get_cst_cofins(&self) -> Option<u8> {
+        self
+            .get_cofins_outr()
+            .as_ref()
+            .and_then(|outro| {
+                outro
+                    .cst
+                    .as_ref()
+                    .and_then(|v| v.trim().parse().ok())
             })
     }
 
