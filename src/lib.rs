@@ -373,7 +373,7 @@ fn parse_cte(xml_path: &Path, arguments: &Arguments) -> Information {
             }
             Information::Cte(Box::new(proc.get_info()))
         }
-        Err(err) => CteProc::print_error_msg(err)
+        Err(err) => CteProc::print_error_msgs(err, xml_path)
     }
 }
 
@@ -386,7 +386,7 @@ fn parse_nfe(xml_path: &Path, arguments: &Arguments) -> Information {
             }
             Information::Nfe(proc.get_infos())
         }
-        Err(err) => NfeProc::print_error_msg(err)
+        Err(err) => NfeProc::print_error_msgs(err, xml_path)
     }
 }
 
@@ -394,12 +394,12 @@ fn parse_evento_cte(xml_path: &Path, arguments: &Arguments) -> Information {
     match ProcEventoCte::xml_parse(xml_path) {
         Ok(evento) => {
             if arguments.verbose {
-                println!("cte xml_path: {xml_path:?}");
+                println!("evento cte xml_path: {xml_path:?}");
                 println!("proc_evento_cte: {evento:#?}\n");
             }
             Information::EventoCte(Box::new(evento.get_info()))
         }
-        Err(err) => ProcEventoCte::print_error_msg(err)
+        Err(err) => ProcEventoCte::print_error_msgs(err, xml_path)
     }
 }
 
@@ -407,12 +407,12 @@ fn parse_evento_nfe(xml_path: &Path, arguments: &Arguments) -> Information {
     match ProcEventoNfe::xml_parse(xml_path) {
         Ok(evento) => {
             if arguments.verbose {
-                println!("cte xml_path: {xml_path:?}");
+                println!("evento nfe xml_path: {xml_path:?}");
                 println!("proc_evento_nfe: {evento:#?}\n");
             }
             Information::EventoNfe(Box::new(evento.get_info()))
         }
-        Err(err) => ProcEventoNfe::print_error_msg(err)
+        Err(err) => ProcEventoNfe::print_error_msgs(err, xml_path)
     }
 }
 
@@ -425,7 +425,7 @@ fn parse_efinanceira(xml_path: &Path, arguments: &Arguments) -> Information {
             }
             Information::EFinanceira(efinanceira.get_infos())
         }
-        Err(err) => EFinanceira::print_error_msg(err)
+        Err(err) => EFinanceira::print_error_msgs(err, xml_path)
     }
 }
 */
