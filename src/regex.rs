@@ -16,18 +16,22 @@ pub static REGEX_CANCELAMENTO: Lazy<Regex> = Lazy::new(||
 
 pub static REGEX_CENTER: Lazy<Regex> = Lazy::new(||
     Regex::new(r"(?ix)
+        # non-capturing group: (?:regex)
         ^(:?
             CNPJ|CPF|Chave|NCM|
             Registro|Identifica|
             Cancelado|
             Estado
-        )
+        )|
+        Código
     ").unwrap()
 );
 
 pub static REGEX_VALUE: Lazy<Regex> = Lazy::new(||
     Regex::new(r"(?ix)
-        Total|Valor
+        Total|Valor|
+        tot_creditos|
+        tot_debitos
     ").unwrap()
 );
 

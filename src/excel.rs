@@ -156,26 +156,12 @@ fn create_formats() -> HashMap<&'static str, Format> {
         ])
 }
 
+/// Format columns by names using regex
 fn format_columns_by_names(
     worksheet: &mut Worksheet,
     fmt: &HashMap<&str, Format>,
     column_names: &[&str],
 ) -> MyResult<()> {
-
-    // Alternative way other than Regex
-    let col_center = [
-        // "CNPJ", "CPF",
-        "Código",
-        "Registro",
-    ];
-
-    // Alternative way other than Regex
-    let col_values = [
-        "Valor",
-        "Total",
-        "tot_creditos",
-        "tot_debitos",
-    ];
 
     for (index, col_name) in column_names.iter().enumerate() {
 
@@ -195,32 +181,12 @@ fn format_columns_by_names(
             worksheet.set_column_format(column_number, fmt.get("date").unwrap())?;
             continue;
         }
-
-        for pattern in col_center {
-            if col_name.contains(pattern) {
-                worksheet.set_column_format(column_number, fmt.get("center").unwrap())?;
-                break;
-            }
-        }
-
-        for value in col_values {
-            if col_name.contains(value) {
-                worksheet.set_column_format(column_number, fmt.get("value").unwrap())?;
-                break;
-            }
-        }
     }
 
     Ok(())
 }
 
 /// Iterate over all data and find the max data width for each column.
-///
-/// use struct_iterable::Iterable
-///
-/// Struct Iterable is a Rust library that provides a proc macro to make a struct iterable.
-///
-/// <https://crates.io/crates/struct_iterable>
 fn auto_fit<'de, T>(
     worksheet: &mut Worksheet,
     lines: &[T],
@@ -281,6 +247,11 @@ macro_rules! match_cast {
     }};
 }
 
+/// Struct Iterable is a Rust library that provides a proc macro to make a struct iterable.
+/// 
+/// use struct_iterable::Iterable
+///
+/// <https://crates.io/crates/struct_iterable>
 fn get_length_of_column_values<'de, T>(line: &T, max_length: &mut HashMap<usize, usize>)
 where
     T: Serialize + Deserialize<'de> + InfoExtension + Iterable
@@ -294,6 +265,9 @@ where
             // <https://doc.rust-lang.org/beta/core/any/index.html>
 
             let field_value_len: usize = match_cast!( field_value {
+                val as Option<u8> => {
+                    val.as_ref().map(|s| s.to_string().chars_count())
+                },
                 val as Option<u16> => {
                     val.as_ref().map(|s| s.to_string().chars_count())
                 },

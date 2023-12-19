@@ -58,6 +58,19 @@ impl Emitente {
             .map(|c| c.trim().format_cnpj())
     }
 
+    /// Código de Regime Tributário.
+    pub fn get_crt(&self) -> Option<u8> {
+        self
+            .crt
+            .as_ref()
+            .and_then(|codigo| {
+                codigo
+                    .remove_non_digits()
+                    .parse()
+                    .ok()
+            })
+    }
+
     pub fn get_nome(&self) -> Option<String> {
         self
             .x_nome

@@ -50,6 +50,8 @@ use crate::{
 pub struct InfoNfe {
     #[serde(rename = "CNPJ do Emitente")]
     emitente_cnpj: Option<String>,
+    #[serde(rename = "CRT (Código de Regime Tributário)")]
+    emitente_crt: Option<u8>,
     #[serde(rename = "Nome ou Razão Social do Emitente")]
     emitente_nome: Option<String>,
     #[serde(rename = "Nome Fantasia do Emitente")]
@@ -154,8 +156,8 @@ impl NfeProc {
             .nfe
             .inf_nfe
             .as_ref()
-            .and_then(|inf| {
-                inf.get_emit_cnpj()
+            .and_then(|information| {
+                information.get_emit_cnpj()
             })
     }
 
@@ -164,8 +166,8 @@ impl NfeProc {
             .nfe
             .inf_nfe
             .as_ref()
-            .and_then(|inf| {
-                inf.get_emit_nome()
+            .and_then(|information| {
+                information.get_emit_nome()
             })
     }
 
@@ -174,8 +176,8 @@ impl NfeProc {
             .nfe
             .inf_nfe
             .as_ref()
-            .and_then(|inf| {
-                inf.get_emit_fantasia()
+            .and_then(|information| {
+                information.get_emit_fantasia()
             })
     }
 
@@ -184,8 +186,8 @@ impl NfeProc {
             .nfe
             .inf_nfe
             .as_ref()
-            .and_then(|inf| {
-                inf.get_emit_ender_municipio()
+            .and_then(|information| {
+                information.get_emit_ender_municipio()
             })
     }
 
@@ -194,8 +196,8 @@ impl NfeProc {
             .nfe
             .inf_nfe
             .as_ref()
-            .and_then(|inf| {
-                inf.get_emit_ender_estado()
+            .and_then(|information| {
+                information.get_emit_ender_estado()
             })
     }
 
@@ -204,8 +206,8 @@ impl NfeProc {
             .nfe
             .inf_nfe
             .as_ref()
-            .and_then(|inf| {
-                inf.get_dest_cnpj()
+            .and_then(|information| {
+                information.get_dest_cnpj()
             })
     }
 
@@ -214,8 +216,8 @@ impl NfeProc {
             .nfe
             .inf_nfe
             .as_ref()
-            .and_then(|inf| {
-                inf.get_dest_nome()
+            .and_then(|information| {
+                information.get_dest_nome()
             })
     }
 
@@ -224,8 +226,8 @@ impl NfeProc {
             .nfe
             .inf_nfe
             .as_ref()
-            .and_then(|inf| {
-                inf.get_dest_ender_municipio()
+            .and_then(|information| {
+                information.get_dest_ender_municipio()
             })
     }
 
@@ -234,8 +236,8 @@ impl NfeProc {
             .nfe
             .inf_nfe
             .as_ref()
-            .and_then(|inf| {
-                inf.get_dest_ender_estado()
+            .and_then(|information| {
+                information.get_dest_ender_estado()
             })
     }
 
@@ -244,8 +246,25 @@ impl NfeProc {
             .nfe
             .inf_nfe
             .as_ref()
-            .and_then(|info| {
-                info.ide.get_n_nf()
+            .and_then(|information| {
+                information.ide.get_n_nf()
+            })
+    }
+
+    /// CRT (Código de Regime Tributário):
+    /// 
+    /// 1 – Simples Nacional;
+    /// 
+    /// 2 – Simples Nacional – excesso de sublimite de receita bruta;
+    /// 
+    /// 3 – Regime Normal.
+    pub fn get_cod_regime_tributario(&self) -> Option<u8> {
+        self
+            .nfe
+            .inf_nfe
+            .as_ref()
+            .and_then(|information| {
+                information.get_cod_reg_trib()
             })
     }
 
@@ -254,8 +273,8 @@ impl NfeProc {
             .nfe
             .inf_nfe
             .as_ref()
-            .and_then(|info| {
-                info.ide.get_dh_emi()
+            .and_then(|information| {
+                information.ide.get_dh_emi()
             })
     }
 
@@ -264,8 +283,8 @@ impl NfeProc {
             .nfe
             .inf_nfe
             .as_ref()
-            .and_then(|info| {
-                info.ide.get_dh_sai()
+            .and_then(|information| {
+                information.ide.get_dh_sai()
             })
     }
 
@@ -274,7 +293,9 @@ impl NfeProc {
             .nfe
             .inf_nfe
             .as_ref()
-            .and_then(|info| info.total.get_valor_total_da_nota_fiscal())
+            .and_then(|information| {
+                information.total.get_valor_total_da_nota_fiscal()
+            })
     }
 
     pub fn get_itens(&self) -> Vec<Item> {
@@ -308,8 +329,8 @@ impl NfeProc {
             .nfe
             .inf_nfe
             .as_ref()
-            .and_then(|inf| {
-                inf.get_info_adic_contribuinte()
+            .and_then(|information| {
+                information.get_info_adic_contribuinte()
             })
     }
 
@@ -318,8 +339,8 @@ impl NfeProc {
             .nfe
             .inf_nfe
             .as_ref()
-            .and_then(|inf| {
-                inf.get_info_adic_fisco()
+            .and_then(|information| {
+                information.get_info_adic_fisco()
             })
     }
 
@@ -332,6 +353,7 @@ impl NfeProc {
         for item in itens {
             let info_nfe = InfoNfe {
                 emitente_cnpj: self.get_emitente_cnpj(),
+                emitente_crt: self.get_cod_regime_tributario(),
                 emitente_nome: self.get_emitente_nome(),
                 emitente_fantasia: self.get_emitente_fantasia(),
                 emitente_ender_municipio: self.get_emitente_ender_municipio(),
@@ -476,6 +498,16 @@ impl InfNfe {
             })
     }
 
+    /// Código de Regime Tributário.
+    fn get_cod_reg_trib(&self) -> Option<u8> {
+        self
+            .emit
+            .as_ref()
+            .and_then(|emitente| {
+                emitente.get_crt()
+            })
+    }
+
     /// Destinatário: CNPJ
     fn get_dest_cnpj(&self) -> Option<String> {
         self
@@ -521,8 +553,8 @@ impl InfNfe {
         self
             .inf_adic
             .as_ref()
-            .and_then(|informacoes| {
-                informacoes
+            .and_then(|information| {
+                information
                     .inf_cpl
                     .as_ref()
                     .map(|i| i.trim().replace_multiple_whitespaces())
@@ -534,8 +566,8 @@ impl InfNfe {
         self
             .inf_adic
             .as_ref()
-            .and_then(|informacoes| {
-                informacoes
+            .and_then(|information| {
+                information
                     .inf_ad_fisco
                     .as_ref()
                     .map(|i| i.trim().replace_multiple_whitespaces())
