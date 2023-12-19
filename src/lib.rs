@@ -126,6 +126,62 @@ pub trait StructExtension {
         // Try to deserialize the XML file into struct T
         Ok(from_reader(&mut bufreader)?)
     }
+
+    /**
+    Print error messages. Examples:
+
+    Structure Name: `read_xml::xml_structs::cte_version_3_00::CteProc`
+    missing field `CTe`
+
+    Structure Name: `read_xml::xml_structs::nfe_version_4_00::NfeProc`
+    duplicate field `NFe`
+
+    Structure Name: `read_xml::xml_structs::cte_evento::ProcEventoCte`
+    missing field `eventoCTe`
+
+    Structure Name: `read_xml::xml_structs::nfe_evento::ProcEventoNfe`
+    missing field `evento`
+
+    Structure Name: `read_xml::xml_structs::efinanceira::EFinanceira`
+    missing field `evtMovOpFin`
+    */
+    fn print_error_msgs(err: MyError, xml_path: &Path) {
+
+        let error_str: String = format!("{err}");
+
+        if !REGEX_FIELDS.is_match(&error_str) {
+
+            let mut buffer: Vec<u8> = Vec::new();
+            let write: Box<&mut dyn Write> = Box::new(&mut buffer);
+
+            let typename = std::any::type_name::<Self>();
+
+            writeln!(*write, "\n").unwrap();
+            writeln!(*write, "Structure Name: {typename:?}\n").unwrap();
+            writeln!(*write, "{error_str}\n").unwrap();
+
+            if REGEX_ERROR_MISSING_FIELD.is_match(&error_str) {
+                writeln!(*write, "Faça a correção de").unwrap();
+                writeln!(*write, "\tfield `XXX`: Type_Y").unwrap();
+                writeln!(*write, "para").unwrap();
+                writeln!(*write, "\tfield `XXX`: Option<Type_Y>\n").unwrap();
+            }
+
+            if REGEX_ERROR_DUPLICATE_FIELD.is_match(&error_str) {
+                writeln!(*write, "Faça a correção de").unwrap();
+                writeln!(*write, "\tfield `XXX`: Type_Y").unwrap();
+                writeln!(*write, "para").unwrap();
+                writeln!(*write, "\tfield `XXX`: Vec<Type_Y>\n").unwrap();
+            }
+
+            writeln!(*write, "Para solucionar este erro, veja os campos da estrutura com o comando:\n").unwrap();
+            writeln!(*write, "read_xml -s {xml_path:?}\n").unwrap();
+
+            my_print(&buffer);
+
+            exit(1);
+        }
+    }
 }
 
 // https://doc.rust-lang.org/book/ch10-01-syntax.html?highlight=option#in-enum-definitions
@@ -257,7 +313,7 @@ pub fn analyze_file(xml_path: &Path, arguments: &Arguments) -> Information {
             }
             return Information::Cte(Box::new(proc.get_info()));
         }
-        Err(err) => print_msgs::<CteProc>(err, xml_path)
+        Err(err) => CteProc::print_error_msgs(err, xml_path)
     }
 
     match NfeProc::xml_parse(xml_path) {
@@ -268,29 +324,29 @@ pub fn analyze_file(xml_path: &Path, arguments: &Arguments) -> Information {
             }
             return Information::Nfe(proc.get_infos());
         }
-        Err(err) => print_msgs::<NfeProc>(err, xml_path)
+        Err(err) => NfeProc::print_error_msgs(err, xml_path)
     }
 
     match ProcEventoCte::xml_parse(xml_path) {
         Ok(evento) => {
             if arguments.verbose {
-                println!("cte xml_path: {xml_path:?}");
+                println!("evento cte xml_path: {xml_path:?}");
                 println!("proc_evento_cte: {evento:#?}\n");
             }
             return Information::EventoCte(Box::new(evento.get_info()));
         }
-        Err(err) => print_msgs::<ProcEventoCte>(err, xml_path)
+        Err(err) => ProcEventoCte::print_error_msgs(err, xml_path)
     }
 
     match ProcEventoNfe::xml_parse(xml_path) {
         Ok(evento) => {
             if arguments.verbose {
-                println!("cte xml_path: {xml_path:?}");
+                println!("evento nfe xml_path: {xml_path:?}");
                 println!("proc_evento_nfe: {evento:#?}\n");
             }
             return Information::EventoNfe(Box::new(evento.get_info()));
         }
-        Err(err) => print_msgs::<ProcEventoNfe>(err, xml_path)
+        Err(err) => ProcEventoNfe::print_error_msgs(err, xml_path)
     }
 
     match EFinanceira::xml_parse(xml_path) {
@@ -301,7 +357,7 @@ pub fn analyze_file(xml_path: &Path, arguments: &Arguments) -> Information {
             }
             return Information::EFinanceira(efinanceira.get_infos());
         }
-        Err(err) => print_msgs::<EFinanceira>(err, xml_path)
+        Err(err) => EFinanceira::print_error_msgs(err, xml_path)
     }
 
     Information::None
@@ -373,62 +429,6 @@ fn parse_efinanceira(xml_path: &Path, arguments: &Arguments) -> Information {
     }
 }
 */
-
-/*
-Structure Name: "read_xml::xml_structs::cte_version_3_00::CteProc"
-missing field `CTe`
-
-Structure Name: "read_xml::xml_structs::nfe_version_4_00::NfeProc"
-duplicate field `NFe`
-
-Structure Name: "read_xml::xml_structs::cte_evento::ProcEventoCte"
-missing field `eventoCTe`
-
-Structure Name: "read_xml::xml_structs::nfe_evento::ProcEventoNfe"
-missing field `evento`
-
-Structure Name: "read_xml::xml_structs::efinanceira::EFinanceira"
-missing field `evtMovOpFin`
-*/
-
-/// Print error messages
-fn print_msgs<T>(err: MyError, xml_path: &Path) {
-
-    let error_str: String = format!("{err}");
-
-    if !REGEX_FIELDS.is_match(&error_str) {
-
-        let mut buffer: Vec<u8> = Vec::new();
-        let write: Box<&mut dyn Write> = Box::new(&mut buffer);
-
-        let typename = std::any::type_name::<T>();
-
-        writeln!(*write, "\n").unwrap();
-        writeln!(*write, "Structure Name: {typename:?}\n").unwrap();
-        writeln!(*write, "{error_str}\n").unwrap();
-
-        if REGEX_ERROR_MISSING_FIELD.is_match(&error_str) {
-            writeln!(*write, "Faça a correção de").unwrap();
-            writeln!(*write, "\tfield `XXX`: Type_Y").unwrap();
-            writeln!(*write, "para").unwrap();
-            writeln!(*write, "\tfield `XXX`: Option<Type_Y>\n").unwrap();
-        }
-
-        if REGEX_ERROR_DUPLICATE_FIELD.is_match(&error_str) {
-            writeln!(*write, "Faça a correção de").unwrap();
-            writeln!(*write, "\tfield `XXX`: Type_Y").unwrap();
-            writeln!(*write, "para").unwrap();
-            writeln!(*write, "\tfield `XXX`: Vec<Type_Y>\n").unwrap();
-        }
-
-        writeln!(*write, "Para solucionar este erro, veja os campos da estrutura com o comando:\n").unwrap();
-        writeln!(*write, "read_xml -s {xml_path:?}\n").unwrap();
-
-        my_print(&buffer);
-
-        exit(1);
-    }
-}
 
 /// Print buffer to stdout
 pub fn my_print(buffer: &[u8]) {

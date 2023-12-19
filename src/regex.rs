@@ -29,9 +29,7 @@ pub static REGEX_CENTER: Lazy<Regex> = Lazy::new(||
 
 pub static REGEX_VALUE: Lazy<Regex> = Lazy::new(||
     Regex::new(r"(?ix)
-        Total|Valor|
-        tot_creditos|
-        tot_debitos
+        Total|Valor
     ").unwrap()
 );
 
