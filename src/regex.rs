@@ -34,6 +34,12 @@ pub static REGEX_VALUE: Lazy<Regex> = Lazy::new(||
     ").unwrap()
 );
 
+pub static REGEX_ALIQ: Lazy<Regex> = Lazy::new(||
+    Regex::new(r"(?ix)
+        Alíquota
+    ").unwrap()
+);
+
 pub static REGEX_DATE: Lazy<Regex> = Lazy::new(||
     Regex::new(r"(?ix)
         ^(:?Data|Dia|Ano)

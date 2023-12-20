@@ -18,7 +18,7 @@ use std::{
 
 use crate::{
     MyResult,
-    REGEX_CENTER, REGEX_VALUE, REGEX_DATE,
+    REGEX_CENTER, REGEX_VALUE, REGEX_DATE, REGEX_ALIQ,
 };
 
 const FONT_SIZE: f64 = 10.0;
@@ -141,7 +141,10 @@ fn create_formats() -> HashMap<&'static str, Format> {
          .set_align(FormatAlign::Center);
 
      let fmt_value = Format::new()
-         .set_num_format("#,##0.00"); // two digits after the decimal point
+         .set_num_format("#,##0.00"); // 2 digits after the decimal point
+
+    let fmt_aliq = Format::new()
+         .set_num_format("#,##0.0000"); // 4 digits after the decimal point
 
      let fmt_date: Format = Format::new()
          .set_align(FormatAlign::Center)
@@ -152,6 +155,7 @@ fn create_formats() -> HashMap<&'static str, Format> {
             ("header", fmt_header),
             ("center", fmt_center),
             ("value",  fmt_value),
+            ("aliq",   fmt_aliq),
             ("date",   fmt_date),
         ])
 }
@@ -174,6 +178,11 @@ fn format_columns_by_names(
 
         if REGEX_VALUE.is_match(col_name) {
             worksheet.set_column_format(column_number, fmt.get("value").unwrap())?;
+            continue;
+        }
+
+        if REGEX_ALIQ.is_match(col_name) {
+            worksheet.set_column_format(column_number, fmt.get("aliq").unwrap())?;
             continue;
         }
 

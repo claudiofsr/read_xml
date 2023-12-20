@@ -58,6 +58,18 @@ impl Imposto {
             })
     }
 
+    pub fn get_aliq_pis(&self) -> Option<f64> {
+        self
+            .get_pis_outr()
+            .as_ref()
+            .and_then(|outro| {
+                outro
+                    .p_pis
+                    .as_ref()
+                    .and_then(|v| v.trim().parse().ok())
+            })
+    }
+
     pub fn get_v_pis(&self) -> Option<f64> {
         self
             .get_pis_outr()
@@ -86,6 +98,18 @@ impl Imposto {
             .and_then(|outro| {
                 outro
                     .cst
+                    .as_ref()
+                    .and_then(|v| v.trim().parse().ok())
+            })
+    }
+
+    pub fn get_aliq_cofins(&self) -> Option<f64> {
+        self
+            .get_cofins_outr()
+            .as_ref()
+            .and_then(|outro| {
+                outro
+                    .p_cofins
                     .as_ref()
                     .and_then(|v| v.trim().parse().ok())
             })
