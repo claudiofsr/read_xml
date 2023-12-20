@@ -62,6 +62,7 @@ use std::{
 
 use claudiofsr_lib::StrExtension;
 use chrono::NaiveDate;
+use itertools::Itertools;
 use rayon::prelude::*;
 use serde::{Serialize, Deserialize, Serializer, de::DeserializeOwned};
 use xml_schema_generator::{into_struct, Options};
@@ -128,6 +129,17 @@ pub trait StructExtension {
         Ok(from_reader(&mut bufreader)?)
     }
 
+    /// struct T to MyResult<Information> 
+    fn struct_to_info(xml_path: &Path, arguments: &Arguments) -> Information
+    where 
+        Self: DeserializeOwned,
+    {
+        match Self::xml_parse(xml_path) {
+            Ok(proc) => proc.get_information(xml_path, arguments),
+            Err(err) => Self::print_error_msgs(&err, xml_path),
+        }
+    }
+
     fn get_information(&self, xml_path: &std::path::Path, arguments: &crate::Arguments) -> Information;
 
     /**
@@ -148,7 +160,7 @@ pub trait StructExtension {
     Structure Name: `read_xml::xml_structs::efinanceira::EFinanceira`
     missing field `evtMovOpFin`
     */
-    fn print_error_msgs(err: MyError, xml_path: &Path) {
+    fn print_error_msgs(err: &MyError, xml_path: &Path) -> Information {
 
         let error_str: String = format!("{err}");
 
@@ -184,6 +196,8 @@ pub trait StructExtension {
 
             exit(1);
         }
+
+        Information::None
     }
 }
 
@@ -315,7 +329,7 @@ pub fn get_all_info(
     let infos: Vec<Information> = xml_entries
         .into_par_iter() // rayon parallel iterator
         //.iter()
-        .map(|entry| {
+        .flat_map(|entry| {
             multi_progressbar.a.inc(1);
             let xml_path = entry.path();
             analyze_file(xml_path, arguments)
@@ -325,34 +339,19 @@ pub fn get_all_info(
     infos
 }
 
-pub fn analyze_file(xml_path: &Path, arguments: &Arguments) -> Information {
-
-    match CteProc::xml_parse(xml_path) {
-        Ok(proc) => return proc.get_information(xml_path, arguments),
-        Err(err) => CteProc::print_error_msgs(err, xml_path)
-    }
-
-    match NfeProc::xml_parse(xml_path) {
-        Ok(proc) => return proc.get_information(xml_path, arguments),
-        Err(err) => NfeProc::print_error_msgs(err, xml_path)
-    }
-
-    match ProcEventoCte::xml_parse(xml_path) {
-        Ok(evento) => return evento.get_information(xml_path, arguments),
-        Err(err) => ProcEventoCte::print_error_msgs(err, xml_path)
-    }
-
-    match ProcEventoNfe::xml_parse(xml_path) {
-        Ok(evento) => return evento.get_information(xml_path, arguments),
-        Err(err) => ProcEventoNfe::print_error_msgs(err, xml_path)
-    }
-
-    match EFinanceira::xml_parse(xml_path) {
-        Ok(efinanceira) => return efinanceira.get_information(xml_path, arguments),
-        Err(err) => EFinanceira::print_error_msgs(err, xml_path)
-    }
-
-    Information::None
+pub fn analyze_file(xml_path: &Path, arguments: &Arguments) -> Vec<Information> {
+    vec![
+        CteProc::struct_to_info(xml_path, arguments),
+        NfeProc::struct_to_info(xml_path, arguments),
+        ProcEventoCte::struct_to_info(xml_path, arguments),
+        ProcEventoNfe::struct_to_info(xml_path, arguments),
+        EFinanceira::struct_to_info(xml_path, arguments),
+    ]
+    //.into_par_iter()
+    .into_iter()
+    .take_while_inclusive(|info| info.is_none())
+    .filter(|info| !info.is_none())
+    .collect()
 }
 
 /// Print buffer to stdout
