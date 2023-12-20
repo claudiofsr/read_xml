@@ -62,7 +62,6 @@ use std::{
 
 use claudiofsr_lib::StrExtension;
 use chrono::NaiveDate;
-use itertools::Itertools;
 use rayon::prelude::*;
 use serde::{Serialize, Deserialize, Serializer, de::DeserializeOwned};
 use xml_schema_generator::{into_struct, Options};
@@ -349,7 +348,6 @@ pub fn analyze_file(xml_path: &Path, arguments: &Arguments) -> Vec<Information> 
     ]
     //.into_par_iter()
     .into_iter()
-    .take_while_inclusive(|info| info.is_none())
     .filter(|info| !info.is_none())
     .collect()
 }
