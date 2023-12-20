@@ -129,7 +129,7 @@ pub trait StructExtension {
         Ok(from_reader(&mut bufreader)?)
     }
 
-    /// struct T to MyResult<Information> 
+    /// struct T to Information
     fn struct_to_info(xml_path: &Path, arguments: &Arguments) -> Information
     where 
         Self: DeserializeOwned,
