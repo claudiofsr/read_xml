@@ -102,7 +102,8 @@ where
 
     // Set up the start location and headers of the data to be
     // serialized using any temporary or valid instance.
-    worksheet.serialize_headers(0, 0, &T::default())?;
+    // worksheet.serialize_headers_from_type(0, 0, &T::default())?;
+    worksheet.serialize_headers_from_type::<T>(0, 0)?;
 
     format_columns_by_names(&mut worksheet, &fmt, column_names)?;
 
