@@ -56,7 +56,7 @@ pub trait InfoExtension {
 /// <https://docs.rs/rust_xlsxwriter/latest/rust_xlsxwriter/serializer/index.html>
 pub fn write_xlsx<'de, T>(lines: &[T], sheet_name: &str) -> MyResult<()>
 where
-    T: Default + Serialize + Deserialize<'de> + InfoExtension + Iterable
+    T: Serialize + Deserialize<'de> + InfoExtension + Iterable
 {
     if lines.is_empty() {
         return Ok(());
@@ -83,7 +83,7 @@ where
 /// Get Worksheet according to some struct T
 fn get_worksheet<'de, T>(lines: &[T], sheet_name: &str) -> MyResult<Worksheet>
 where
-    T: Default + Serialize + Deserialize<'de> + InfoExtension + Iterable
+    T: Serialize + Deserialize<'de> + InfoExtension + Iterable
 {
     let column_names: &[&str] = T::get_headers();
     let column_number: u16 = column_names.len().try_into()?;
