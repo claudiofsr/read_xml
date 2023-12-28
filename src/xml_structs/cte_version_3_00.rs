@@ -81,6 +81,16 @@ pub struct InfoCte {
     nfes: Vec<String>,
     #[serde(rename = "Valor Total")]
     valor_total: Option<f64>,
+    #[serde(rename = "Valor de PIS/PASEP")]
+    v_pis: Option<f64>,
+    #[serde(rename = "Valor de COFINS")]
+    v_cofins: Option<f64>,
+    #[serde(rename = "Alíquota de PIS/PASEP")]
+    aliq_pis: Option<f64>,
+    #[serde(rename = "Alíquota de COFINS")]
+    aliq_cofins: Option<f64>,
+    #[serde(rename = "Valor de ICMS")]
+    v_icms: Option<f64>,
 }
 
 /// <https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations>
@@ -295,7 +305,18 @@ impl CteProc {
             .map(|info| info.v_prest.v_tprest)
     }
 
+    pub fn get_imposto(&self) -> Option<&Imposto> {
+        self
+            .cte
+            .inf_cte
+            .as_ref()
+            .map(|inf| {
+                &inf.imposto
+            })
+    }
+
     pub fn get_info(&self) -> InfoCte {
+        let imposto = self.get_imposto();
         InfoCte {
             remetente_cnpj: self.get_remetente_cnpj(),
             remetente_nome: self.get_remetente_nome(),
@@ -315,6 +336,11 @@ impl CteProc {
             dh_sai_ent: self.get_data_saida(),
             cte_anteriores: self.get_cte_anteriores(),
             nfes: self.get_nfes(),
+            v_pis: imposto.and_then(|i| i.get_v_pis()),
+            v_cofins: imposto.and_then(|i| i.get_v_cofins()),
+            aliq_pis: imposto.and_then(|i| i.get_aliq_pis()),
+            aliq_cofins: imposto.and_then(|i| i.get_aliq_cofins()),
+            v_icms: imposto.and_then(|i| i.get_v_icms()),
             valor_total: self.get_value_total(),
         }
     }
@@ -330,14 +356,6 @@ pub struct Cte {
     pub inf_cte_supl: Option<InfCteSupl>,
     #[serde(rename = "Signature")]
     pub signature: Signature,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct InfCteSupl {
-    #[serde(rename = "$text")]
-    pub text: Option<String>,
-    #[serde(rename = "qrCodCTe")]
-    pub qr_cod_cte: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -361,7 +379,7 @@ pub struct InfCte {
     #[serde(rename = "ide")]
     pub ide: Ide,
     #[serde(rename = "imp")]
-    pub imp: Imposto,
+    pub imposto: Imposto,
     #[serde(rename = "infCTeNorm")]
     pub inf_cte_norm: Option<InfCteNorm>,
     #[serde(rename = "infCteAnu")]
@@ -1326,6 +1344,14 @@ pub struct ProtCte {
     pub inf_prot: InfProtocolo,
     #[serde(rename = "Signature")]
     pub signature: Option<ProtSignature>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfCteSupl {
+    #[serde(rename = "$text")]
+    pub text: Option<String>,
+    #[serde(rename = "qrCodCTe")]
+    pub qr_cod_cte: String,
 }
 
 #[cfg(test)]
