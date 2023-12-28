@@ -159,7 +159,10 @@ pub trait StructExtension {
     Structure Name: `read_xml::xml_structs::efinanceira::EFinanceira`
     missing field `evtMovOpFin`
     */
-    fn print_error_msgs(err: &MyError, xml_path: &Path) -> Information {
+    fn print_error_msgs(err: &MyError, xml_path: &Path) -> Information 
+    where
+        Self: Sized
+    {
 
         let error_str: String = format!("{err}");
 
@@ -331,14 +334,14 @@ pub fn get_all_info(
         .flat_map(|entry| {
             multi_progressbar.a.inc(1);
             let xml_path = entry.path();
-            analyze_file(xml_path, arguments)
+            get_xml_serialized(xml_path, arguments)
         })
         .collect();
 
     infos
 }
 
-pub fn analyze_file(xml_path: &Path, arguments: &Arguments) -> Vec<Information> {
+fn get_xml_serialized(xml_path: &Path, arguments: &Arguments) -> Vec<Information> {
     vec![
         CteProc::struct_to_info(xml_path, arguments),
         NfeProc::struct_to_info(xml_path, arguments),
