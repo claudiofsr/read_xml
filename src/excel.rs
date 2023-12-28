@@ -205,6 +205,7 @@ fn auto_fit<'de, T>(
 where
     T: Serialize + Deserialize<'de> + InfoExtension + Iterable
 {
+    // HashMap<col index, col width>:
     let mut max_length: HashMap<usize, usize> = HashMap::new();
 
     let width_min = 8;
@@ -214,11 +215,11 @@ where
     column_names
         .iter()
         .enumerate()
-        .for_each(|(index, col)| {
+        .for_each(|(col_index, col_name)| {
             // Init values: add column name lengths
-            let col_len = col.chars_count().div_ceil(4);
-            let width = width_min.max(col_len);
-            max_length.insert(index, width);
+            let col_len = col_name.chars_count().div_ceil(4);
+            let col_width = width_min.max(col_len);
+            max_length.insert(col_index, col_width);
         });
 
     lines
@@ -227,11 +228,7 @@ where
             get_length_of_column_values(line, &mut max_length)
         });
 
-    // Collect the values of a HashMap into a vector:
-    let mut cols: Vec<(&usize, &usize)> = max_length.iter().collect();
-    cols.sort_by_key(|&(index, _len)| index);
-
-    for (&index, &len) in cols {
+    for (index, len) in max_length {
         let width = width_max.min(len);
         //println!("{index:>2} {}: {width}", column_names[index]);
         worksheet.set_column_width(index as u16, (width as f64) * adjustment)?;
