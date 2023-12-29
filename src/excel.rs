@@ -123,6 +123,16 @@ where
         worksheet.serialize(line)?;
     }
 
+    /*
+    lines
+        .iter()
+        .try_for_each(|line| -> MyResult<()> {
+            // Serialize the data.
+            worksheet.serialize(line)?;
+            Ok(())
+        })?;
+    */
+
     // worksheet.autofit();
     auto_fit(&mut worksheet, lines, column_names)?;
 
