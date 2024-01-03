@@ -56,7 +56,7 @@ pub trait InfoExtension {
 /// <https://docs.rs/rust_xlsxwriter/latest/rust_xlsxwriter/serializer/index.html>
 pub fn write_xlsx<'de, T>(lines: &[T], sheet_name: &str) -> MyResult<()>
 where
-    T: Default + Serialize + Deserialize<'de> + InfoExtension + Iterable
+    T: Serialize + Deserialize<'de> + InfoExtension + Iterable
 {
     if lines.is_empty() {
         return Ok(());
@@ -83,9 +83,9 @@ where
 /// Get Worksheet according to some struct T
 fn get_worksheet<'de, T>(lines: &[T], sheet_name: &str) -> MyResult<Worksheet>
 where
-    T: Default + Serialize + Deserialize<'de> + InfoExtension + Iterable
+    T: Serialize + Deserialize<'de> + InfoExtension + Iterable
 {
-    let column_names: &[&str] = T::get_headers();
+    let column_names: &[&str] = T::get_headers(); // <-- InfoExtension
     let column_number: u16 = column_names.len().try_into()?;
     let row_number: u32 = lines.len().try_into()?;
 
@@ -99,11 +99,9 @@ where
         .set_row_height(0, 64)?
         .set_row_format(0, fmt.get("header").unwrap())?
         .set_freeze_panes(1, 0)?;
-
-    // Set up the start location and headers of the data to be
-    // serialized using any temporary or valid instance.
-    worksheet.serialize_headers(0, 0, &T::default())?;
-    //worksheet.serialize_headers_from_type::<T>(0, 0)?;
+    
+    // Set up the start location and headers of the data to be serialized.
+    worksheet.deserialize_headers::<T>(0, 0)?;
 
     format_columns_by_names(&mut worksheet, &fmt, column_names)?;
 
@@ -148,27 +146,27 @@ fn create_formats() -> HashMap<&'static str, Format> {
         .set_text_wrap()
         .set_font_size(FONT_SIZE);
 
-     let fmt_center = Format::new()
-         .set_align(FormatAlign::Center);
+    let fmt_center = Format::new()
+        .set_align(FormatAlign::Center);
 
-     let fmt_value = Format::new()
-         .set_num_format("#,##0.00"); // 2 digits after the decimal point
+    let fmt_value = Format::new()
+        .set_num_format("#,##0.00"); // 2 digits after the decimal point
 
     let fmt_aliq = Format::new()
-         .set_num_format("#,##0.0000"); // 4 digits after the decimal point
+        .set_num_format("#,##0.0000"); // 4 digits after the decimal point
 
-     let fmt_date: Format = Format::new()
-         .set_align(FormatAlign::Center)
-         .set_align(FormatAlign::VerticalCenter)
-         .set_num_format("dd/mm/yyyy");
+    let fmt_date: Format = Format::new()
+        .set_align(FormatAlign::Center)
+        .set_align(FormatAlign::VerticalCenter)
+        .set_num_format("dd/mm/yyyy");
 
     HashMap::from([
-            ("header", fmt_header),
-            ("center", fmt_center),
-            ("value",  fmt_value),
-            ("aliq",   fmt_aliq),
-            ("date",   fmt_date),
-        ])
+        ("header", fmt_header),
+        ("center", fmt_center),
+        ("value",  fmt_value),
+        ("aliq",   fmt_aliq),
+        ("date",   fmt_date),
+    ])
 }
 
 /// Format columns by names using regex
