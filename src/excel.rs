@@ -16,6 +16,8 @@ use std::{
     path::PathBuf,
 };
 
+// use rayon::prelude::*;
+
 use crate::{
     MyResult,
     REGEX_CENTER, REGEX_VALUE, REGEX_DATE, REGEX_ALIQ,
@@ -56,7 +58,7 @@ pub trait InfoExtension {
 /// <https://docs.rs/rust_xlsxwriter/latest/rust_xlsxwriter/serializer/index.html>
 pub fn write_xlsx<'de, T>(lines: &[T], sheet_name: &str) -> MyResult<()>
 where
-    T: Serialize + Deserialize<'de> + InfoExtension + Iterable
+    T: Serialize + Deserialize<'de> + InfoExtension + Iterable // + Sync + Send
 {
     if lines.is_empty() {
         return Ok(());
@@ -83,7 +85,7 @@ where
 /// Get Worksheet according to some struct T
 fn get_worksheet<'de, T>(lines: &[T], sheet_name: &str) -> MyResult<Worksheet>
 where
-    T: Serialize + Deserialize<'de> + InfoExtension + Iterable
+    T: Serialize + Deserialize<'de> + InfoExtension + Iterable // + Sync + Send
 {
     let column_names: &[&str] = T::get_headers(); // <-- InfoExtension
     let column_number: u16 = column_names.len().try_into()?;
@@ -211,7 +213,7 @@ fn auto_fit<'de, T>(
     column_names: &[&str],
 ) -> MyResult<()>
 where
-    T: Serialize + Deserialize<'de> + InfoExtension + Iterable
+    T: Serialize + Deserialize<'de> + InfoExtension + Iterable // + Sync + Send
 {
     // HashMap<col index, col width>:
     let mut max_length: HashMap<usize, usize> = HashMap::new();
@@ -232,6 +234,7 @@ where
 
     lines
         .iter()
+        //.into_par_iter() // rayon parallel iterator
         .for_each(|line| {
             get_length_of_column_values(line, &mut max_length)
         });
