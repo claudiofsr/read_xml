@@ -57,23 +57,42 @@ fn main() -> MyResult<()> {
 
     multi_progressbar.show_print.finish();
 
-    atualizar_nfes_cancelados(&mut docs_fiscais.nfes, &docs_fiscais.eventos_nfe);
-    atualizar_ctes_cancelados(&mut docs_fiscais.ctes, &docs_fiscais.eventos_cte);
+    // Takes two closures and potentially runs them in parallel.
+    rayon::join(
+        || atualizar_nfes_cancelados(&mut docs_fiscais.nfes, &docs_fiscais.eventos_nfe),
+        || atualizar_ctes_cancelados(&mut docs_fiscais.ctes, &docs_fiscais.eventos_cte),
+    );
 
     docs_fiscais.sort();
 
     // By default, after parsing xml files, write the xlsx files.
     if !arguments.avoid {
-        write_xlsx(&docs_fiscais.ctes, "CTes", "read_xml-ctes.xlsx")?;
-        write_xlsx(&docs_fiscais.nfes, "NFes", "read_xml-nfes.xlsx")?;
-        write_xlsx(&docs_fiscais.efinanceiras, "eFinanceiras", "read_xml-efinanceiras.xlsx")?;
+        rayon::scope(|s| {
+            s.spawn(|_| {
+                write_xlsx(&docs_fiscais.ctes, "CTes", "read_xml-ctes.xlsx").unwrap()
+            });
+            s.spawn(|_| {
+                write_xlsx(&docs_fiscais.nfes, "NFes", "read_xml-nfes.xlsx").unwrap()
+            });
+            s.spawn(|_| {
+                write_xlsx(&docs_fiscais.efinanceiras, "eFinanceiras", "read_xml-efinanceiras.xlsx").unwrap()
+            })
+        });
     }
 
     // Optionally, after parsing xml files, write the csv files.
     if arguments.csv {
-        write_csv(&docs_fiscais.ctes, "read_xml-ctes.csv", arguments.delimiter)?;
-        write_csv(&docs_fiscais.nfes, "read_xml-nfes.csv", arguments.delimiter)?;
-        write_csv(&docs_fiscais.efinanceiras, "read_xml-eFinanceiras.csv", arguments.delimiter)?;
+        rayon::scope(|s| {
+            s.spawn(|_| {
+                write_csv(&docs_fiscais.ctes, "read_xml-ctes.csv", arguments.delimiter).unwrap()
+            });
+            s.spawn(|_| {
+                write_csv(&docs_fiscais.nfes, "read_xml-nfes.csv", arguments.delimiter).unwrap()
+            });
+            s.spawn(|_| {
+                write_csv(&docs_fiscais.efinanceiras, "read_xml-eFinanceiras.csv", arguments.delimiter).unwrap()
+            })
+        });
     }
 
     if arguments.time {
