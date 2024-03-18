@@ -13,7 +13,7 @@ use read_xml::{
     get_all_info,
 };
 
-use std::time::Instant;
+use std::{time::Instant, thread};
 use walkdir::DirEntry;
 
 /**
@@ -67,17 +67,37 @@ fn main() -> MyResult<()> {
 
     // By default, after parsing xml files, write the xlsx files.
     if !arguments.avoid {
-        rayon::scope(|s| {
-            s.spawn(|_| {
-                write_xlsx(&docs_fiscais.ctes, "CTes", "read_xml-ctes.xlsx").unwrap()
+        let results = thread::scope(|s| {
+            let thread_write_nfes = s.spawn(|| -> MyResult<()> {
+                write_xlsx(&docs_fiscais.ctes, "CTes", "read_xml-ctes.xlsx")
             });
-            s.spawn(|_| {
-                write_xlsx(&docs_fiscais.nfes, "NFes", "read_xml-nfes.xlsx").unwrap()
+            let thread_write_ctes = s.spawn(|| -> MyResult<()> {
+                write_xlsx(&docs_fiscais.nfes, "NFes", "read_xml-nfes.xlsx")
             });
-            s.spawn(|_| {
-                write_xlsx(&docs_fiscais.efinanceiras, "eFinanceiras", "read_xml-efinanceiras.xlsx").unwrap()
-            })
+            let thread_write_efin = s.spawn(|| -> MyResult<()> {
+                write_xlsx(&docs_fiscais.efinanceiras, "eFinanceiras", "read_xml-efinanceiras.xlsx")
+            });
+
+            // Wait for background thread to complete.
+            // Call join() on each handle to make sure all the threads finish.
+            // join() returns immediately when the associated thread completes.
+
+            let threads: Vec<_> = [thread_write_nfes, thread_write_ctes, thread_write_efin]
+                .into_iter()
+                .map(|scoped_join_handle| scoped_join_handle.join())
+                .collect();
+
+            threads
         });
+
+        results
+            .into_iter()
+            .for_each(|result| {
+                if result.is_err() {
+                    eprintln!("Error: {result:?}");
+                    panic!("thread::scope failed to write xlsx files!")
+                }
+            });
     }
 
     // Optionally, after parsing xml files, write the csv files.
