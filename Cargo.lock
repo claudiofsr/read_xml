@@ -229,9 +229,9 @@ checksum = "98cc8fbded0c607b7ba9dd60cd98df59af97e84d24e49c8557331cfc26d301ce"
 
 [[package]]
 name = "claudiofsr_lib"
-version = "0.4.0"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c50ec39cb67ba0a78ec75da6215f6ab31b95f8aeabd99d68b46c3734b0c3092d"
+checksum = "b341bca746fffb061343ffb3c5061a376e9098edbde94760f936149aff6dfc35"
 dependencies = [
  "blake3",
  "chrono",
