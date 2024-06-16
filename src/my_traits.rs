@@ -87,8 +87,9 @@ where
         T: Deref<Target = str>,
     {
         self.as_ref()
-            .map(|s| s.trim().to_string())
+            .map(|s| s.trim())
             .filter(|s| !s.is_empty())
+            .map(ToString::to_string)
     }
 }
 

@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use std::collections::{BTreeMap, HashMap, HashSet};
 use rayon::prelude::*;
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 #[derive(Debug, Clone)]
 struct Element {
@@ -31,7 +31,8 @@ fn get_unique_v1(elements: &mut Vec<Element>) -> Vec<Element> {
 /// HashSet + Filter
 fn get_unique_v2(elements: &[Element]) -> Vec<Element> {
     let mut unique = HashSet::new();
-    elements.iter()
+    elements
+        .iter()
         .filter(|element| unique.insert(element.get_id()))
         .cloned()
         .collect::<Vec<Element>>()
@@ -39,7 +40,8 @@ fn get_unique_v2(elements: &[Element]) -> Vec<Element> {
 
 /// Map + HashMap
 fn get_unique_v3(elements: &[Element]) -> Vec<Element> {
-    elements.iter()
+    elements
+        .iter()
         .map(|elem| (elem.get_id(), elem))
         .collect::<HashMap<_, _>>() // único
         .into_values()
@@ -49,7 +51,8 @@ fn get_unique_v3(elements: &[Element]) -> Vec<Element> {
 
 /// Map + BTreeMap
 fn get_unique_v4(elements: &[Element]) -> Vec<Element> {
-    elements.iter()
+    elements
+        .iter()
         .map(|elem| (elem.get_id(), elem))
         .collect::<BTreeMap<_, _>>() // único ordenado
         .into_values()
@@ -59,7 +62,8 @@ fn get_unique_v4(elements: &[Element]) -> Vec<Element> {
 
 /// Map + HashMap + Rayon
 fn get_unique_v5(elements: &[Element]) -> Vec<Element> {
-    elements.par_iter()
+    elements
+        .par_iter()
         .map(|elem| (elem.get_id(), elem))
         .collect::<HashMap<_, _>>() // único
         .into_values()
@@ -69,7 +73,8 @@ fn get_unique_v5(elements: &[Element]) -> Vec<Element> {
 
 /// Map + BTreeMap + Rayon
 fn get_unique_v6(elements: &[Element]) -> Vec<Element> {
-    elements.par_iter()
+    elements
+        .par_iter()
         .map(|elem| (elem.get_id(), elem))
         .collect::<BTreeMap<_, _>>() // único ordenado
         .into_values()
@@ -78,7 +83,6 @@ fn get_unique_v6(elements: &[Element]) -> Vec<Element> {
 }
 
 fn benchmark_get_unique(c: &mut Criterion) {
-
     let element1 = Element {
         chave: Some("12abc345".to_string()),
         n_item: Some(1),
@@ -143,7 +147,7 @@ fn benchmark_get_unique(c: &mut Criterion) {
         b.iter(|| {
             let _unique = black_box(get_unique_v6(&elements));
         })
-    });    
+    });
 
     group.finish();
 }

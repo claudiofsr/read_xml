@@ -1,8 +1,8 @@
 #![allow(dead_code)]
-use rayon::prelude::*;
 use std::{
     borrow::Cow,
     collections::{BTreeMap, HashSet},
+    fmt::Debug
 };
 
 // https://blog.logrocket.com/using-cow-rust-efficient-memory-utilization/
@@ -41,10 +41,6 @@ pub trait UniqueKey<Structure> {
     fn get_unique(&self) -> Vec<Structure>
     where
         Structure: GetID + Clone;
-
-    fn get_par_unique(&self) -> Vec<Structure>
-    where
-        Structure: GetID + Clone + Send + Sync;
 }
 
 impl<Structure> UniqueKey<Structure> for [Structure] {
@@ -53,18 +49,6 @@ impl<Structure> UniqueKey<Structure> for [Structure] {
         Structure: GetID + Clone,
     {
         self.iter()
-            .map(|elem| (elem.get_id(), elem))
-            .collect::<BTreeMap<_, _>>() // único ordenado
-            .into_values()
-            .cloned()
-            .collect::<Vec<Structure>>()
-    }
-
-    fn get_par_unique(&self) -> Vec<Structure>
-    where
-        Structure: GetID + Clone + Send + Sync,
-    {
-        self.par_iter()
             .map(|elem| (elem.get_id(), elem))
             .collect::<BTreeMap<_, _>>() // único ordenado
             .into_values()
@@ -87,37 +71,26 @@ where
 
 pub fn get_unique_v2<Structure>(elements: &[Structure]) -> Cow<[Structure]>
 where
-    Structure: GetID + Clone,
+    Structure: GetID + Clone + Debug,
 {
-    let mut unique = HashSet::new();
+    let mut seen = HashSet::new();
     for element in elements {
-        if !unique.insert(element.get_id()) {
-            // If duplicated:
-            let mut unique2 = HashSet::new();
+        //print!("element: {element:?}");
+        if !seen.insert(element.get_id()) {
+            //println!(" <-- Duplicated element\n");
+            let mut unique = HashSet::new();
             return Cow::Owned(
                 elements
                     .iter()
-                    .filter(|element| unique2.insert(element.get_id()))
+                    .filter(|element| unique.insert(element.get_id()))
                     .cloned()
                     .collect::<Vec<Structure>>(),
             );
         }
+        //println!();
     }
-    // If unique:
+    //println!("Unique -> Borrowed\n");
     Cow::Borrowed(elements)
-}
-
-pub fn get_unique_v3<Structure>(elements: &[Structure]) -> Cow<[Structure]>
-where
-    Structure: GetID + Clone,
-{
-    let mut unique = HashSet::new();
-    elements
-        .iter()
-        .filter(|element| unique.insert(element.get_id()))
-        .cloned()
-        .collect::<Vec<Structure>>()
-        .into() // into Cow::Owned
 }
 
 #[cfg(test)]
@@ -143,18 +116,19 @@ mod clone_on_write {
             value: 67.9,
         };
 
+        //let elements = vec![element1, element2];
         let elements = vec![element1.clone(), element2, element1];
+        for (index, element) in elements.iter().enumerate() { 
+            println!("element{}: {element:?}", index + 1); 
+        }
+        println!();
+
         let unique_v1 = get_unique_v1(&elements);
         let unique_v2 = get_unique_v2(&elements);
-        let unique_v3 = get_unique_v3(&elements);
-        let unique_v4 = elements.get_unique();
-        let unique_v5 = elements.get_par_unique();
+        let unique_v3 = elements.get_unique();
 
-        println!("elements: {elements:?}");
         println!("unique_v1: {unique_v1:?}");
         println!("unique_v2: {unique_v2:?}");
         println!("unique_v3: {unique_v3:?}");
-        println!("unique_v4: {unique_v4:?}");
-        println!("unique_v5: {unique_v5:?}");
     }
 }
