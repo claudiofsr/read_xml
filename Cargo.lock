@@ -1322,6 +1322,7 @@ dependencies = [
  "chrono",
  "regex",
  "rust_xlsxwriter_derive",
+ "ryu",
  "serde",
  "zip",
 ]

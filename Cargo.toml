@@ -71,6 +71,7 @@ features = [
 version = "0.67"
 features = [
     "chrono",
+    "ryu",
     "serde",
     "zlib",
 ]
