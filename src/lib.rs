@@ -25,7 +25,7 @@ pub use self::{
     },
     regex::*,
     group_by_hashmap::{GetKey, GroupByHashMapExt},
-    my_traits::{GroupBy, OptExt, UniqueElements},
+    my_traits::{GetFirst, GroupBy, OptExt, UniqueElements},
     test_cow::UniqueKey,
 };
 
@@ -380,8 +380,8 @@ impl DocsFiscais {
     // https://blog.logrocket.com/using-cow-rust-efficient-memory-utilization/
     pub fn unique(&mut self) {
         thread::scope(|s| {
-            s.spawn(|| self.nfes = self.nfes.get_unique());
-            s.spawn(|| self.ctes = self.ctes.get_unique());
+            s.spawn(|| self.nfes = self.nfes.get_unique_id());
+            s.spawn(|| self.ctes = self.ctes.get_unique_id());
         });
 
         self.ctes.par_iter_mut().for_each(|info| info.get_unique_elements());

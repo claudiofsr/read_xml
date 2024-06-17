@@ -1,3 +1,4 @@
+use claudiofsr_lib::GetNChars;
 use rayon::prelude::*;
 use std::{
     cmp::Ord,
@@ -5,6 +6,36 @@ use std::{
     hash::Hash,
     ops::Deref,
 };
+
+pub trait GetFirst {
+    /**
+        Get first chars from `Option<T>`.
+
+        Example:
+        ```
+        use read_xml::GetFirst;
+
+        let string = String::from("12.345.678/1000-99");
+        let cnpj: Option<String> = Some(string);
+        let cnpj_base: Option<String> = cnpj.get_first(10);
+
+        assert_eq!(cnpj_base, Some("12.345.678".to_string()));
+        ```
+    */
+    fn get_first(&self, num: usize) -> Option<String>;
+}
+
+impl GetFirst for Option<String> {
+    fn get_first(&self, num: usize) -> Option<String> {
+        self
+            .as_ref()
+            .map(|cnpj| {
+                cnpj
+                    .get_first_n_chars(num)
+                    .to_string()
+            })
+    }
+}
 
 pub trait OptExt<T> {
     /**

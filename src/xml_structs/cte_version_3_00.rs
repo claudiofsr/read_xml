@@ -21,7 +21,7 @@ Make PDF files from XSD.
 */
 
 use chrono::NaiveDate;
-use claudiofsr_lib::{BTreeSetExtension, GetNChars};
+use claudiofsr_lib::BTreeSetExtension;
 use rust_xlsxwriter::serialize_chrono_option_naive_to_excel;
 use serde::{Deserialize, Serialize, Serializer};
 use std::collections::BTreeSet;
@@ -40,7 +40,8 @@ use crate::{
         integrated_dev_env::Ide
     }, 
     Arguments, Information, KeysExtension,
-    OptExt, StructExtension, UniqueElements
+    StructExtension, UniqueElements,
+    GetFirst, OptExt
 };
 
 use super::{cobranca::Cobranca, entrega::Entrega};
@@ -258,22 +259,6 @@ pub struct InfoCte {
     aliq_icms: Option<f64>,
     #[serde(rename = "Valor de ICMS")]
     v_icms: Option<f64>,
-}
-
-trait GetFirst {
-    fn get_first(&self, num: usize) -> Option<String>;
-}
-
-impl GetFirst for Option<String> {
-    fn get_first(&self, num: usize) -> Option<String> {
-        self
-            .as_ref()
-            .map(|cnpj| {
-                cnpj
-                    .get_first_n_chars(num)
-                    .to_string()
-            })
-    }
 }
 
 impl InfoCte {

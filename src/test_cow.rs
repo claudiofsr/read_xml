@@ -38,13 +38,13 @@ pub trait GetID {
 }
 
 pub trait UniqueKey<Structure> {
-    fn get_unique(&self) -> Vec<Structure>
+    fn get_unique_id(&self) -> Vec<Structure>
     where
         Structure: GetID + Clone;
 }
 
 impl<Structure> UniqueKey<Structure> for [Structure] {
-    fn get_unique(&self) -> Vec<Structure>
+    fn get_unique_id(&self) -> Vec<Structure>
     where
         Structure: GetID + Clone,
     {
@@ -125,7 +125,7 @@ mod clone_on_write {
 
         let unique_v1 = get_unique_v1(&elements);
         let unique_v2 = get_unique_v2(&elements);
-        let unique_v3 = elements.get_unique();
+        let unique_v3 = elements.get_unique_id();
 
         println!("unique_v1: {unique_v1:?}");
         println!("unique_v2: {unique_v2:?}");
