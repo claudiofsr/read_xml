@@ -21,7 +21,7 @@ Make PDF files from XSD.
 */
 
 use chrono::NaiveDate;
-use claudiofsr_lib::BTreeSetExtension;
+use claudiofsr_lib::{BTreeSetExtension, UniqueElements};
 use rust_xlsxwriter::serialize_chrono_option_naive_to_excel;
 use serde::{Deserialize, Serialize, Serializer};
 use std::collections::BTreeSet;
@@ -40,8 +40,7 @@ use crate::{
         integrated_dev_env::Ide
     }, 
     Arguments, Information, KeysExtension,
-    StructExtension, UniqueElements,
-    GetFirst, OptExt
+    StructExtension, GetFirst, OptExt
 };
 
 use super::{cobranca::Cobranca, entrega::Entrega};

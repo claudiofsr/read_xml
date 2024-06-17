@@ -25,7 +25,7 @@ pub use self::{
     },
     regex::*,
     group_by_hashmap::{GetKey, GroupByHashMapExt},
-    my_traits::{GetFirst, GroupBy, OptExt, UniqueElements},
+    my_traits::{GetFirst, GroupBy, OptExt},
     test_cow::UniqueIdentification,
 };
 

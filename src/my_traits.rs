@@ -2,7 +2,7 @@ use claudiofsr_lib::GetNChars;
 use rayon::prelude::*;
 use std::{
     cmp::Ord,
-    collections::{BTreeSet, HashMap, HashSet},
+    collections::HashMap,
     hash::Hash,
     ops::Deref,
 };
@@ -160,139 +160,9 @@ where
     }
 }
 
-pub trait UniqueElements<T> {
-    /**
-    Get unique and ordered elements from `Vec<T>`.
-
-    Example:
-    ```
-        use read_xml::UniqueElements;
-
-        let mut items1: Vec<u16> = Vec::new();
-        let mut items2: Vec<u32> = vec![1, 3, 1, 2, 2, 4, 3];
-        let mut items3: Vec<&str> = vec!["foo", "foo", "bar", "foo"];
-        let mut items4: Vec<char> = vec!['f', 'o', 'o', ' ', 'b', 'a', 'r'];
-
-        items1.unique_ordered();
-        items2.unique_ordered();
-        items3.unique_ordered();
-        items4.unique_ordered();
-
-        assert!(items1.is_empty());
-        assert_eq!(items1, [0u16;0]);
-        assert_eq!(items2, [1, 2, 3, 4]);
-        assert_eq!(items3, ["bar", "foo"]);
-        assert_eq!(items4, [' ', 'a', 'b', 'f', 'o', 'r']);
-    ```
-    */
-    fn unique_ordered(&mut self);
-
-    /**
-    Get unique and ordered elements from `Vec<T>`.
-
-    Example:
-    ```
-        use read_xml::UniqueElements;
-
-        let mut items1: Vec<u16> = Vec::new();
-        let mut items2: Vec<u32> = vec![1, 3, 1, 2, 2, 4, 3];
-        let mut items3: Vec<&str> = vec!["foo", "foo", "bar", "foo"];
-        let mut items4: Vec<char> = vec!['f', 'o', 'o', ' ', 'b', 'a', 'r'];
-
-        items1 = items1.unique_elements();
-        items2 = items2.unique_elements();
-        items3 = items3.unique_elements();
-        items4 = items4.unique_elements();
-
-        assert!(items1.is_empty());
-        assert_eq!(items1, [0u16;0]);
-        assert_eq!(items2, [1, 2, 3, 4]);
-        assert_eq!(items3, ["bar", "foo"]);
-        assert_eq!(items4, [' ', 'a', 'b', 'f', 'o', 'r']);
-    ```
-    */
-    fn unique_elements(&mut self) -> Vec<T>;
-}
-
-impl<T> UniqueElements<T> for Vec<T>
-where
-    T: Clone + Hash + Ord,
-{
-    fn unique_ordered(&mut self) {
-        self.sort_unstable();
-        self.dedup();
-    }
-
-    fn unique_elements(&mut self) -> Vec<T> {
-        let vector: Vec<T> = self
-            .iter()
-            .collect::<BTreeSet<&T>>()
-            .into_iter()
-            .cloned()
-            .collect();
-
-        vector
-    }
-}
-
-#[allow(dead_code)]
-pub fn unique_by_hashset<T>(vs: &[T]) -> Vec<T>
-where
-    T: Clone + Hash + Eq,
-{
-    vs.iter()
-        .collect::<HashSet<_>>()
-        .into_iter()
-        .cloned()
-        .collect()
-}
-
-#[allow(dead_code)]
-pub fn unique_by_btreeset<T>(vs: &[T]) -> Vec<T>
-where
-    T: Clone + Hash + Ord,
-{
-    vs.iter()
-        .collect::<BTreeSet<_>>()
-        .into_iter()
-        .cloned()
-        .collect()
-}
-
 #[cfg(test)]
 mod sort_dedup {
     use super::*;
-
-    #[test]
-    /// `cargo test -- --show-output remove_duplicates`
-    ///
-    /// rustfmt src/my_traits.rs
-    fn remove_duplicates() {
-        let mut elements = vec![1, 2, 4, 2, 5, 3, 2];
-        println!("elements: {elements:?}");
-
-        elements.unique_ordered();
-        println!("elements.unique_ordered(): {elements:?}");
-
-        assert_eq!(elements, vec![1, 2, 3, 4, 5])
-    }
-
-    #[test]
-    /// `cargo test -- --show-output unique_by_hash`
-    fn unique_by_hash() {
-        let elements = vec![1, 2, 3, 5, 2, 4, 4, 2, 3, 3];
-        println!("elements: {elements:?}");
-
-        let mut h = unique_by_hashset(&elements);
-        println!("unique_by_hashset: {:?}", h);
-        h.sort();
-
-        let b = unique_by_btreeset(&elements);
-        println!("unique_by_btreeset: {:?}", b);
-
-        assert_eq!(h, [1, 2, 3, 4, 5]);
-        assert_eq!(b, [1, 2, 3, 4, 5]);
-    }
 
     #[test]
     /// `cargo test -- --show-output dispach_table`
