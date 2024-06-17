@@ -68,7 +68,7 @@ features = [
 
 [dependencies.rust_xlsxwriter]
 # git = "https://github.com/jmcnamara/rust_xlsxwriter.git"
-version = "0.66"
+version = "0.67"
 features = [
     "chrono",
     "serde",

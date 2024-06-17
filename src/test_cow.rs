@@ -119,7 +119,7 @@ mod clone_on_write {
         //let elements = vec![element1, element2];
         let elements = vec![element1.clone(), element2, element1];
         for (index, element) in elements.iter().enumerate() { 
-            println!("element{}: {element:?}", index + 1); 
+            println!("elements[{index}]: {element:?}"); 
         }
         println!();
 
