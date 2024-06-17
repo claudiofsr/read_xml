@@ -988,8 +988,7 @@ fn get_nfes_grouped_by_ncm_description(
                 })
                 // sort in descending order of values
                 .sorted_by_key(|itens| (
-                    //((itens.valor * -100.0) as i64),
-                    Reverse((itens.valor * 100.0) as i64),
+                    Reverse((itens.valor * 100.0) as i64), // 10 ^ 2 = 100
                     itens.keys.ncm,
                     itens.keys.descricao
                 ))
@@ -1083,8 +1082,7 @@ fn get_ctes_grouped_by_payer(
                 })
                 // sort in descending order of values
                 .sorted_by_key(|itens| (
-                    //((itens.valor * -100.0) as i64),
-                    Reverse((itens.valor * 100.0) as i64),
+                    Reverse((itens.valor * 100.0) as i64), // 10 ^ 2 = 100
                     itens.keys.tomador_cnpj_cpf.clone(),
                     itens.keys.tomador_atributo.clone(),
                 ))
