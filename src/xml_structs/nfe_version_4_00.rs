@@ -186,7 +186,7 @@ impl GetKey for InfoNfe {
 }
 
 /// Ver src/test_cow.rs
-impl GetID for InfoNfe {
+impl GetID<Option<(String, u32)>> for InfoNfe {
     fn get_id(&self) -> Option<(String, u32)> {
         if let (Some(nfe), Some(n_item)) = (&self.nfe, self.n_item) {
             Some((nfe.clone(), n_item))

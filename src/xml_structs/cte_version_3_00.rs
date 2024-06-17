@@ -438,9 +438,9 @@ impl GetKey for InfoCte {
 }
 
 /// Ver src/test_cow.rs
-impl GetID for InfoCte {
-    fn get_id(&self) -> Option<(String, u32)> {
-        self.cte.as_ref().map(|cte| (cte.clone(), 1))
+impl GetID<Option<String>> for InfoCte {
+    fn get_id(&self) -> Option<String> {
+        self.cte.clone()
     }
 }
 

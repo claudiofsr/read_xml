@@ -2,7 +2,7 @@
 use std::{
     borrow::Cow,
     collections::{BTreeMap, HashSet},
-    fmt::Debug
+    fmt::Debug, hash::Hash
 };
 
 // https://blog.logrocket.com/using-cow-rust-efficient-memory-utilization/
@@ -16,7 +16,7 @@ struct Element {
     value: f64,
 }
 
-impl GetID for Element {
+impl GetID<Option<(String, u32)>> for Element {
     fn get_id(&self) -> Option<(String, u32)> {
         if let (Some(nfe), Some(n_item)) = (&self.chave, self.n_item) {
             Some((nfe.clone(), n_item))
@@ -26,40 +26,42 @@ impl GetID for Element {
     }
 }
 
-pub trait GetID {
+pub trait GetID<T> {
     /// id identifica um único item de um document fiscal
     /// 
-    /// id: (chave, n_item)
+    /// NFe pode conter vários itens, assim id: (chave, n_item)
     /// 
-    /// NFe pode conter vários itens
-    /// 
-    /// CTe contém apenas um item
-    fn get_id(&self) -> Option<(String, u32)>;
+    /// CTe contém apenas um item, assim id: chave
+    fn get_id(&self) -> T;
 }
 
-pub trait UniqueKey<Structure> {
+pub trait UniqueIdentification<T, Structure> {
+    /// Get Structure with unique ID
     fn get_unique_id(&self) -> Vec<Structure>
     where
-        Structure: GetID + Clone;
+        Structure: GetID<T> + Clone,
+        T: Ord;
 }
 
-impl<Structure> UniqueKey<Structure> for [Structure] {
+impl<T, Structure> UniqueIdentification<T, Structure> for [Structure] {
     fn get_unique_id(&self) -> Vec<Structure>
     where
-        Structure: GetID + Clone,
+        Structure: GetID<T> + Clone,
+        T: Ord
     {
         self.iter()
             .map(|elem| (elem.get_id(), elem))
-            .collect::<BTreeMap<_, _>>() // único ordenado
+            .collect::<BTreeMap<T, &Structure>>() // único ordenado
             .into_values()
             .cloned()
             .collect::<Vec<Structure>>()
     }
 }
 
-pub fn get_unique_v1<Structure>(elements: &[Structure]) -> Vec<Structure>
+pub fn get_unique_v1<T, Structure>(elements: &[Structure]) -> Vec<Structure>
 where
-    Structure: GetID + Clone,
+    Structure: GetID<T> + Clone,
+    T: Eq + Hash,
 {
     let mut unique = HashSet::new();
     elements
@@ -69,9 +71,10 @@ where
         .collect::<Vec<Structure>>()
 }
 
-pub fn get_unique_v2<Structure>(elements: &[Structure]) -> Cow<[Structure]>
+pub fn get_unique_v2<T, Structure>(elements: &[Structure]) -> Cow<[Structure]>
 where
-    Structure: GetID + Clone + Debug,
+    Structure: GetID<T> + Clone + Debug,
+    T: Eq + Hash,
 {
     let mut seen = HashSet::new();
     for element in elements {
