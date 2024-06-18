@@ -62,11 +62,15 @@ impl<T, Structure> UniqueIdentification<T, Structure> for [Structure] {
             .collect::<Vec<Structure>>()
     }
 
-    // Cow means "clone on write".
-    // https://dhghomon.github.io/easy_rust/Chapter_42.html
-    // https://blog.logrocket.com/using-cow-rust-efficient-memory-utilization/
-    // https://dev.to/kgrech/6-things-you-can-do-with-the-cow-in-rust-4l55
+    /**
+    Cow means "clone on write"
 
+    <https://dhghomon.github.io/easy_rust/Chapter_42.html>
+
+    <https://blog.logrocket.com/using-cow-rust-efficient-memory-utilization>
+
+    <https://dev.to/kgrech/6-things-you-can-do-with-the-cow-in-rust-4l55>
+    */
     fn get_unique_v2(&self) -> Cow<[Structure]>
     where
         Structure: GetID<T> + Clone + Debug,
@@ -74,9 +78,7 @@ impl<T, Structure> UniqueIdentification<T, Structure> for [Structure] {
     {
         let mut seen = HashSet::new();
         for element in self {
-            //print!("element: {element:?}");
             if !seen.insert(element.get_id()) {
-                //println!(" <-- Duplicated element\n");
                 let mut unique = HashSet::new();
                 return Cow::Owned(
                     self.iter()
@@ -85,9 +87,7 @@ impl<T, Structure> UniqueIdentification<T, Structure> for [Structure] {
                         .collect::<Vec<Structure>>(),
                 );
             }
-            //println!();
         }
-        //println!("Unique -> Borrowed\n");
         Cow::Borrowed(self)
     }
 }
@@ -155,7 +155,7 @@ mod clone_on_write {
     #[test]
     /// `cargo test -- --show-output get_unique`
     ///
-    /// rustfmt src/test_cow.rs
+    /// rustfmt src/unique_with_cows.rs
     fn get_unique() {
         let element1 = Element {
             chave: Some("12abc345".to_string()),
