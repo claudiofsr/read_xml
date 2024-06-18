@@ -7,7 +7,7 @@ mod nodes;
 mod regex;
 mod xml_structs;
 mod group_by_hashmap;
-mod test_cow;
+mod unique_with_cows;
 
 pub use self::{
     args::*,
@@ -26,7 +26,7 @@ pub use self::{
     regex::*,
     group_by_hashmap::{GetKey, GroupByHashMapExt},
     my_traits::{GetFirst, GroupBy, OptExt},
-    test_cow::UniqueIdentification,
+    unique_with_cows::UniqueIdentification,
 };
 
 use indicatif::{

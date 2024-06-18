@@ -31,19 +31,19 @@ use crate::{
     excel::InfoExtension, 
     group_by_hashmap::GetKey, 
     serialize_vec_string, 
-    test_cow::GetID, 
+    unique_with_cows::GetID, 
     xml_structs::{
         agente::{Agente, AgenteExtension, TOMADOR_DO_SERVICO}, 
         assinaturas::{ProtSignature, Signature}, 
         aut_xml::{AutXML, InfProtocolo, InfRespTec}, 
         impostos::Imposto, 
-        integrated_dev_env::Ide
+        integrated_dev_env::Ide,
+        cobranca::Cobranca, 
+        entrega::Entrega
     }, 
     Arguments, Information, KeysExtension,
     StructExtension, GetFirst, OptExt
 };
-
-use super::{cobranca::Cobranca, entrega::Entrega};
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone, Iterable)]
 pub struct InfoCte {

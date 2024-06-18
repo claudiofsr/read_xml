@@ -30,21 +30,31 @@ Make PDF files from XSD.
 // :\s+(\w+),
 // : Option<$1>,
 
-use std::collections::BTreeSet;
-
 use claudiofsr_lib::StrExtension;
 use chrono::NaiveDate;
 use rust_xlsxwriter::serialize_chrono_option_naive_to_excel;
 use serde::{Serialize, Deserialize};
+use std::collections::BTreeSet;
 use struct_iterable::Iterable;
 
 use crate::{
-    excel::InfoExtension, group_by_hashmap::GetKey, serialize_vec_string, test_cow::GetID, xml_structs::{
-        agente::{Agente, AgenteExtension}, assinaturas::Signature, aut_xml::{AutXML, InfProtocolo, InfRespTec}, impostos::{Imposto, Total}, integrated_dev_env::Ide
-    }, Arguments, Information, KeysExtension, OptExt, StructExtension
+    excel::InfoExtension, 
+    group_by_hashmap::GetKey, 
+    serialize_vec_string, 
+    unique_with_cows::GetID, 
+    xml_structs::{
+        agente::{Agente, AgenteExtension}, 
+        assinaturas::Signature, 
+        aut_xml::{AutXML, InfProtocolo, InfRespTec}, 
+        impostos::{Imposto, Total}, 
+        integrated_dev_env::Ide,
+        cobranca::Cobranca, 
+        entrega::Entrega, 
+        pagamento::Pagamento
+    },
+    Arguments, Information, KeysExtension,
+    OptExt, StructExtension
 };
-
-use super::{cobranca::Cobranca, entrega::Entrega, pagamento::Pagamento};
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone, Iterable)]
 pub struct InfoNfe {

@@ -22,7 +22,8 @@ use serde::{Deserialize, Serialize};
 use struct_iterable::Iterable;
 
 use crate::{
-    excel::InfoExtension, get_naive_date_from_yyyymm, xml_structs::assinaturas::Signature,
+    excel::InfoExtension, get_naive_date_from_yyyymm,
+    xml_structs::assinaturas::Signature,
     Arguments, Information, OptExt, StructExtension,
 };
 
