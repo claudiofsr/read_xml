@@ -1,11 +1,6 @@
 use claudiofsr_lib::GetNChars;
 use rayon::prelude::*;
-use std::{
-    cmp::Ord,
-    collections::HashMap,
-    hash::Hash,
-    ops::Deref,
-};
+use std::{cmp::Ord, collections::HashMap, hash::Hash, ops::Deref};
 
 pub trait GetFirst {
     /**
@@ -27,13 +22,8 @@ pub trait GetFirst {
 
 impl GetFirst for Option<String> {
     fn get_first(&self, num: usize) -> Option<String> {
-        self
-            .as_ref()
-            .map(|cnpj| {
-                cnpj
-                    .get_first_n_chars(num)
-                    .to_string()
-            })
+        self.as_ref()
+            .map(|cnpj| cnpj.get_first_n_chars(num).to_string())
     }
 }
 
@@ -161,12 +151,32 @@ where
 }
 
 #[cfg(test)]
-mod sort_dedup {
+mod traits {
     use super::*;
 
     #[test]
+    /// `cargo test -- --show-output group_tuples`
+    fn group_tuples() {
+        let tuples = vec![
+            ("zz", 5),
+            ("ab", 2),
+            ("cd", 1),
+            ("ab", 2),
+            ("cd", 1),
+            ("ab", 2),
+        ];
+
+        let map_reduce: HashMap<&str, u64> = tuples.group_by_key();
+
+        println!("tuples: {tuples:?}");
+        println!("map_reduce: {map_reduce:?}");
+
+        assert_eq!(map_reduce, HashMap::from([("ab", 6), ("cd", 2), ("zz", 5)]));
+    }
+
+    #[test]
     /// `cargo test -- --show-output dispach_table`
-    /// 
+    ///
     /// <https://stackoverflow.com/questions/51372702/how-do-i-make-a-dispatch-table-in-rust>
     fn dispach_table() {
         let dispatch = {
