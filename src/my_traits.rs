@@ -1,4 +1,4 @@
-use claudiofsr_lib::GetNChars;
+use claudiofsr_lib::StrExtension;
 use rayon::prelude::*;
 use std::{cmp::Ord, collections::HashMap, hash::Hash, ops::Deref};
 
