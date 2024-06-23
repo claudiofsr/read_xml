@@ -49,7 +49,7 @@ use std::{
     string::ToString, thread
 };
 
-use claudiofsr_lib::{round_f64, BTreeSetExtension, HashSetExtension, StrExtension};
+use claudiofsr_lib::{BTreeSetExtension, HashSetExtension, RoundFloat, StrExtension};
 use chrono::NaiveDate;
 use itertools::Itertools;
 use rayon::prelude::*;
@@ -895,7 +895,7 @@ fn get_total_value_ctes(ctes: &HashSet<String>, cte_info: &BTreeMap<KeyDoc, Vec<
                 )
         })
         .sum::<Option<f64>>()
-        .map(|sum| round_f64(sum, 2))
+        .map(|sum| sum.round_float(2))
 }
 
 /// cte: [nfe1, nfe2, nfe3, ,,,, nfeN]
@@ -914,7 +914,7 @@ fn get_total_value_nfes(nfes: &HashSet<String>, nfe_info: &BTreeMap<KeyDoc, Vec<
                 )
         })
         .sum::<Option<f64>>()
-        .map(|sum| round_f64(sum, 2))
+        .map(|sum| sum.round_float(2))
 }
 
 #[derive(Debug, Default, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize)]
@@ -982,8 +982,8 @@ fn get_nfes_grouped_by_ncm_description(
                     let porcentagem = valor / valor_total * 100.0;
                     NFeItens {
                         keys,
-                        valor: round_f64(valor, 2),
-                        pct: round_f64(porcentagem, 2)
+                        valor: valor.round_float(2),
+                        pct: porcentagem.round_float(2),
                     }
                 })
                 // sort in descending order of values
@@ -1076,8 +1076,8 @@ fn get_ctes_grouped_by_payer(
                     let porcentagem = valor / valor_total * 100.0;
                     CTeItens {
                         keys,
-                        valor: round_f64(valor, 2),
-                        pct: round_f64(porcentagem, 2)
+                        valor: valor.round_float(2),
+                        pct: porcentagem.round_float(2),
                     }
                 })
                 // sort in descending order of values
