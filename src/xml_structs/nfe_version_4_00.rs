@@ -1284,7 +1284,7 @@ pub struct Vol {
     #[serde(rename = "$text")]
     pub text: Option<String>,
     #[serde(rename = "lacres")]
-    pub lacres: Option<Lacres>,
+    pub lacres: Option<Vec<Lacres>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
