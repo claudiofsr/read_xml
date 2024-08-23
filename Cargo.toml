@@ -26,7 +26,7 @@ keywords = [
 anstyle = "1.0" # used by clap color
 cc = { version = "1.0", features = ["parallel"] }
 clap_complete = "4.5"
-claudiofsr_lib = "0.11"
+claudiofsr_lib = "0.12"
 csv = "1.3"
 itertools = "0.13"
 once_cell = "1.19"
@@ -59,7 +59,7 @@ features = [
 ]
 
 [dependencies.quick-xml]
-version = "0.35"
+version = "0.36.0"
 features = [
     "async-tokio",
     "encoding",
@@ -68,7 +68,7 @@ features = [
 
 [dependencies.rust_xlsxwriter]
 # git = "https://github.com/jmcnamara/rust_xlsxwriter.git"
-version = "0.69"
+version = "0.73"
 features = [
     "chrono",
     "ryu",
@@ -89,7 +89,7 @@ features = [
 ]
 
 [dependencies.xml_schema_generator]
-version = "0.6"
+version = "0.6.12"
 # git = "https://github.com/Thomblin/xml_schema_generator.git"
 # path = "/home/claudio/.cargo/registry/src/index.crates.io-6f17d22bba15001f/xml_schema_generator-0.6.7b"
 features = [

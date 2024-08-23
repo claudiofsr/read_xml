@@ -21,9 +21,10 @@ use walkdir::DirEntry;
     cargo test -- --show-output
     rustfmt src/xml_structs/agente.rs
 
-    read_xml -tcei 100 -l 100000 --exibir-correlacoes > output_docs_nao_encontrados_e_docs_correlacionados
-    read_xml -tcai 200 --exibir-correlacoes > output_correlacoes_new
-    b3sum read_xml-*.csv && b3sum output_c*
+    read_xml -taei 200 -l 500000 > output_docs_nao_encontrados
+    read_xml -tai 200 --exibir-correlacoes > output_correlacoes_new
+    read_xml -tcei 200 --exibir-correlacoes > output_docs_nao_encontrados_e_docs_correlacionados
+    b3sum read_xml-*.csv && b3sum output_*
 
     To see the Rust Structures in an xml file:
     read_xml -s 35220412345678901234567890123456789012345678_NFe.xml > /tmp/structures.rs
