@@ -1,7 +1,6 @@
 use claudiofsr_lib::{OptionExtension, StrExtension};
-use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::LazyLock as Lazy};
 
 use crate::xml_structs::endereco::{Endereco, EnderecoExtension};
 

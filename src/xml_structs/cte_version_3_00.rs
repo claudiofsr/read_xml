@@ -221,7 +221,7 @@ pub struct InfoCte {
     #[serde(rename = "Informações de NFes relacionados", serialize_with = "serialize_vec_string")]
     pub nfes: Vec<String>,
     #[serde(
-        rename = "(NCM e Descrição) dos Itens de NFes com Valor e Porcentagem",
+        rename = "(NCM e Descrição) dos Itens de NFes com Valores e Porcentagens decrescentes",
         serialize_with = "serialize_vec_string"
     )]
     pub ncm_descricao: Vec<String>,

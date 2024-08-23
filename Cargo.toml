@@ -3,7 +3,7 @@ name = "read_xml"
 authors = ["Claudio F S Rodrigues <claudiofsrodrigues@gmail.com>"]
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.79"
+rust-version = "1.80"
 description = """\
 Read NFe/CTe XML files recursively and write XLSX/CSV files\n
  Author: Claudio F S Rodrigues
@@ -24,12 +24,11 @@ keywords = [
 
 [dependencies]
 anstyle = "1.0" # used by clap color
-cc = { version = "1.0", features = ["parallel"] }
+cc = { version = "1.1", features = ["parallel"] }
 clap_complete = "4.5"
 claudiofsr_lib = "0.12"
 csv = "1.3"
 itertools = "0.13"
-once_cell = "1.19"
 rayon = "1.10"
 regex = "1.10"
 serde_json = "1.0"

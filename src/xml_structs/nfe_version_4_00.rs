@@ -121,7 +121,7 @@ pub struct InfoNfe {
     #[serde(rename = "Informações de CTes relacionados", serialize_with = "serialize_vec_string")]
     pub ctes: Vec<String>,
     #[serde(
-        rename = "(CNPJ_CPF e Atributo) dos Tomadores dos CTes com Valor e Porcentagem",
+        rename = "(CNPJ_CPF e Atributo) dos Tomadores dos CTes com Valores e Porcentagens decrescentes",
         serialize_with = "serialize_vec_string"
     )]
     pub tomadores: Vec<String>,

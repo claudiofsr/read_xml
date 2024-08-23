@@ -1261,7 +1261,6 @@ dependencies = [
  "csv",
  "indicatif",
  "itertools 0.13.0",
- "once_cell",
  "plotters",
  "quick-xml",
  "rayon",
