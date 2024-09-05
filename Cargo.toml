@@ -58,7 +58,7 @@ features = [
 ]
 
 [dependencies.quick-xml]
-version = "0.36.0"
+version = "0.36.1"
 features = [
     "async-tokio",
     "encoding",
@@ -67,7 +67,7 @@ features = [
 
 [dependencies.rust_xlsxwriter]
 # git = "https://github.com/jmcnamara/rust_xlsxwriter.git"
-version = "0.73"
+version = "0.75"
 features = [
     "chrono",
     "ryu",
@@ -82,13 +82,13 @@ features = [
 ]
 
 [dependencies.tokio]
-version = "1.38"
+version = "1.40"
 features = [
     "full",
 ]
 
 [dependencies.xml_schema_generator]
-version = "0.6.12"
+version = "0.6.14"
 # git = "https://github.com/Thomblin/xml_schema_generator.git"
 # path = "/home/claudio/.cargo/registry/src/index.crates.io-6f17d22bba15001f/xml_schema_generator-0.6.7b"
 features = [
