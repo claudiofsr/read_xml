@@ -389,7 +389,7 @@ impl NfeProc {
             .inf_nfe
             .as_ref()
             .and_then(|information| {
-                information.ide.get_n_nf()
+                information.ide.get_num_nfe()
             })
     }
 

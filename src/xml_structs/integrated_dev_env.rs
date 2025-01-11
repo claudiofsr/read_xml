@@ -67,10 +67,8 @@ pub struct Ide {
     pub nat_operacao: Option<String>,
     #[serde(rename = "NFref")]
     pub nfref: Option<Vec<NFref>>,
-    #[serde(rename = "nCT")]
-    pub n_ct: Option<String>,
-    #[serde(rename = "nNF")]
-    pub n_nf: Option<String>,
+    #[serde(rename = "nNF")] // Número do NF-e
+    pub num_nfe: Option<String>,
     #[serde(rename = "procEmi")]
     pub proc_emi: Option<String>,
     #[serde(rename = "retira")]
@@ -129,13 +127,13 @@ pub struct Ide {
 }
 
 impl Ide {
-    pub fn get_n_nf(&self) -> Option<u32> {
-        self.n_nf
+    pub fn get_num_nfe(&self) -> Option<u32> {
+        self.num_nfe
             .as_ref()
             .and_then(|numero| numero.trim().parse::<u32>().ok())
     }
 
-    pub fn get_n_ct(&self) -> Option<u32> {
+    pub fn get_num_cte(&self) -> Option<u32> {
         self.num_cte
             .as_ref()
             .and_then(|numero| numero.trim().parse::<u32>().ok())

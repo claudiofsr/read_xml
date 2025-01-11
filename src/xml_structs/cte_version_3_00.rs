@@ -961,7 +961,7 @@ impl CteProc {
             .inf_cte
             .as_ref()
             .and_then(|info| {
-                info.ide.get_n_ct()
+                info.ide.get_num_cte()
             })
     }
 
