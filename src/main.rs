@@ -36,7 +36,6 @@ use walkdir::DirEntry;
     tail -n 10 /tmp/xml
     read_xml -s some_file.xml
 */
-
 fn main() -> MyResult<()> {
     let time = Instant::now();
     let arguments = Arguments::build()?;

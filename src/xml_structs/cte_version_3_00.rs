@@ -192,7 +192,6 @@ pub struct InfoCte {
     3. Destinatário;
     4. Terceiro [adicionado em CTe versão 4.00].
     */
-
     #[serde(rename = "Tomador do Serviço", serialize_with = "serialize_tomador_do_servico")]
     pub tomador_codigo: Option<u8>,
 
@@ -1907,7 +1906,7 @@ pub struct InfDocCteInfNfCteInfUnidCarga {
     #[serde(rename = "idUnidCarga")]
     pub id_unid_carga: Option<String>,
     #[serde(rename = "lacUnidCarga")]
-    pub lac_unid_carga: Option<InfDocCteInfNfCteInfUnidCargaCteLacUnidCarga>,
+    pub lac_unid_carga: Option<Vec<InfDocCteInfNfCteInfUnidCargaCteLacUnidCarga>>,
     #[serde(rename = "qtdRat")]
     pub qtd_rat: Option<String>,
     #[serde(rename = "tpUnidCarga")]
