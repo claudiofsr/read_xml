@@ -1944,7 +1944,7 @@ pub struct InfNfCteInfUnidTranspCteInfUnidCarga {
     #[serde(rename = "idUnidCarga")]
     pub id_unid_carga: Option<String>,
     #[serde(rename = "lacUnidCarga")]
-    pub lac_unid_carga: Option<InfNfCteInfUnidTranspCteInfUnidCargaCteLacUnidCarga>,
+    pub lac_unid_carga: Option<Vec<InfNfCteInfUnidTranspCteInfUnidCargaCteLacUnidCarga>>,
     #[serde(rename = "qtdRat")]
     pub qtd_rat: Option<String>,
     #[serde(rename = "tpUnidCarga")]
@@ -1990,7 +1990,7 @@ pub struct InfDocCteInfNfeCteInfUnidCarga {
     #[serde(rename = "idUnidCarga")]
     pub id_unid_carga: Option<String>,
     #[serde(rename = "lacUnidCarga")]
-    pub lac_unid_carga: Option<InfDocCteInfNfeCteInfUnidCargaCteLacUnidCarga>,
+    pub lac_unid_carga: Option<Vec<InfDocCteInfNfeCteInfUnidCargaCteLacUnidCarga>>,
     #[serde(rename = "qtdRat")]
     pub qtd_rat: Option<String>,
     #[serde(rename = "tpUnidCarga")]
@@ -2028,7 +2028,7 @@ pub struct InfNfeCteInfUnidTranspCteInfUnidCarga {
     #[serde(rename = "idUnidCarga")]
     pub id_unid_carga: Option<String>,
     #[serde(rename = "lacUnidCarga")]
-    pub lac_unid_carga: Option<InfNfeCteInfUnidTranspCteInfUnidCargaCteLacUnidCarga>,
+    pub lac_unid_carga: Option<Vec<InfNfeCteInfUnidTranspCteInfUnidCargaCteLacUnidCarga>>,
     #[serde(rename = "qtdRat")]
     pub qtd_rat: Option<String>,
     #[serde(rename = "tpUnidCarga")]
@@ -2080,7 +2080,7 @@ pub struct InfDocCteInfOutrosCteInfUnidCarga {
     #[serde(rename = "idUnidCarga")]
     pub id_unid_carga: Option<String>,
     #[serde(rename = "lacUnidCarga")]
-    pub lac_unid_carga: Option<InfDocCteInfOutrosCteInfUnidCargaCteLacUnidCarga>,
+    pub lac_unid_carga: Option<Vec<InfDocCteInfOutrosCteInfUnidCargaCteLacUnidCarga>>,
     #[serde(rename = "qtdRat")]
     pub qtd_rat: Option<String>,
     #[serde(rename = "tpUnidCarga")]
@@ -2118,7 +2118,7 @@ pub struct InfOutrosCteInfUnidTranspCteInfUnidCarga {
     #[serde(rename = "idUnidCarga")]
     pub id_unid_carga: Option<String>,
     #[serde(rename = "lacUnidCarga")]
-    pub lac_unid_carga: Option<InfOutrosCteInfUnidTranspCteInfUnidCargaCteLacUnidCarga>,
+    pub lac_unid_carga: Option<Vec<InfOutrosCteInfUnidTranspCteInfUnidCargaCteLacUnidCarga>>,
     #[serde(rename = "qtdRat")]
     pub qtd_rat: Option<String>,
     #[serde(rename = "tpUnidCarga")]
