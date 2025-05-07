@@ -1,0 +1,140 @@
+[package]
+name = "read_xml"
+authors = ["Claudio F S Rodrigues <claudiofsrodrigues@gmail.com>"]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.86"
+description = """\
+Read NFe/CTe XML files recursively and write XLSX/CSV files\n
+ Author: Claudio F S Rodrigues
+ email: claudiofsrodrigues@gmail.com
+ github: https://github.com/claudiofsr/read_xml\
+"""
+license = "BSD-3-Clause"
+readme = "README.md"
+categories = ["command-line-utilities"]
+keywords = [
+    "read",
+    "NFe",
+    "CTe",
+    "xml",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anstyle = "1.0" # used by clap color
+cc = { version = "1.2", features = ["parallel"] }
+clap_complete = "4.5"
+claudiofsr_lib = "0.14"
+csv = "1.3"
+execution-time = "0.3"
+itertools = "0.14"
+rayon = "1.10"
+regex = "1.11"
+serde_json = "1.0"
+serde-aux = "4.7"
+struct_iterable = "0.1"
+walkdir = "2.5"
+
+[dependencies.clap]
+version = "4.5"
+features = [
+    "color",
+    "derive",
+    "env",
+    "unstable-styles",
+]
+
+[dependencies.chrono]
+version = "0.4"
+features = [
+    "serde",
+]
+
+[dependencies.indicatif] # ProgressBar
+version = "0.17"
+features = [
+    "rayon"
+]
+
+[dependencies.quick-xml]
+version = "0.37.5"
+features = [
+    "async-tokio",
+    "encoding",
+    "serialize",
+]
+
+[dependencies.rust_xlsxwriter]
+# git = "https://github.com/jmcnamara/rust_xlsxwriter.git"
+version = "0.86"
+features = [
+    "chrono",
+    "ryu",
+    "serde",
+    "zlib",
+]
+
+[dependencies.serde]
+version = "1.0"
+features = [
+    "derive",
+]
+
+[dependencies.tokio]
+version = "1.45"
+features = [
+    "full",
+]
+
+[dependencies.xml_schema_generator]
+version = "0.6.19"
+# git = "https://github.com/Thomblin/xml_schema_generator.git"
+# path = "/home/claudio/.cargo/registry/src/index.crates.io-6f17d22bba15001f/xml_schema_generator-0.6.7b"
+features = [
+    "env_logger"
+]
+
+# [dependencies.enum_delegate]
+# version = "0.2"
+# git = "https://gitlab.com/dawn_app/enum_delegate.git"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+# Package release:
+# On Manjaro Linux, install with: pacman -S mingw-w64-gcc
+# rustup target list
+# After downloading the target with `rustup target add x86_64-pc-windows-gnu`
+# cargo b -r --target x86_64-unknown-linux-gnu --target x86_64-pc-windows-gnu
+
+[profile.release]
+# https://doc.rust-lang.org/cargo/reference/profiles.html
+debug = false           # No debug info at all.
+strip = "symbols"       # Strip symbols from a binary.
+opt-level = 3           # All optimizations.
+overflow-checks = true  # Panic will occur on overflow.
+lto = true              # Enable link time optimization.
+codegen-units = 1       # Use a single codegen for size optimization.
+panic = "abort"         # Remove traceback information.
+incremental = true      # Save information to disk, improving re-compile times.
+
+[profile.dev]
+opt-level = 1           # Use slightly better optimizations.
+
+# pacman -S aspell-en aspell-pt
+# "aspell --lang=en_US --check README.md"
+
+[dev-dependencies]
+# cargo bench
+# Uses gnuplot to generate detailed graphs of benchmark results
+# pacman -S gnuplot
+# see the result:
+# chromium ~/Documents/Rust/projects/read_xml/target/criterion/report/index.html&
+criterion = { version = "0.5", features = ["html_reports"] }
+plotters = "0.3"
+
+[[bench]]
+name = "uniques"
+harness = false
