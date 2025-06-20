@@ -17,7 +17,7 @@ read_xml -s evtMovOpFin-v1_2_1.xml > evtMovOpFin-v1_2_1.rs
 */
 use chrono::NaiveDate;
 use claudiofsr_lib::{OptionExtension, StrExtension};
-use rust_xlsxwriter::serialize_chrono_option_naive_to_excel;
+use rust_xlsxwriter::serialize_option_datetime_to_excel;
 use serde::{Deserialize, Serialize};
 use struct_iterable::Iterable;
 
@@ -58,7 +58,7 @@ pub struct InfoEFinanceira {
     pub nome_declarado: Option<String>,
     #[serde(
         rename = "Ano/Mês Caixa Reportado",
-        serialize_with = "serialize_chrono_option_naive_to_excel"
+        serialize_with = "serialize_option_datetime_to_excel"
     )]
     pub ano_mes_caixa: Option<NaiveDate>,
     #[serde(rename = "Nº da Conta")]

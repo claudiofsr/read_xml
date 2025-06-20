@@ -21,7 +21,7 @@ Make PDF files from XSD.
 */
 use chrono::NaiveDate;
 use claudiofsr_lib::{BTreeSetExtension, UniqueElements};
-use rust_xlsxwriter::serialize_chrono_option_naive_to_excel;
+use rust_xlsxwriter::serialize_option_datetime_to_excel;
 use serde::{Deserialize, Serialize, Serializer};
 use std::collections::BTreeSet;
 use struct_iterable::Iterable;
@@ -202,7 +202,7 @@ pub struct InfoCte {
     cfop: Option<u16>,
     #[serde(
         rename = "Data de Emissão",
-        serialize_with = "serialize_chrono_option_naive_to_excel"
+        serialize_with = "serialize_option_datetime_to_excel"
     )]
     pub data_emissao: Option<NaiveDate>,
     #[serde(
