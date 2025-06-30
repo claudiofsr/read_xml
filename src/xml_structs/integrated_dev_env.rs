@@ -217,8 +217,8 @@ impl Ide {
             1 => tomadores.first().copied(),
             _ => {
                 eprintln!("Error: CTe com múltiplos tomadores!");
-                eprintln!("IDE: {:#?}", self);
-                eprintln!("Tomadores: {:#?}\n", tomadores);
+                eprintln!("IDE: {self:#?}");
+                eprintln!("Tomadores: {tomadores:#?}\n");
                 None
             }
         }

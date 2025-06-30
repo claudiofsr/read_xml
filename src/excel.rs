@@ -83,7 +83,7 @@ where
         // Add a custom error message
         eprintln!("error: {xlsx_error}");
         eprintln!("fn write_xlsx()");
-        eprintln!("Error: Failed to write XLSX file {:?}", output_file);
+        eprintln!("Error: Failed to write XLSX file {output_file:?}");
     })?;
 
     Ok(())

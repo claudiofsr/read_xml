@@ -104,7 +104,7 @@ mod test_example01 {
         // Assuming the unwrap above didn't blow up, we should get a count here
         println!("defect_list.defects.len(): {}", defect_list.defects.len());
 
-        println!("defect_list: {:#?}", defect_list);
+        println!("defect_list: {defect_list:#?}");
 
         //assert_eq!(valid, results);
 

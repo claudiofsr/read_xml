@@ -149,8 +149,8 @@ mod group_by {
         let result_a: HashMap<String, Vec<Teste1>> = vec_a.group_by_hashmap_key_vector_v1();
         let result_b: HashMap<String, Vec<Teste2>> = vec_b.group_by_hashmap_key_vector_v1();
 
-        println!("{:?}", result_a);
-        println!("{:?}", result_b);
+        println!("{result_a:?}");
+        println!("{result_b:?}");
 
         assert_eq!(
             HashMap::from([

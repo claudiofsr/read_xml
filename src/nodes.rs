@@ -40,7 +40,7 @@ fn print_results(seen: &HashMap<String, usize>, counter: &usize) {
         println!("{}: {:?}", item, seen.get(item).unwrap());
     }
 
-    println!("Found not considered nodes: {}", counter);
+    println!("Found not considered nodes: {counter}");
 }
 
 #[tokio::main]
@@ -58,7 +58,7 @@ pub async fn print_nodes(xml_path: &PathBuf) -> MyResult<()> {
 
     loop {
         match reader.read_event_into(&mut buffer) {
-            Err(error) => break println!("{}", error),
+            Err(error) => break println!("{error}"),
             Ok(Event::Eof) => break println!("Completed."),
             Ok(Event::Start(node)) => {
                 path.push(format!(
