@@ -14,4 +14,4 @@ cte_nfes.len(): 0
 nfe_ctes:
 nfe_ctes.len(): 0
 
-Elapsed time: 0.017319 second (17.318889ms)
+Elapsed time: 0.035214 second (35.214108ms)
