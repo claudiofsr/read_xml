@@ -53,15 +53,16 @@ features = [
 ]
 
 [dependencies.indicatif] # ProgressBar
-version = "0.17"
+version = "0.18"
 features = [
     "rayon"
 ]
 
 [dependencies.quick-xml]
-version = "0.37.5"
+version = "0.38.1"
 features = [
     "async-tokio",
+    "escape-html",
     "encoding",
     "serialize",
 ]
@@ -83,13 +84,13 @@ features = [
 ]
 
 [dependencies.tokio]
-version = "1.45"
+version = "1.47"
 features = [
     "full",
 ]
 
 [dependencies.xml_schema_generator]
-version = "0.6.19"
+version = "0.6.20"
 # git = "https://github.com/Thomblin/xml_schema_generator.git"
 # path = "/home/claudio/.cargo/registry/src/index.crates.io-6f17d22bba15001f/xml_schema_generator-0.6.7b"
 features = [
@@ -132,7 +133,7 @@ opt-level = 1           # Use slightly better optimizations.
 # pacman -S gnuplot
 # see the result:
 # chromium ~/Documents/Rust/projects/read_xml/target/criterion/report/index.html&
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.7", features = ["html_reports"] }
 plotters = "0.3"
 
 [[bench]]

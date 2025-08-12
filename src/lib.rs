@@ -684,16 +684,13 @@ impl DocsFiscais {
             .par_iter_mut() // rayon parallel iterator
             .filter(|info| info.is_valid()) // remover cte cancelado
             .for_each(|info| {
-                if let Some(cte) = &info.cte {
-                    if let Some(nfes) = correlacoes.cte_nfes.get(cte) {
-                        info.nfes = nfes.to_vec_sorted();
-                        info.ncm_descricao = get_nfes_grouped_by_ncm_description(
-                            nfes,
-                            &correlacoes.nfe_info,
-                            arguments,
-                        );
-                        info.valor_total_nfes = get_total_value_nfes(nfes, &correlacoes.nfe_info);
-                    }
+                if let Some(cte) = &info.cte
+                    && let Some(nfes) = correlacoes.cte_nfes.get(cte)
+                {
+                    info.nfes = nfes.to_vec_sorted();
+                    info.ncm_descricao =
+                        get_nfes_grouped_by_ncm_description(nfes, &correlacoes.nfe_info, arguments);
+                    info.valor_total_nfes = get_total_value_nfes(nfes, &correlacoes.nfe_info);
                 }
             });
     }
@@ -704,13 +701,13 @@ impl DocsFiscais {
             .par_iter_mut() // rayon parallel iterator
             .filter(|info| info.is_valid()) // remover nfe cancelado
             .for_each(|info| {
-                if let Some(nfe) = &info.nfe {
-                    if let Some(ctes) = correlacoes.nfe_ctes.get(nfe) {
-                        info.ctes = ctes.to_vec_sorted();
-                        info.tomadores =
-                            get_ctes_grouped_by_payer(ctes, &correlacoes.cte_info, arguments);
-                        info.valor_total_ctes = get_total_value_ctes(ctes, &correlacoes.cte_info);
-                    }
+                if let Some(nfe) = &info.nfe
+                    && let Some(ctes) = correlacoes.nfe_ctes.get(nfe)
+                {
+                    info.ctes = ctes.to_vec_sorted();
+                    info.tomadores =
+                        get_ctes_grouped_by_payer(ctes, &correlacoes.cte_info, arguments);
+                    info.valor_total_ctes = get_total_value_ctes(ctes, &correlacoes.cte_info);
                 }
             });
     }
@@ -1431,7 +1428,7 @@ pub fn deep_keys(
                 //println!("key: {key}");
             }
             Ok(Event::Text(node)) => {
-                let value = node.unescape().expect("Invalid UTF-8!").into_owned();
+                let value = node.decode().expect("Invalid UTF-8!").into_owned();
                 //println!("value: {value}");
 
                 if !filter || FIELDS.iter().any(|field| key.contains(field)) {

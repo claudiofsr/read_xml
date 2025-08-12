@@ -30,7 +30,7 @@ pub trait UniqueIdentification<T, Structure> {
         Structure: GetID<T> + Clone,
         T: Eq + Hash;
 
-    fn get_unique_v2(&self) -> Cow<[Structure]>
+    fn get_unique_v2(&'_ self) -> Cow<'_, [Structure]>
     where
         Structure: GetID<T> + Clone + Debug,
         T: Eq + Hash;
@@ -71,7 +71,7 @@ impl<T, Structure> UniqueIdentification<T, Structure> for [Structure] {
 
     <https://dev.to/kgrech/6-things-you-can-do-with-the-cow-in-rust-4l55>
     */
-    fn get_unique_v2(&self) -> Cow<[Structure]>
+    fn get_unique_v2(&'_ self) -> Cow<'_, [Structure]>
     where
         Structure: GetID<T> + Clone + Debug,
         T: Eq + Hash,
@@ -105,7 +105,7 @@ where
         .collect::<Vec<Structure>>()
 }
 
-pub fn get_unique_v2<T, Structure>(elements: &[Structure]) -> Cow<[Structure]>
+pub fn get_unique_v2<T, Structure>(elements: &'_ [Structure]) -> Cow<'_, [Structure]>
 where
     Structure: GetID<T> + Clone + Debug,
     T: Eq + Hash,

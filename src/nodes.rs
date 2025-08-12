@@ -73,7 +73,7 @@ pub async fn print_nodes(xml_path: &PathBuf) -> MyResult<()> {
             }
             Ok(Event::Text(e)) => {
                 //path.push("@text".into());
-                path.push(e.unescape().unwrap().into_owned());
+                path.push(e.decode().expect("Invalid UTF-8!").into_owned());
                 increment_counters(&mut seen, path.join(" / "));
                 path.pop();
             }
