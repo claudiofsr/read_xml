@@ -2,19 +2,34 @@
 
 Structure Name: "read_xml::xml_structs::cte_version_3_00::CteProc"
 
-invalid type: string "XMLBEANS_LIB=/home/claudio/Downloads/XMLBeans/xmlbeans-5.2.0/bin/../lib", expected struct CteProc
+invalid type: string "XMLBEANS_LIB=/home/claudio/Downloads/XMLBeans/xmlbeans-5.2.0/bin/../lib\n", expected struct CteProc
 
 Para solucionar este erro, veja os campos da estrutura com o comando:
 
-read_xml -s "./schemas_xml/PL_009_V4_00_NT_2020_006_v1.20/procInutNFe_v4.00.xml"
+read_xml -s "./schemas_xml/PL_009_V4_00_NT_2020_006_v1.20/leiauteInutNFe_v4.00.xml"
 
 
 
 Structure Name: "read_xml::xml_structs::cte_version_3_00::CteProc"
 
-invalid type: string "XMLBEANS_LIB=/home/claudio/Downloads/XMLBeans/xmlbeans-5.2.0/bin/../lib", expected struct CteProc
+duplicate field `tomador`
+
+Faça a correção de
+	field `XXX`: Type_Y
+para
+	field `XXX`: Vec<Type_Y>
 
 Para solucionar este erro, veja os campos da estrutura com o comando:
 
-read_xml -s "./schemas_xml/PL_009_V4_00_NT_2020_006_v1.20/leiauteEventoCancNFe_v1.00.xml"
+read_xml -s "./schemas_xml/PL_CTe_400/procCTe_v4.00.xml"
+
+
+
+Structure Name: "read_xml::xml_structs::cte_version_3_00::CteProc"
+
+invalid type: string "XMLBEANS_LIB=/home/claudio/Downloads/XMLBeans/xmlbeans-5.2.0/bin/../lib\n", expected struct CteProc
+
+Para solucionar este erro, veja os campos da estrutura com o comando:
+
+read_xml -s "./schemas_xml/PL_CTe_300_NT2018.002/procCTe_v3.00.xml"
 

@@ -19,7 +19,7 @@ use walkdir::DirEntry;
 
     read_xml -taei 200 -l 500000 > output_docs_nao_encontrados
     read_xml -tai 200 --exibir-correlacoes > output_correlacoes_new
-    read_xml -tcei 200 --exibir-correlacoes > output_docs_nao_encontrados_e_docs_correlacionados
+    read_xml -m 1 -tcei 200 --exibir-correlacoes > output_docs_nao_encontrados_e_docs_correlacionados
     b3sum read_xml-*.csv && b3sum output_*
 
     To see the Rust Structures in an xml file:
