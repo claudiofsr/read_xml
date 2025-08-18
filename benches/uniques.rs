@@ -1,7 +1,10 @@
 #![allow(dead_code)]
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
 use rayon::prelude::*;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::{
+    collections::{BTreeMap, HashMap, HashSet},
+    hint::black_box,
+};
 
 #[derive(Debug, Clone)]
 struct Element {
