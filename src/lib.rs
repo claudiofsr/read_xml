@@ -628,42 +628,43 @@ impl DocsFiscais {
     }
 
     /// Obtain correlations between CTe and NFe
+    ///
+    /// CTe contém 1 item
+    ///
+    /// NFe contém vários itens
     pub fn get_correlations(&mut self, arguments: &Arguments) {
-        let mut cte_info: BTreeMap<KeyDoc, Vec<InfoCte>> = BTreeMap::new(); // cte contém 1 item
-        let mut nfe_info: BTreeMap<KeyDoc, Vec<InfoNfe>> = BTreeMap::new(); // nfe contém vários itens
+        // 1. Primeira etapa: Agrupamento inicial
+        let (cte_info, nfe_info) =
+            rayon::join(|| self.groupby_cte_info(), || self.groupby_nfe_info());
 
-        thread::scope(|s| {
-            s.spawn(|| cte_info = self.groupby_cte_info());
-            s.spawn(|| nfe_info = self.groupby_nfe_info());
-        });
-
+        // 2. Segunda etapa: Cruzamento de dados
+        // Aqui usamos rayon::scope pois temos 4 tarefas independentes.
         let mut ctes_nao_encontrados: HashSet<String> = HashSet::new();
         let mut nfes_nao_encontrados: HashSet<String> = HashSet::new();
 
         let mut cte_ctes: HashMap<String, HashSet<String>> = HashMap::new();
         let mut cte_nfes: HashMap<String, HashSet<String>> = HashMap::new();
 
-        thread::scope(|s| {
-            s.spawn(|| ctes_nao_encontrados = self.get_ctes_nao_encontrados(&cte_info));
-            s.spawn(|| nfes_nao_encontrados = self.get_nfes_nao_encontrados(&nfe_info));
-            s.spawn(|| cte_ctes = self.groupby_cte_ctes(&cte_info));
-            s.spawn(|| cte_nfes = self.groupby_cte_nfes(&nfe_info));
+        rayon::scope(|s| {
+            s.spawn(|_| ctes_nao_encontrados = self.get_ctes_nao_encontrados(&cte_info));
+            s.spawn(|_| nfes_nao_encontrados = self.get_nfes_nao_encontrados(&nfe_info));
+            s.spawn(|_| cte_ctes = self.groupby_cte_ctes(&cte_info));
+            s.spawn(|_| cte_nfes = self.groupby_cte_nfes(&nfe_info));
         });
 
+        // 3. Processamento Sequencial de Lógica de Negócio
         if arguments.exibir_chaves_nao_encontradas {
             show_docs("CTe", &ctes_nao_encontrados.to_vec_sorted());
             show_docs("NFe", &nfes_nao_encontrados.to_vec_sorted());
         }
 
+        // Estas expansões são iterativas e dependentes
         cte_ctes.expand_ctes(false);
-
         cte_nfes.expand_nfes(&cte_ctes);
 
+        // Filtros e Inversão de Mapas
         let cte_nfes = cte_nfes.filtrar_nfes_validos(&nfe_info);
-
-        let nfe_ctes = cte_nfes.get_nfe_ctes();
-
-        let nfe_ctes = nfe_ctes.filtrar_ctes_validos(&cte_info);
+        let nfe_ctes = cte_nfes.get_nfe_ctes().filtrar_ctes_validos(&cte_info);
 
         let correlacoes = Correlacoes {
             cte_info,
