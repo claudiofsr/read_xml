@@ -1260,6 +1260,7 @@ dependencies = [
  "serde-aux",
  "serde_json",
  "struct_iterable",
+ "thiserror",
  "tokio",
  "walkdir",
  "xml_schema_generator",

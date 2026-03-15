@@ -35,6 +35,7 @@ regex = "1.12"
 serde_json = "1.0"
 serde-aux = "4.7"
 struct_iterable = "0.1"
+thiserror = "2.0"
 walkdir = "2.5"
 
 [dependencies.clap]
