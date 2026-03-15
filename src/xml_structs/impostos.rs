@@ -1259,24 +1259,6 @@ pub struct Icmsufdest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ImpostoDevol {
-    #[serde(rename = "pDevol")]
-    pub p_devol: Option<String>,
-    #[serde(rename = "$text")]
-    pub text: Option<String>,
-    #[serde(rename = "IPI")]
-    pub ipi: Option<ImpostoDevolNfeIpi>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ImpostoDevolNfeIpi {
-    #[serde(rename = "vIPIDevol")]
-    pub v_ipidevol: Option<String>,
-    #[serde(rename = "$text")]
-    pub text: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct Total {
     #[serde(rename = "$text")]
     pub text: Option<String>,

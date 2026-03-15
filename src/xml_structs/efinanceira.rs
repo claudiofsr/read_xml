@@ -820,7 +820,7 @@ mod lib_functions {
             tot_debitos: Some(-327.4056),
         };
 
-        let infos = vec![info_a, info_b, info_c];
+        let infos = [info_a, info_b, info_c];
 
         infos.iter().enumerate().for_each(|(index, info)| {
             println!(
