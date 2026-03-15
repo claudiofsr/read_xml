@@ -83,7 +83,7 @@ fn main() -> XmlParserResult<()> {
     });
 
     docs_fiscais.unique();
-    docs_fiscais.sort();
+    docs_fiscais.sort()?;
     docs_fiscais.get_correlations(&arguments);
 
     // Imprimir em arquivos com no máximo N linhas as chaves encontradas.
