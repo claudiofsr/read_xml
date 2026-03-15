@@ -1,10 +1,7 @@
 use serde::Serialize;
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::{fs, path::PathBuf};
 
-use crate::XmlParserResult;
+use crate::{XmlParserError, XmlParserResult};
 
 // Write CSV File with DELIMITER_CHAR
 // <https://docs.rs/csv/latest/csv/tutorial/index.html>
@@ -60,9 +57,9 @@ impl CsvWriter {
 
     // Open a file in write-only mode, returns `io::Result<File>`
     fn open_file(&self) -> XmlParserResult<fs::File> {
-        fs::File::create(Path::new(&self.output_file)).map_err(|error| {
-            eprintln!("Couldn't create {:?}", self.output_file);
-            panic!("Error: {error}");
+        fs::File::create(&self.output_file).map_err(|error| XmlParserError::IoContext {
+            source: error,
+            path: self.output_file.clone(),
         })
     }
 

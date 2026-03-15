@@ -2,7 +2,8 @@ use std::path::PathBuf;
 use thiserror::Error;
 
 /// Alias para Resultados padrão do projeto usando nosso Enum
-pub type XmlParserResult<T> = Result<T, XmlParserError>;
+// O '= ()' diz ao Rust: "Se eu não disser o que é T, assuma que é 'nada' (unit type)"
+pub type XmlParserResult<T = ()> = Result<T, XmlParserError>;
 
 #[derive(Error, Debug)]
 pub enum XmlParserError {

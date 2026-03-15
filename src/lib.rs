@@ -47,7 +47,6 @@ use std::{
     process::exit,
     str,
     string::ToString,
-    thread,
 };
 
 use chrono::NaiveDate;
@@ -416,15 +415,13 @@ impl DocsFiscais {
             .for_each(|info| info.get_unique_elements());
     }
 
-    /// Sort `DocsFiscais` by key
-    pub fn sort(&mut self) {
-        //self.sort_nfes();
-        //self.sort_ctes();
-
-        let results = thread::scope(|s| {
-            // Sort `Vec<InfoNfe>` by key
-            let thread_sort_nfes = s.spawn(|| {
-                // rayon: Sorts the slice in parallel with a key extraction function.
+    /// Ordena `DocsFiscais` por chaves específicas de forma paralela.
+    pub fn sort(&mut self) -> XmlParserResult {
+        // rayon::join executa as duas closures em paralelo.
+        // Se qualquer uma delas entrar em pânico, o pânico será propagado
+        // de forma segura, mas removemos o pânico manual e o loop de results.
+        rayon::join(
+            || {
                 self.nfes.par_sort_by_key(|info_nfe| {
                     (
                         info_nfe.emitente_cnpj.clone(),
@@ -434,11 +431,8 @@ impl DocsFiscais {
                         info_nfe.n_item,
                     )
                 });
-            });
-
-            // Sort `Vec<InfoCte>` by key
-            let thread_sort_ctes = s.spawn(|| {
-                // rayon: Sorts the slice in parallel with a key extraction function.
+            },
+            || {
                 self.ctes.par_sort_by_key(|info_cte| {
                     (
                         info_cte.emitente_cnpj.clone(),
@@ -455,26 +449,10 @@ impl DocsFiscais {
                         info_cte.cte.clone(),
                     )
                 });
-            });
+            },
+        );
 
-            // Wait for background thread to complete.
-            // Call join() on each handle to make sure all the threads finish.
-            // join() returns immediately when the associated thread completes.
-
-            let threads: Vec<_> = [thread_sort_nfes, thread_sort_ctes]
-                .into_iter()
-                .map(|scoped_join_handle| scoped_join_handle.join())
-                .collect();
-
-            threads
-        });
-
-        results.into_iter().for_each(|result| {
-            if result.is_err() {
-                eprintln!("Error: {result:?}");
-                panic!("thread::scope failed to sort!")
-            }
-        });
+        Ok(())
     }
 
     /// Relacionar KeyDoc com InfoCte
