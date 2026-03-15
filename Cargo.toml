@@ -3,7 +3,7 @@ name = "read_xml"
 authors = ["Claudio F S Rodrigues <claudiofsrodrigues@gmail.com>"]
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.92"
 description = """\
 Read NFe/CTe XML files recursively and write XLSX/CSV files\n
  Author: Claudio F S Rodrigues
