@@ -1,8 +1,9 @@
 use execution_time::ExecutionTime;
 use indicatif::MultiProgress;
 use read_xml::{
-    Arguments, CsvWriter, DocsFiscais, Information, MultiProgressBar, MyResult, OuputFilename,
-    adicionar_eventos_cte, adicionar_eventos_nfe, get_all_info, get_xml_entries, write_xlsx,
+    Arguments, CsvWriter, DocsFiscais, Information, MultiProgressBar, OuputFilename,
+    XmlParserResult, adicionar_eventos_cte, adicionar_eventos_nfe, get_all_info, get_xml_entries,
+    write_xlsx,
 };
 
 use std::thread;
@@ -32,7 +33,7 @@ use walkdir::DirEntry;
     tail -n 10 /tmp/xml
     read_xml -s some_file.xml
 */
-fn main() -> MyResult<()> {
+fn main() -> XmlParserResult<()> {
     let timer = ExecutionTime::start();
     let arguments = Arguments::build()?;
     let xml_entries: Vec<DirEntry> = get_xml_entries(&arguments)?;

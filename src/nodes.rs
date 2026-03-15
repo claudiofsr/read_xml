@@ -1,4 +1,4 @@
-use crate::MyResult;
+use crate::XmlParserResult;
 use quick_xml::{
     events::{BytesStart, Event},
     reader::Reader,
@@ -44,7 +44,7 @@ fn print_results(seen: &HashMap<String, usize>, counter: &usize) {
 }
 
 #[tokio::main]
-pub async fn print_nodes(xml_path: &PathBuf) -> MyResult<()> {
+pub async fn print_nodes(xml_path: &PathBuf) -> XmlParserResult<()> {
     let mut reader = Reader::from_file(xml_path).unwrap();
 
     // path, which works like a stack showing the way from the root to the current node

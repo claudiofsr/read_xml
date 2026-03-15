@@ -43,7 +43,7 @@ pub struct SFA {
 #[cfg(test)]
 mod test_example01 {
     use super::*;
-    use crate::MyResult;
+    use crate::XmlParserResult;
     use quick_xml::de::from_reader;
     use std::io::{BufReader, Cursor};
 
@@ -89,7 +89,7 @@ mod test_example01 {
 
     #[test]
     /// `cargo test -- --show-output deserialize_xml_defects`
-    fn deserialize_xml_defects() -> MyResult<()> {
+    fn deserialize_xml_defects() -> XmlParserResult<()> {
         // Create fake "file"
         let cursor = Cursor::new(XML);
 

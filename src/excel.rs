@@ -10,7 +10,7 @@ use struct_iterable::Iterable;
 
 // use rayon::prelude::*;
 
-use crate::{MyResult, REGEX_ALIQ, REGEX_CENTER, REGEX_DATE, REGEX_VALUE};
+use crate::{REGEX_ALIQ, REGEX_CENTER, REGEX_DATE, REGEX_VALUE, XmlParserResult};
 
 const FONT_SIZE: f64 = 10.0;
 const MAX_NUMBER_OF_ROWS: usize = 1_000_000;
@@ -39,7 +39,7 @@ pub trait InfoExtension {
 /// The lines (or rows) are given by `&[T]`
 ///
 /// <https://docs.rs/rust_xlsxwriter/latest/rust_xlsxwriter/serializer/index.html>
-pub fn write_xlsx<'de, T, P>(lines: &[T], sheet_name: &str, output_file: P) -> MyResult<()>
+pub fn write_xlsx<'de, T, P>(lines: &[T], sheet_name: &str, output_file: P) -> XmlParserResult<()>
 where
     P: AsRef<Path> + std::marker::Copy + std::fmt::Debug,
     T: Serialize + Deserialize<'de> + InfoExtension + Iterable + Sync, // + Send
@@ -51,10 +51,10 @@ where
     // eprintln!("Write XLSX File: {:?}", output_file);
 
     // Each chunk divides the slice &[T] into smaller slices.
-    let worksheets: MyResult<Vec<Worksheet>> = lines
+    let worksheets: XmlParserResult<Vec<Worksheet>> = lines
         .par_chunks(MAX_NUMBER_OF_ROWS) // rayon parallel iterator
         .enumerate()
-        .map(|(index, data)| -> MyResult<Worksheet> {
+        .map(|(index, data)| -> XmlParserResult<Worksheet> {
             //println!("thread id: {:?}", std::thread::current().id());
             let mut new_name = sheet_name.to_string();
 
@@ -89,7 +89,7 @@ where
     Ok(())
 }
 
-fn get_properties() -> MyResult<DocProperties> {
+fn get_properties() -> XmlParserResult<DocProperties> {
     // Add it to the document metadata.
     let properties = DocProperties::new()
         .set_title("Read XML")
@@ -103,7 +103,7 @@ fn get_properties() -> MyResult<DocProperties> {
 }
 
 /// Get Worksheet according to some struct T
-fn get_worksheet<'de, T>(lines: &[T], sheet_name: &str) -> MyResult<Worksheet>
+fn get_worksheet<'de, T>(lines: &[T], sheet_name: &str) -> XmlParserResult<Worksheet>
 where
     T: Serialize + Deserialize<'de> + InfoExtension + Iterable, // + Sync + Send
 {
@@ -182,7 +182,7 @@ fn format_columns_by_names(
     worksheet: &mut Worksheet,
     fmt: &HashMap<&str, Format>,
     column_names: &[&str],
-) -> MyResult<()> {
+) -> XmlParserResult<()> {
     for (index, col_name) in column_names.iter().enumerate() {
         let column_number: u16 = index.try_into()?;
 
@@ -213,7 +213,11 @@ fn format_columns_by_names(
 }
 
 /// Iterate over all data and find the max data width for each column.
-fn auto_fit<'de, T>(worksheet: &mut Worksheet, lines: &[T], column_names: &[&str]) -> MyResult<()>
+fn auto_fit<'de, T>(
+    worksheet: &mut Worksheet,
+    lines: &[T],
+    column_names: &[&str],
+) -> XmlParserResult<()>
 where
     T: Serialize + Deserialize<'de> + InfoExtension + Iterable, // + Sync + Send
 {

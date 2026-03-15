@@ -1,5 +1,6 @@
 mod args;
 mod csv;
+mod error;
 mod example01;
 mod excel;
 mod group_by_hashmap;
@@ -12,6 +13,7 @@ mod xml_structs;
 pub use self::{
     args::*,
     csv::CsvWriter,
+    error::{XmlParserError, XmlParserResult},
     excel::write_xlsx,
     group_by_hashmap::{GetKey, GroupByHashMapExt},
     my_traits::{GetFirst, GroupBy, OptExt},
@@ -55,9 +57,6 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize, Serializer, de::DeserializeOwned};
 use walkdir::{DirEntry, WalkDir};
 use xml_schema_generator::{Options, into_struct};
-
-pub type MyError = Box<dyn std::error::Error + Send + Sync + 'static>;
-pub type MyResult<T> = Result<T, MyError>;
 
 /**
 To serialize a field in a struct, do the following:
@@ -133,7 +132,7 @@ impl MultiProgressBar {
         multi_progress: &MultiProgress,
         name: &str,
         total: usize,
-    ) -> MyResult<ProgressBar> {
+    ) -> XmlParserResult<ProgressBar> {
         let num_char = total.to_string().chars().count();
 
         let template =
@@ -152,25 +151,41 @@ impl MultiProgressBar {
         Ok(progressbar)
     }
 
-    pub fn add_parse_xml(&mut self, multi_progress: &MultiProgress, total: usize) -> MyResult<()> {
+    pub fn add_parse_xml(
+        &mut self,
+        multi_progress: &MultiProgress,
+        total: usize,
+    ) -> XmlParserResult<()> {
         let progressbar = self.add_progressbar(multi_progress, "parse xml", total)?;
         self.show_parse = progressbar;
         Ok(())
     }
 
-    pub fn add_print_xml(&mut self, multi_progress: &MultiProgress, total: usize) -> MyResult<()> {
+    pub fn add_print_xml(
+        &mut self,
+        multi_progress: &MultiProgress,
+        total: usize,
+    ) -> XmlParserResult<()> {
         let progressbar = self.add_progressbar(multi_progress, "print xml", total)?;
         self.show_print = progressbar;
         Ok(())
     }
 
-    pub fn add_print_xls(&mut self, multi_progress: &MultiProgress, total: usize) -> MyResult<()> {
+    pub fn add_print_xls(
+        &mut self,
+        multi_progress: &MultiProgress,
+        total: usize,
+    ) -> XmlParserResult<()> {
         let progressbar = self.add_progressbar(multi_progress, "write xlsx", total)?;
         self.show_excel = progressbar;
         Ok(())
     }
 
-    pub fn add_print_csv(&mut self, multi_progress: &MultiProgress, total: usize) -> MyResult<()> {
+    pub fn add_print_csv(
+        &mut self,
+        multi_progress: &MultiProgress,
+        total: usize,
+    ) -> XmlParserResult<()> {
         let progressbar = self.add_progressbar(multi_progress, "write csv", total)?;
         self.show_csval = progressbar;
         Ok(())
@@ -182,7 +197,7 @@ impl MultiProgressBar {
 /// <https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations>
 pub trait StructExtension {
     /// Parse XML File into struct T
-    fn xml_parse(path: &Path) -> MyResult<Self>
+    fn xml_parse(path: &Path) -> XmlParserResult<Self>
     where
         Self: DeserializeOwned,
     {
@@ -229,7 +244,7 @@ pub trait StructExtension {
     Structure Name: `read_xml::xml_structs::efinanceira::EFinanceira`
     missing field `evtMovOpFin`
     */
-    fn print_error_msgs(err: &MyError, xml_path: &Path) -> Information
+    fn print_error_msgs(err: &XmlParserError, xml_path: &Path) -> Information
     where
         Self: Sized,
     {
@@ -714,7 +729,7 @@ impl DocsFiscais {
 
     // find . \( -iname "ctes-*.txt" \) | xargs wc -l
     // find . \( -iname "ctes-*.txt" -o -iname "nfes-*.txt" \) | xargs wc -l
-    pub fn print_ctes(&self, filename: &str, size: usize) -> MyResult<()> {
+    pub fn print_ctes(&self, filename: &str, size: usize) -> XmlParserResult<()> {
         let chaves: BTreeSet<String> = self.ctes.get_chaves();
         print_chaves(&chaves, filename, size)?;
         Ok(())
@@ -722,19 +737,23 @@ impl DocsFiscais {
 
     // find . \( -iname "nfes-*.txt" \) | xargs wc -l
     // find . \( -iname "ctes-*.txt" -o -iname "nfes-*.txt" \) | xargs wc -l
-    pub fn print_nfes(&self, filename: &str, size: usize) -> MyResult<()> {
+    pub fn print_nfes(&self, filename: &str, size: usize) -> XmlParserResult<()> {
         let chaves: BTreeSet<String> = self.nfes.get_chaves();
         print_chaves(&chaves, filename, size)?;
         Ok(())
     }
 }
 
-pub fn print_chaves(all_keys: &BTreeSet<String>, filename: &str, size: usize) -> MyResult<()> {
+pub fn print_chaves(
+    all_keys: &BTreeSet<String>,
+    filename: &str,
+    size: usize,
+) -> XmlParserResult<()> {
     all_keys
         .to_vec() // unique and ordered keys
         .chunks(size)
         .enumerate()
-        .try_for_each(|(index, chaves)| -> MyResult<()> {
+        .try_for_each(|(index, chaves)| -> XmlParserResult<()> {
             let file_txt = format!("{filename}-{:05}.txt", index + 1);
             let mut output = File::create(file_txt)?;
             for chave in chaves {
@@ -1165,7 +1184,7 @@ fn show_docs(doc_tipo: &str, docs: &[String]) {
 }
 
 /// Get path from arguments or from default (current directory).
-pub fn get_path(opt_path: &Option<PathBuf>) -> MyResult<PathBuf> {
+pub fn get_path(opt_path: &Option<PathBuf>) -> XmlParserResult<PathBuf> {
     let relative_path: PathBuf = match opt_path {
         Some(path) => {
             if std::path::Path::new(&path).try_exists()? {
@@ -1181,7 +1200,7 @@ pub fn get_path(opt_path: &Option<PathBuf>) -> MyResult<PathBuf> {
     Ok(relative_path)
 }
 
-pub fn get_xml_entries(arguments: &Arguments) -> MyResult<Vec<DirEntry>> {
+pub fn get_xml_entries(arguments: &Arguments) -> XmlParserResult<Vec<DirEntry>> {
     let dir_path = get_path(&arguments.path)?;
 
     let max_depth: usize = match arguments.max_depth {
@@ -1258,7 +1277,7 @@ pub fn my_print(buffer: &[u8]) {
     print!("{print_msg}");
 }
 
-pub fn parse_xml_and_print_struct(xml_path: &PathBuf) -> MyResult<()> {
+pub fn parse_xml_and_print_struct(xml_path: &PathBuf) -> XmlParserResult<()> {
     let mut reader = Reader::from_file(xml_path)?;
 
     if let Ok(root) = into_struct(&mut reader) {
@@ -1470,7 +1489,7 @@ mod lib_functions {
 
     #[test]
     /// `cargo test -- --show-output deep_keys_test`
-    fn deep_keys_test() -> MyResult<()> {
+    fn deep_keys_test() -> XmlParserResult<()> {
         let filter = false;
 
         let _xml_cte = PathBuf::from(r"35220998765432101234567894741048320396789012_CTe.xml");
@@ -1498,7 +1517,7 @@ mod lib_functions {
     /// https://docs.rs/xml_schema_generator/latest/xml_schema_generator/
     ///
     /// `cargo test -- --show-output parse_xml_and_get_struct_from_str`
-    fn parse_xml_and_get_struct_from_str() -> MyResult<()> {
+    fn parse_xml_and_get_struct_from_str() -> XmlParserResult<()> {
         use quick_xml::reader::Reader;
         use xml_schema_generator::into_struct;
 
@@ -1520,7 +1539,7 @@ mod lib_functions {
     /// `cargo test -- --show-output parse_xml_and_get_struct_from_file`
     ///
     /// `cargo test -- --show-output parse_xml_and_get_struct_from_file > /tmp/xml_struct.rs`
-    fn parse_xml_and_get_struct_from_file() -> MyResult<()> {
+    fn parse_xml_and_get_struct_from_file() -> XmlParserResult<()> {
         let _xml_cte = PathBuf::from(r"35220998765432101234567894741048320396789012_CTe.xml");
         let _xml_nfe = PathBuf::from(r"35220412345678901234567890123456789012345678_NFe.xml");
 
@@ -1544,7 +1563,7 @@ mod lib_functions {
         `cargo test -- --show-output correlacionar_ctes`
     */
     #[test]
-    fn correlacionar_ctes() -> MyResult<()> {
+    fn correlacionar_ctes() -> XmlParserResult<()> {
         // Start
         let array_a = ["cte_1", "cte_2", "cte_3"];
         let array_b = ["cte_3", "cte_4"];
@@ -1652,7 +1671,7 @@ mod lib_functions {
 
     /// `cargo test -- --show-output expand_cte_nfes`
     #[test]
-    fn expand_cte_nfes() -> MyResult<()> {
+    fn expand_cte_nfes() -> XmlParserResult<()> {
         // Start
         let array_a = ["cte_1", "cte_2", "cte_3"];
         let array_b = ["cte_3", "cte_4"];

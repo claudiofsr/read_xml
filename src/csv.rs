@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::MyResult;
+use crate::XmlParserResult;
 
 // Write CSV File with DELIMITER_CHAR
 // <https://docs.rs/csv/latest/csv/tutorial/index.html>
@@ -37,7 +37,7 @@ impl CsvWriter {
         }
     }
 
-    pub fn write<T>(&self, lines: &[T]) -> MyResult<()>
+    pub fn write<T>(&self, lines: &[T]) -> XmlParserResult<()>
     where
         T: Serialize,
     {
@@ -59,7 +59,7 @@ impl CsvWriter {
     }
 
     // Open a file in write-only mode, returns `io::Result<File>`
-    fn open_file(&self) -> MyResult<fs::File> {
+    fn open_file(&self) -> XmlParserResult<fs::File> {
         fs::File::create(Path::new(&self.output_file)).map_err(|error| {
             eprintln!("Couldn't create {:?}", self.output_file);
             panic!("Error: {error}");

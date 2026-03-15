@@ -3,7 +3,7 @@ use clap_complete::{Generator, Shell, generate};
 use claudiofsr_lib::clear_terminal_screen;
 use std::{io, path::PathBuf, process};
 
-use crate::{MyResult, nodes::print_nodes, parse_xml_and_print_struct};
+use crate::{XmlParserResult, nodes::print_nodes, parse_xml_and_print_struct};
 
 // https://stackoverflow.com/questions/74068168/clap-rs-not-printing-colors-during-help
 fn get_styles() -> clap::builder::Styles {
@@ -209,7 +209,7 @@ pub struct Arguments {
 
 impl Arguments {
     /// Build Arguments struct
-    pub fn build() -> MyResult<Arguments> {
+    pub fn build() -> XmlParserResult<Arguments> {
         let args: Arguments = Arguments::parse();
 
         if let Some(generator) = args.generator {

@@ -734,7 +734,7 @@ pub struct CambioMedJudic {
 #[cfg(test)]
 mod lib_functions {
     use super::*;
-    use crate::MyResult;
+    use crate::XmlParserResult;
     use chrono::NaiveDate;
 
     // cargo test -- --help
@@ -746,7 +746,7 @@ mod lib_functions {
     ///
     /// `cargo test -- --show-output get_struct_field_names`
     #[allow(dead_code)]
-    fn get_struct_field_names() -> MyResult<()> {
+    fn get_struct_field_names() -> XmlParserResult<()> {
         my_macro! {
             pub struct Test {
                 pub id: Option<String>,
@@ -783,7 +783,7 @@ mod lib_functions {
 
     #[test]
     /// `cargo test -- --show-output struct_iterator`
-    fn struct_iterator() -> MyResult<()> {
+    fn struct_iterator() -> XmlParserResult<()> {
         let info_a = InfoEFinanceira {
             id: Some("identificação 01".to_string()),
             cnpj_do_declarante: Some("cnpj 01".to_string()),

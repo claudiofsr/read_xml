@@ -2042,7 +2042,7 @@ pub struct InfCteSupl {
 #[cfg(test)]
 mod test_functions {
     use super::*;
-    use crate::MyResult;
+    use crate::XmlParserResult;
     use std::path::Path;
 
     // cargo test -- --help
@@ -2051,7 +2051,7 @@ mod test_functions {
 
     #[test]
     /// `cargo test -- --show-output deserialize_xml_cte`
-    fn deserialize_xml_cte() -> MyResult<()> {
+    fn deserialize_xml_cte() -> XmlParserResult<()> {
         let mut cte_chaves = Vec::new();
 
         let xmls = [
@@ -2094,7 +2094,7 @@ mod test_functions {
 
     #[test]
     /// `cargo test -- --show-output documentos_anteriores_eletronicos`
-    fn documentos_anteriores_eletronicos() -> MyResult<()> {
+    fn documentos_anteriores_eletronicos() -> XmlParserResult<()> {
         let doc_anterior = IdDocAnt {
             id_doc_ant_ele: None,
             id_doc_ant_pap: None,

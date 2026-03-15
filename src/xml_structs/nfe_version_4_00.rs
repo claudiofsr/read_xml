@@ -1333,7 +1333,7 @@ pub struct InfNfeSupl {
 #[cfg(test)]
 mod test_functions {
     use super::*;
-    use crate::MyResult;
+    use crate::XmlParserResult;
     use std::path::Path;
 
     // cargo test -- --help
@@ -1342,7 +1342,7 @@ mod test_functions {
 
     #[test]
     /// `cargo test -- --show-output deserialize_xml_nfe`
-    fn deserialize_xml_nfe() -> MyResult<()> {
+    fn deserialize_xml_nfe() -> XmlParserResult<()> {
         let mut nfe_chaves = Vec::new();
 
         let xmls = [
