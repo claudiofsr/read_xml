@@ -58,19 +58,10 @@ use serde::{Deserialize, Serialize, Serializer, de::DeserializeOwned};
 use walkdir::{DirEntry, WalkDir};
 use xml_schema_generator::{Options, into_struct};
 
-/**
-To serialize a field in a struct, do the following:
-```ignore
-    #[derive(Debug, Default, Serialize, Clone)]
-    pub struct StructName {
-        field_a: Option<String>,
-        field_b: Option<u32>,
-        #[serde(serialize_with = "serialize_vec_string")]
-        field_c: Vec<String>,
-    }
-```
-<https://serde.rs/impl-serialize.html>
-*/
+/// Serializa um vetor de strings em uma única string separada por vírgulas.
+///
+/// Se o vetor estiver vazio, retorna uma string vazia. Caso contrário,
+/// o resultado será envolto em colchetes: `[item1, item2]`.
 pub fn serialize_vec_string<S>(vec_string: &[String], serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
@@ -83,10 +74,20 @@ where
     }
 }
 
+/// Representa os caminhos de saída para os diferentes tipos de documentos processados.
 pub struct OuputFilename {
     pub ctes: PathBuf,
     pub nfes: PathBuf,
     pub efin: PathBuf,
+}
+
+impl OuputFilename {
+    /// Define a extensão de arquivo para todos os caminhos de saída (ex: "xlsx", "csv").
+    pub fn set_extension(&mut self, extension: &str) {
+        self.ctes.set_extension(extension);
+        self.nfes.set_extension(extension);
+        self.efin.set_extension(extension);
+    }
 }
 
 impl Default for OuputFilename {
@@ -96,14 +97,6 @@ impl Default for OuputFilename {
             nfes: "read_xml-nfes".into(),
             efin: "read_xml-efinanceiras".into(),
         }
-    }
-}
-
-impl OuputFilename {
-    pub fn set_extension(&mut self, extension: &str) {
-        self.ctes.set_extension(extension);
-        self.nfes.set_extension(extension);
-        self.efin.set_extension(extension);
     }
 }
 
@@ -192,24 +185,19 @@ impl MultiProgressBar {
     }
 }
 
-/// Add some methods
-///
-/// <https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations>
+/// Extensão para estruturas que podem ser parseadas a partir de XML.
 pub trait StructExtension {
-    /// Parse XML File into struct T
+    /// Tenta realizar o parse de um arquivo XML para a estrutura `Self`.
     fn xml_parse(path: &Path) -> XmlParserResult<Self>
     where
         Self: DeserializeOwned,
     {
-        // Attempts to open a file in read-only mode.
         let file = File::open(path)?;
-        let mut bufreader: BufReader<File> = BufReader::new(file);
-
-        // Try to deserialize the XML file into struct T
+        let mut bufreader = BufReader::new(file);
         Ok(from_reader(&mut bufreader)?)
     }
 
-    /// struct T to Information
+    /// Converte o arquivo XML no caminho fornecido para um enum [Information].
     fn struct_to_info(xml_path: &Path, arguments: &Arguments) -> Information
     where
         Self: DeserializeOwned,
@@ -416,11 +404,11 @@ impl DocsFiscais {
         .sum()
     }
 
-    // https://blog.logrocket.com/using-cow-rust-efficient-memory-utilization/
+    /// Remove duplicatas de Ctes e Nfes de forma paralela.
     pub fn unique(&mut self) {
-        thread::scope(|s| {
-            s.spawn(|| self.nfes = self.nfes.get_unique_id());
-            s.spawn(|| self.ctes = self.ctes.get_unique_id());
+        rayon::scope(|s| {
+            s.spawn(|_| self.nfes = self.nfes.get_unique_id());
+            s.spawn(|_| self.ctes = self.ctes.get_unique_id());
         });
 
         self.ctes

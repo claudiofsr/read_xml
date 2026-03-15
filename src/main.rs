@@ -6,10 +6,9 @@ use read_xml::{
     write_xlsx,
 };
 
-use std::thread;
 use walkdir::DirEntry;
 
-/**
+/*
     clear && cargo run -- -tcvm 1 > /tmp/xml
     cargo b -r && cargo install --path=.
     cargo run -- -h
@@ -33,6 +32,11 @@ use walkdir::DirEntry;
     tail -n 10 /tmp/xml
     read_xml -s some_file.xml
 */
+
+/// Ponto de entrada principal para o processador de XML.
+///
+/// Realiza a varredura de diretórios, parsing de documentos fiscais eletrônicos
+/// (NFe, CTe) e exportação para Excel/CSV.
 fn main() -> XmlParserResult<()> {
     let timer = ExecutionTime::start();
     let arguments = Arguments::build()?;
@@ -43,31 +47,33 @@ fn main() -> XmlParserResult<()> {
     multi_progressbar.add_parse_xml(&multi_progress, xml_entries.len())?;
     multi_progressbar.add_print_xml(&multi_progress, xml_entries.len())?;
 
+    // Processamento funcional e paralelo para extração de informações
     let infos: Vec<Information> = get_all_info(&xml_entries, &mut multi_progressbar, &arguments);
 
     // Add informations to DocsFiscais
     let mut docs_fiscais = DocsFiscais::new();
 
-    for (count, info) in (1u64..).zip(infos.iter()) {
+    // Agregação de resultados
+    infos.iter().enumerate().for_each(|(i, info)| {
         info.add_info_to_docs_fiscais(&mut docs_fiscais);
         if arguments.verbose {
-            println!("xml {count}: {info:#?}\n");
+            println!("xml {}: {info:#?}\n", i + 1);
         }
         multi_progressbar.show_print.inc(1);
-    }
+    });
 
     multi_progressbar.show_print.finish();
 
-    // Takes two closures and potentially runs them in parallel.
-    thread::scope(|s| {
-        s.spawn(|| {
+    // Uso do Rayon Scope para tarefas que compartilham dados locais
+    rayon::scope(|s| {
+        s.spawn(|_| {
             adicionar_eventos_nfe(
                 &mut docs_fiscais.nfes,
                 &docs_fiscais.eventos_nfe,
                 &docs_fiscais.cancel_nfe,
             )
         });
-        s.spawn(|| {
+        s.spawn(|_| {
             adicionar_eventos_cte(
                 &mut docs_fiscais.ctes,
                 &docs_fiscais.eventos_cte,
@@ -82,28 +88,30 @@ fn main() -> XmlParserResult<()> {
 
     // Imprimir em arquivos com no máximo N linhas as chaves encontradas.
     if let Some(size) = arguments.linhas {
-        docs_fiscais.print_ctes("ctes", size.try_into()?)?;
-        docs_fiscais.print_nfes("nfes", size.try_into()?)?;
+        let size_u = size.try_into()?;
+        docs_fiscais.print_ctes("ctes", size_u)?;
+        docs_fiscais.print_nfes("nfes", size_u)?;
     }
 
     let mut output = OuputFilename::default();
 
-    // By default, after parsing xml files, write the xlsx files.
+    // Exportação XLSX
     if !arguments.avoid {
         output.set_extension("xlsx");
         multi_progressbar.add_print_xls(&multi_progress, docs_fiscais.total())?;
-        thread::scope(|s| {
-            s.spawn(|| {
+
+        rayon::scope(|s| {
+            s.spawn(|_| {
                 if write_xlsx(&docs_fiscais.ctes, "CTes", &output.ctes).is_ok() {
                     multi_progressbar.show_excel.inc(1);
                 }
             });
-            s.spawn(|| {
+            s.spawn(|_| {
                 if write_xlsx(&docs_fiscais.nfes, "NFes", &output.nfes).is_ok() {
                     multi_progressbar.show_excel.inc(1);
                 }
             });
-            s.spawn(|| {
+            s.spawn(|_| {
                 if write_xlsx(&docs_fiscais.efinanceiras, "eFinanceiras", &output.efin).is_ok() {
                     multi_progressbar.show_excel.inc(1);
                 }
@@ -112,6 +120,7 @@ fn main() -> XmlParserResult<()> {
         multi_progressbar.show_excel.finish();
     }
 
+    /*
     // Optionally, after parsing xml files, write the csv files.
     if arguments.csv {
         output.set_extension("csv");
@@ -137,6 +146,40 @@ fn main() -> XmlParserResult<()> {
             });
         });
         multi_progressbar.show_csval.finish();
+    }
+    */
+
+    // Opcionalmente, após o parsing, escreve os arquivos CSV.
+    if arguments.csv {
+        output.set_extension("csv");
+        multi_progressbar.add_print_csv(&multi_progress, docs_fiscais.total())?;
+
+        // 1. Definimos uma função genérica interna.
+        // T: Serialize é necessário para que o CsvWriter funcione.
+        fn export_csv<T: serde::Serialize>(
+            path: &std::path::Path,
+            data: &[T],
+            delimiter: char,
+            pb: &indicatif::ProgressBar,
+        ) {
+            let writer = CsvWriter::new(path.to_path_buf(), delimiter);
+            // Tratamento de erro funcional básico
+            if writer.write(data).is_ok() {
+                pb.inc(1);
+            }
+        }
+
+        let delimiter = arguments.delimiter;
+        let pb = &multi_progressbar.show_csval;
+
+        // 2. Usamos rayon::scope para processamento paralelo
+        rayon::scope(|s| {
+            s.spawn(|_| export_csv(&output.ctes, &docs_fiscais.ctes, delimiter, pb));
+            s.spawn(|_| export_csv(&output.nfes, &docs_fiscais.nfes, delimiter, pb));
+            s.spawn(|_| export_csv(&output.efin, &docs_fiscais.efinanceiras, delimiter, pb));
+        });
+
+        pb.finish();
     }
 
     if arguments.time {
