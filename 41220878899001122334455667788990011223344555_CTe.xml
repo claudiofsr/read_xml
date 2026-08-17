@@ -1,0 +1,204 @@
+<cteProc versao="3.00" xmlns="http://www.portalfiscal.inf.br/cte">
+    <CTe xmlns="http://www.portalfiscal.inf.br/cte">
+        <infCte versao="3.00" Id="CTe12345678901234567890123456789012345678901234">
+            <ide>
+                <cUF>35</cUF>
+                <cCT>12345678</cCT>
+                <CFOP>5352</CFOP>
+                <natOp>PRESTACAO DE SERVICOS DE TRANSPORTE DENTRO DO ESTADO.</natOp>
+                <mod>57</mod>
+                <serie>1</serie>
+                <nCT>12345</nCT>
+                <dhEmi>2022-10-07T11:12:30-03:00</dhEmi>
+                <tpImp>1</tpImp>
+                <tpEmis>1</tpEmis>
+                <cDV>7</cDV>
+                <tpAmb>1</tpAmb>
+                <tpCTe>0</tpCTe>
+                <procEmi>0</procEmi>
+                <verProc>1.0</verProc>
+                <cMunEnv>3531803</cMunEnv>
+                <xMunEnv>MONTE MOR</xMunEnv>
+                <UFEnv>SP</UFEnv>
+                <modal>01</modal>
+                <tpServ>0</tpServ>
+                <cMunIni>3556701</cMunIni>
+                <xMunIni>Vinhedo</xMunIni>
+                <UFIni>SP</UFIni>
+                <cMunFim>3519071</cMunFim>
+                <xMunFim>HORTOLANDIA</xMunFim>
+                <UFFim>SP</UFFim>
+                <retira>1</retira>
+                <indIEToma>1</indIEToma>
+                <toma3>
+                    <toma>3</toma>
+                </toma3>
+            </ide>
+            <compl>
+                <xEmi>EMISSOR FICTICIO</xEmi>
+                <Entrega>
+                    <semData>
+                        <tpPer>0</tpPer>
+                    </semData>
+                    <semHora>
+                        <tpHor>0</tpHor>
+                    </semHora>
+                </Entrega>
+                <origCalc>Vinhedo</origCalc>
+                <destCalc>HORTOLANDIA</destCalc>
+                <xObs>DECR. N. 12.345 DE 29 DE DEZEMBRO DE 2020 | ;| Motorista: NOME DO MOTORISTA FANTASIA. CPF: 123.456.789-01;| Veiculo: AAA-0000 - RNTRC: 123456789 - RENAVAM: 12345678901</xObs>
+                <ObsCont xCampo="PLACA">
+                    <xTexto>AAA0000</xTexto>
+                </ObsCont>
+                <ObsCont xCampo="CPFMOTORISTA">
+                    <xTexto>12345678901</xTexto>
+                </ObsCont>
+                <ObsCont xCampo="RESPSEG">
+                    <xTexto>12.345.678/0001-90</xTexto>
+                </ObsCont>
+            </compl>
+            <emit>
+                <CNPJ>12345678000190</CNPJ>
+                <IE>123456789012</IE>
+                <xNome>TRANSPORTADORA ALFA LTDA</xNome>
+                <xFant>TRANSPORTADORA ALFA</xFant>
+                <enderEmit>
+                    <xLgr>RUA DAS FLORES</xLgr>
+                    <nro>100</nro>
+                    <xCpl>SALA 1</xCpl>
+                    <xBairro>CENTRO</xBairro>
+                    <cMun>3531803</cMun>
+                    <xMun>MONTE MOR</xMun>
+                    <CEP>13190000</CEP>
+                    <UF>SP</UF>
+                    <fone>1234567890</fone>
+                </enderEmit>
+            </emit>
+            <rem>
+                <CNPJ>23456789000101</CNPJ>
+                <IE>234567890123</IE>
+                <xNome>REMETENTE BETA S.A.</xNome>
+                <xFant>REMETENTE BETA S.A.</xFant>
+                <fone>2345678901</fone>
+                <enderReme>
+                    <xLgr>Avenida Principal</xLgr>
+                    <nro>200</nro>
+                    <xBairro>Distrito Industrial</xBairro>
+                    <cMun>3556701</cMun>
+                    <xMun>Vinhedo</xMun>
+                    <CEP>13288006</CEP>
+                    <UF>SP</UF>
+                    <cPais>1058</cPais>
+                    <xPais>BRASIL</xPais>
+                </enderReme>
+            </rem>
+            <dest>
+                <CNPJ>34567890000112</CNPJ>
+                <IE>345678901234</IE>
+                <xNome>DESTINATARIO GAMA LTDA</xNome>
+                <fone>3456789012</fone>
+                <enderDest>
+                    <xLgr>Rua dos Viajantes</xLgr>
+                    <nro>300</nro>
+                    <xBairro>Bairro das Nacoes</xBairro>
+                    <cMun>3519071</cMun>
+                    <xMun>HORTOLANDIA</xMun>
+                    <CEP>13184889</CEP>
+                    <UF>SP</UF>
+                    <cPais>1058</cPais>
+                    <xPais>BRASIL</xPais>
+                </enderDest>
+            </dest>
+            <vPrest>
+                <vTPrest>123.45</vTPrest>
+                <vRec>123.45</vRec>
+                <Comp>
+                    <xNome>Frete Peso</xNome>
+                    <vComp>100.00</vComp>
+                </Comp>
+            </vPrest>
+            <imp>
+                <ICMS>
+                    <ICMS00>
+                        <CST>00</CST>
+                        <vBC>123.45</vBC>
+                        <pICMS>12.00</pICMS>
+                        <vICMS>14.81</vICMS>
+                    </ICMS00>
+                </ICMS>
+            </imp>
+            <infCTeNorm>
+                <infCarga>
+                    <vCarga>123456.78</vCarga>
+                    <proPred>SALINACOX</proPred>
+                    <xOutCat>UN</xOutCat>
+                    <infQ>
+                        <cUnid>01</cUnid>
+                        <tpMed>Peso Bruto</tpMed>
+                        <qCarga>1000.0000</qCarga>
+                    </infQ>
+                    <infQ>
+                        <cUnid>03</cUnid>
+                        <tpMed>Qtde</tpMed>
+                        <qCarga>100.0000</qCarga>
+                    </infQ>
+                    <vCargaAverb>123456.78</vCargaAverb>
+                </infCarga>
+                <infDoc>
+                    <infNFe>
+                        <chave>12345678901234567890123456789012345678901234</chave>
+                    </infNFe>
+                    <infNFe>
+                        <chave>23456789012345678901234567890123456789012345</chave>
+                    </infNFe>
+                    <infNFe>
+                        <chave>34567890123456789012345678901234567890123456</chave>
+                    </infNFe>
+                    <infNFe>
+                        <chave>45678901234567890123456789012345678901234567</chave>
+                    </infNFe>
+                </infDoc>
+                <infModal versaoModal="3.00">
+                    <rodo>
+                        <RNTRC>12345678</RNTRC>
+                    </rodo>
+                </infModal>
+            </infCTeNorm>
+        </infCte>
+        <infCTeSupl>
+            <qrCodCTe><![CDATA[https://nfe.fazenda.sp.gov.br/CTeConsulta/qrCode?chCTe=12345678901234567890123456789012345678901234&tpAmb=1]]></qrCodCTe>
+        </infCTeSupl>
+        <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+            <SignedInfo>
+                <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />
+                <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" />
+                <Reference URI="#CTe12345678901234567890123456789012345678901234">
+                    <Transforms>
+                        <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" />
+                        <Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />
+                    </Transforms>
+                    <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
+                    <DigestValue>a1b2c3d4e5f6g7h8i9j0</DigestValue>
+                </Reference>
+            </SignedInfo>
+            <SignatureValue>k1l2m3n4o5p6q7r8s9t0</SignatureValue>
+            <KeyInfo>
+                <X509Data>
+                    <X509Certificate>u1v2w3x4y5z6a7b8c9d0</X509Certificate>
+                </X509Data>
+            </KeyInfo>
+        </Signature>
+    </CTe>
+    <protCTe versao="3.00">
+        <infProt>
+            <tpAmb>1</tpAmb>
+            <verAplic>SP-CTe-2022-08-17-1</verAplic>
+            <chCTe>12345678901234567890123456789012345678905555</chCTe>
+            <dhRecbto>2022-10-07T11:27:23-03:00</dhRecbto>
+            <nProt>123456789012345</nProt>
+            <digVal>a1b2c3d4e5f6g7h8i9j0</digVal>
+            <cStat>100</cStat>
+            <xMotivo>Autorizado o uso do CT-e</xMotivo>
+        </infProt>
+    </protCTe>
+</cteProc>
