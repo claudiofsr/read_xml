@@ -276,13 +276,15 @@ where
     if !column_names.is_empty() {
         let total_cols = column_names.len();
 
-        // Divide as colunas de forma contígua em dois blocos a partir da posição da "Chave"
-        let (grouped_columns, details_columns) = column_names.split_at(
-            column_names
-                .iter()
-                .position(|name| name.contains("Chave do Documento Fiscal"))
-                .unwrap_or(total_cols),
-        );
+        let split_idx = column_names
+            .iter()
+            .position(|name| name.contains("Chave do Documento Fiscal"))
+            .unwrap_or(total_cols);
+
+        // Divisão segura: se o índice falhar, faz fallback para (tudo, vazio)
+        let (grouped_columns, details_columns) = column_names
+            .split_at_checked(split_idx)
+            .unwrap_or((column_names, &[]));
 
         let mut col_offset = 0;
         let mut table_index = 0;
