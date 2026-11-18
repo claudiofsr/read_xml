@@ -1,8 +1,5 @@
-use crate::XmlParserResult;
-use quick_xml::{
-    events::{BytesStart, Event},
-    reader::Reader,
-};
+use crate::{XmlParserResult, XmlPathExt};
+use quick_xml::events::{BytesStart, Event};
 use std::{collections::HashMap, path::PathBuf};
 
 // Autor: Adrian Macal
@@ -23,7 +20,7 @@ fn process_attributes(seen: &mut HashMap<String, usize>, path: &mut Vec<String>,
     for attribute in node.attributes() {
         path.push(format!(
             "{:?}",
-            String::from_utf8(attribute.unwrap().key.0.to_vec()).unwrap()
+            attribute.unwrap().key.into_inner().to_string()
         ));
         increment_counters(seen, path.join(" / "));
         path.pop();
@@ -45,7 +42,7 @@ fn print_results(seen: &HashMap<String, usize>, counter: &usize) {
 
 #[tokio::main]
 pub async fn print_nodes(xml_path: &PathBuf) -> XmlParserResult<()> {
-    let mut reader = Reader::from_file(xml_path).unwrap();
+    let mut reader = xml_path.open_xml_reader()?;
 
     // path, which works like a stack showing the way from the root to the current node
     // seen, which is a dictionary that keeps track of all the paths we have already come across
@@ -61,10 +58,7 @@ pub async fn print_nodes(xml_path: &PathBuf) -> XmlParserResult<()> {
             Err(error) => break println!("{error}"),
             Ok(Event::Eof) => break println!("Completed."),
             Ok(Event::Start(node)) => {
-                path.push(format!(
-                    "{:?}",
-                    String::from_utf8(node.name().0.to_vec()).unwrap()
-                ));
+                path.push(format!("{:?}", node.name().into_inner()));
                 increment_counters(&mut seen, path.join(" / "));
                 process_attributes(&mut seen, &mut path, node);
             }
@@ -73,15 +67,12 @@ pub async fn print_nodes(xml_path: &PathBuf) -> XmlParserResult<()> {
             }
             Ok(Event::Text(e)) => {
                 //path.push("@text".into());
-                path.push(e.decode().expect("Invalid UTF-8!").into_owned());
+                path.push(e.into_inner().into_owned());
                 increment_counters(&mut seen, path.join(" / "));
                 path.pop();
             }
             Ok(Event::Empty(node)) => {
-                path.push(format!(
-                    "{:?}",
-                    String::from_utf8(node.name().0.to_vec()).unwrap()
-                ));
+                path.push(format!("{:?}", node.name().into_inner()));
                 increment_counters(&mut seen, path.join(" / "));
                 process_attributes(&mut seen, &mut path, node);
                 path.pop();

@@ -5,18 +5,15 @@
 
 use chrono::NaiveDate;
 use claudiofsr_lib::StrExtension;
-use quick_xml::reader::Reader;
 use serde::Serializer;
 use std::{
-    fs::File,
-    io::BufReader,
     path::{Path, PathBuf},
     str,
 };
 use walkdir::{DirEntry, WalkDir};
 use xml_schema_generator::{Options, into_struct};
 
-use crate::{Arguments, XmlParserError, XmlParserResult};
+use crate::{Arguments, XmlParserError, XmlParserResult, XmlPathExt};
 
 /// Representa os caminhos de saída para os arquivos gerados (planilhas e CSVs).
 #[derive(Debug, Clone)]
@@ -143,11 +140,7 @@ pub fn get_xml_entries(arguments: &Arguments) -> XmlParserResult<Vec<DirEntry>> 
 
 /// Imprime a estrutura Rust gerada a partir da inferência de um arquivo XML.
 pub fn parse_xml_and_print_struct(xml_path: &Path) -> XmlParserResult<()> {
-    let file = File::open(xml_path).map_err(|err| XmlParserError::IoContext {
-        source: err,
-        path: xml_path.to_path_buf(),
-    })?;
-    let mut reader = Reader::from_reader(BufReader::new(file));
+    let mut reader = xml_path.open_xml_reader()?;
 
     if let Ok(root) = into_struct(&mut reader) {
         // Options: quick_xml_de(), serde_xml_rs(), derive()

@@ -2,6 +2,8 @@ use clap::ValueEnum;
 use rust_xlsxwriter::{Workbook, Worksheet};
 use serde::{Deserialize, Serialize};
 
+use crate::XmlParserResult;
+
 /// Estratégias de consumo de memória para a geração do documento Excel.
 #[derive(Default, ValueEnum, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ExcelMemoryMode {
@@ -35,11 +37,16 @@ impl ExcelMemoryMode {
     ///
     /// O parâmetro de tempo de vida `'a` garante que a referência mútua devolvida permaneça
     /// válida respeitando a posse interna do `Workbook`.
-    pub fn add_worksheet_to_workbook(self, workbook: &mut Workbook) -> &mut Worksheet {
-        match self {
-            Self::Constant => workbook.add_worksheet_with_constant_memory(),
-            Self::Low => workbook.add_worksheet_with_low_memory(),
+    pub fn add_worksheet_to_workbook(
+        self,
+        workbook: &mut Workbook,
+    ) -> XmlParserResult<&mut Worksheet> {
+        let worksheet = match self {
+            Self::Constant => workbook.add_worksheet_with_constant_memory()?,
+            Self::Low => workbook.add_worksheet_with_low_memory()?,
             Self::Memory => workbook.add_worksheet(),
-        }
+        };
+
+        Ok(worksheet)
     }
 }

@@ -10,6 +10,7 @@ use serde_aux::prelude::serde_introspect;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
+use crate::XmlPathExt;
 use crate::xml_structs::{
     agente, aut_xml, cancelamento, cancelamento_cte, cancelamento_nfe, cobranca, cte,
     cte_detalhamento, cte_evento, efinanceira, endereco, entrega, impostos, integrated_dev_env,
@@ -298,20 +299,20 @@ fn adicionar_tags_comuns(expected: &mut HashSet<&'static str>) {
 
 /// Detecta dinamicamente a tag de abertura raiz do XML de modo resiliente.
 fn detect_root_tag(xml_path: &Path) -> Option<String> {
-    let mut reader = Reader::from_file(xml_path).ok()?;
+    let mut reader = xml_path.open_xml_reader().ok()?;
     let mut buf = Vec::new();
     loop {
         match reader.read_event_into(&mut buf) {
             Ok(Event::Start(e)) | Ok(Event::Empty(e)) => {
-                let tag_name = String::from_utf8_lossy(e.name().as_ref()).into_owned();
+                let tag_name = e.name().into_inner();
                 let clean_tag = tag_name
                     .split(':')
                     .next_back()
-                    .unwrap_or(&tag_name)
+                    .unwrap_or(tag_name)
                     .to_string();
                 return Some(clean_tag);
             }
-            Ok(Event::Eof) => break,
+            Ok(Event::Eof) | Err(_) => break,
             _ => {}
         }
         buf.clear();
@@ -403,9 +404,8 @@ pub fn obter_tags_nao_mapeadas(xml_path: &Path) -> Option<HashSet<String>> {
     loop {
         match reader.read_event_into(&mut buf) {
             Ok(Event::Start(e)) | Ok(Event::Empty(e)) => {
-                let tag_name = String::from_utf8_lossy(e.name().as_ref()).into_owned();
-                let clean_tag = tag_name.split(':').next_back().unwrap_or(&tag_name);
-
+                let tag_name = e.name().into_inner();
+                let clean_tag = tag_name.split(':').next_back().unwrap_or(tag_name);
                 if !expected_tags.contains(clean_tag)
                     && clean_tag != "nfeProc"
                     && clean_tag != "cteProc"

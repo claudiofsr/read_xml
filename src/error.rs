@@ -1,3 +1,4 @@
+use rust_xlsxwriter::XlsxError;
 use std::path::PathBuf;
 use thiserror::Error;
 
@@ -17,14 +18,11 @@ pub enum XmlParserError {
 
     /// Erro genérico vindo da biblioteca de Excel (conversões, inserções)
     #[error("Erro ao gerar planilha Excel: {0}")]
-    Excel(#[from] rust_xlsxwriter::XlsxError),
+    Excel(#[from] XlsxError),
 
     /// Erro específico com contexto do arquivo físico de destino do Excel
     #[error("Falha ao salvar planilha Excel em {path}: {source}")]
-    ExcelWrite {
-        source: rust_xlsxwriter::XlsxError,
-        path: PathBuf,
-    },
+    ExcelWrite { source: XlsxError, path: PathBuf },
 
     /// Erro vindo do crate de Excel ou CSV
     #[error("Erro ao exportar dados: {0}")]

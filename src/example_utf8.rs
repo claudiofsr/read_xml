@@ -101,12 +101,19 @@ mod test_example01 {
         // Now, try to deserialize the XML we have in file_content
         let defect_list: DEFECTS = from_reader(&mut reader)?;
 
+        // use quick_xml::de::from_str;
+        // let defect_list: DEFECTS = from_str(XML)?;
+
         // Assuming the unwrap above didn't blow up, we should get a count here
         println!("defect_list.defects.len(): {}", defect_list.defects.len());
 
         println!("defect_list: {defect_list:#?}");
 
         //assert_eq!(valid, results);
+
+        assert_eq!(defect_list.defects.len(), 2);
+        assert!(defect_list.defects[0].PATH.SFA.is_none());
+        assert!(defect_list.defects[1].PATH.SFA.is_some());
 
         Ok(())
     }

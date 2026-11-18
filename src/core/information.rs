@@ -3,15 +3,15 @@
 //! Define a taxonomia unificada de documentos (`Information`) e a trait de abstração
 //! de desserialização (`StructExtension`).
 
-use quick_xml::{Reader, de::from_reader, events::Event};
+use quick_xml::events::Event;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use std::{fs::File, io::BufReader, path::Path};
+use std::path::Path;
 use walkdir::DirEntry;
 
 use crate::{
     Arguments, DocsFiscais, MultiProgressBar, REGEX_ERROR_DUPLICATE_FIELD,
-    REGEX_ERROR_MISSING_FIELD, REGEX_FIELDS, XmlParserError, XmlParserResult,
+    REGEX_ERROR_MISSING_FIELD, REGEX_FIELDS, XmlParserError, XmlParserResult, XmlPathExt,
     xml_structs::{
         cancelamento_cte::{InfoCteCancel, ProcCancCte},
         cancelamento_nfe::{InfoNfeCancel, ProcCancNfe},
@@ -98,12 +98,7 @@ impl Information {
 pub trait StructExtension: Sized + DeserializeOwned {
     /// Realiza a abertura do arquivo XML e desserialização com buffer otimizado de 64 KB.
     fn xml_parse(path: &Path) -> XmlParserResult<Self> {
-        let file = File::open(path).map_err(|err| XmlParserError::IoContext {
-            source: err,
-            path: path.to_path_buf(),
-        })?;
-        let mut bufreader = BufReader::with_capacity(64 * 1024, file);
-        Ok(from_reader(&mut bufreader)?)
+        path.parse_xml_with_capacity(64 * 1024)
     }
 
     /// Tenta o parse e diagnostica anomalias de schema em caso de falha estrutural.
@@ -164,28 +159,20 @@ pub trait StructExtension: Sized + DeserializeOwned {
 /// Inspeciona os primeiros bytes do XML para identificar a tag raiz sem carregar
 /// ou desserializar o documento inteiro em memória.
 pub fn peek_root_tag(path: &Path) -> XmlParserResult<Option<String>> {
-    let file = File::open(path).map_err(|err| XmlParserError::IoContext {
-        source: err,
-        path: path.to_path_buf(),
-    })?;
-
-    let mut reader = Reader::from_reader(BufReader::with_capacity(2048, file));
+    let mut reader = path.open_xml_reader_with_capacity(2048)?;
     let mut buf = Vec::with_capacity(512);
 
     loop {
         match reader.read_event_into(&mut buf) {
             Ok(Event::Start(e)) | Ok(Event::Empty(e)) => {
-                let name = e.name();
-                // Cow<str> emprestado sem alocar heap para UTF-8 válido
-                let raw_name = String::from_utf8_lossy(name.as_ref());
-
+                let raw_name = e.name().into_inner();
                 // Remove namespace se houver (ex: "nfe:nfeProc" -> "nfeProc")
                 let clean_name = raw_name
-                    .rsplit_once(':')
-                    .map(|(_, name)| name)
-                    .unwrap_or(&raw_name);
-
-                return Ok(Some(clean_name.to_string()));
+                    .split(':')
+                    .next_back()
+                    .unwrap_or(raw_name)
+                    .to_string();
+                return Ok(Some(clean_name));
             }
             Ok(Event::Eof) => break,
             Err(err) => return Err(XmlParserError::Xml(err)),

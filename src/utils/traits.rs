@@ -1,7 +1,18 @@
 use chrono::{Datelike, NaiveDate};
 use claudiofsr_lib::StrExtension;
+use quick_xml::{DeError, Reader, de::from_reader, encoding::DecodingReader, events::Event};
 use rayon::prelude::*;
-use std::{cmp::Ord, collections::HashMap, hash::Hash};
+use serde::de::DeserializeOwned;
+use std::{
+    cmp::Ord,
+    collections::HashMap,
+    fs::File,
+    hash::Hash,
+    io::{self, BufRead, BufReader},
+    path::Path,
+};
+
+use crate::{XmlParserError, XmlParserResult};
 
 pub trait GetFirst {
     /**
@@ -246,6 +257,130 @@ where
                 });
                 hashmap_acc
             })
+    }
+}
+
+// ---------------------------------------------------------------------------//
+
+pub type XmlDecodingReader<R = BufReader<File>> = DecodingReader<R>;
+pub type XmlEventReader<R = BufReader<File>> = Reader<DecodingReader<R>>;
+
+/// Extensão para qualquer fonte `BufRead` (`&[u8]`, `BufReader<File>`, entradas de `.zip`, etc.),
+/// detectando automaticamente BOM (`UTF-8`/`UTF-16`) e declaração `<?xml ... encoding="..."?>`.
+pub trait XmlBufReadExt: BufRead + Sized {
+    /// Envolve o stream em um `DecodingReader` configurado com o encoding do XML.
+    fn into_decoding_reader(mut self) -> io::Result<DecodingReader<Self>> {
+        let enc = {
+            // Espia os bytes iniciais do buffer sem consumi-los.
+            let peek = self.fill_buf()?;
+            let mut probe = Reader::from_reader(peek);
+            let mut buf = Vec::new();
+
+            loop {
+                match probe.read_event_into(&mut buf) {
+                    Ok(Event::Decl(_)) | Ok(Event::Start(_)) | Ok(Event::Empty(_))
+                    | Ok(Event::Eof) | Err(_) => break probe.encoding(),
+                    _ => {}
+                }
+                buf.clear();
+            }
+        };
+
+        let mut decoder = DecodingReader::new(self);
+        // Só sobrescreve quando a declaração XML indica explicitamente um encoding não-UTF-8;
+        // para UTF-8 e UTF-16 (via BOM/padrão), o próprio `DecodingReader` já resolve.
+        if enc.name() != "UTF-8" {
+            decoder.set_encoding(enc);
+        }
+
+        Ok(decoder)
+    }
+
+    /// Envolve o stream em um `quick_xml::Reader` pronto para leitura por eventos.
+    fn into_xml_reader(self) -> io::Result<Reader<DecodingReader<Self>>> {
+        Ok(Reader::from_reader(self.into_decoding_reader()?))
+    }
+}
+
+impl<R: BufRead> XmlBufReadExt for R {}
+
+/// Extensão ergonômica para caminhos de arquivo (`&Path`, `PathBuf`, `&str`).
+pub trait XmlPathExt {
+    fn open_decoding_reader(&self) -> XmlParserResult<XmlDecodingReader>;
+    fn open_decoding_reader_with_capacity(
+        &self,
+        capacity: usize,
+    ) -> XmlParserResult<XmlDecodingReader>;
+
+    fn open_xml_reader(&self) -> XmlParserResult<XmlEventReader>;
+    fn open_xml_reader_with_capacity(&self, capacity: usize) -> XmlParserResult<XmlEventReader>;
+
+    /// Desserializa um arquivo XML com buffer padrão de 64 KB,
+    /// detecção automática de encoding e fallback seguro para Windows-1252.
+    fn parse_xml<T: DeserializeOwned>(&self) -> XmlParserResult<T>;
+
+    /// Desserializa um arquivo XML com capacidade de buffer customizada,
+    /// detecção automática de encoding e fallback seguro para Windows-1252.
+    fn parse_xml_with_capacity<T: DeserializeOwned>(&self, capacity: usize) -> XmlParserResult<T>;
+}
+
+impl<P: AsRef<Path> + ?Sized> XmlPathExt for P {
+    fn open_decoding_reader(&self) -> XmlParserResult<XmlDecodingReader> {
+        self.open_decoding_reader_with_capacity(8 * 1024)
+    }
+
+    fn open_decoding_reader_with_capacity(
+        &self,
+        capacity: usize,
+    ) -> XmlParserResult<XmlDecodingReader> {
+        let path = self.as_ref();
+        let file = File::open(path).map_err(|err| XmlParserError::IoContext {
+            source: err,
+            path: path.to_path_buf(),
+        })?;
+
+        let buf_reader = BufReader::with_capacity(capacity, file);
+        buf_reader
+            .into_decoding_reader()
+            .map_err(|err| XmlParserError::IoContext {
+                source: err,
+                path: path.to_path_buf(),
+            })
+    }
+
+    fn open_xml_reader(&self) -> XmlParserResult<XmlEventReader> {
+        Ok(Reader::from_reader(self.open_decoding_reader()?))
+    }
+
+    fn open_xml_reader_with_capacity(&self, capacity: usize) -> XmlParserResult<XmlEventReader> {
+        Ok(Reader::from_reader(
+            self.open_decoding_reader_with_capacity(capacity)?,
+        ))
+    }
+
+    fn parse_xml<T: DeserializeOwned>(&self) -> XmlParserResult<T> {
+        self.parse_xml_with_capacity(64 * 1024)
+    }
+
+    fn parse_xml_with_capacity<T: DeserializeOwned>(&self, capacity: usize) -> XmlParserResult<T> {
+        let decoder = self.open_decoding_reader_with_capacity(capacity)?;
+
+        match from_reader(decoder) {
+            Ok(parsed) => Ok(parsed),
+            Err(DeError::InvalidXml(quick_xml::Error::Encoding(_))) => {
+                // Fallback seguro apenas quando o XML omitiu/mentiu o encoding (ex.: legado Windows-1252)
+                let path = self.as_ref();
+                let file = File::open(path).map_err(|err| XmlParserError::IoContext {
+                    source: err,
+                    path: path.to_path_buf(),
+                })?;
+
+                let mut decoder = DecodingReader::new(BufReader::with_capacity(capacity, file));
+                decoder.set_encoding(encoding_rs::WINDOWS_1252);
+                Ok(from_reader(decoder)?)
+            }
+            Err(err) => Err(err.into()),
+        }
     }
 }
 

@@ -3,7 +3,7 @@ name = "read_xml"
 authors = ["Claudio F S Rodrigues <claudiofsrodrigues@gmail.com>"]
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.97"
+rust-version = "1.100"
 description = """\
 Read NFe/CTe XML files recursively and write XLSX/CSV files\n
  Author: Claudio F S Rodrigues
@@ -23,10 +23,10 @@ keywords = [
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cc = { version = "1.4", features = ["parallel"] }
 clap_complete = "4.6"
 claudiofsr_lib = "0.20"
 csv = "1.4"
+encoding_rs = "0.8" 
 execution-time = "0.3"
 itertools = "0.15"
 rayon = "1.12"
@@ -59,7 +59,7 @@ features = [
 ]
 
 [dependencies.quick-xml]
-version = "0.41.0"
+version = "0.42.0"
 features = [
     "async-tokio",
     "escape-html",
@@ -69,7 +69,7 @@ features = [
 
 [dependencies.rust_xlsxwriter]
 # git = "https://github.com/jmcnamara/rust_xlsxwriter.git"
-version = "0.98"
+version = "0.102"
 features = [
     "constant_memory",
     "chrono",
@@ -91,9 +91,9 @@ features = [
 ]
 
 [dependencies.xml_schema_generator]
-# version = "0.6.24"
-git = "https://github.com/Thomblin/xml_schema_generator.git"
-rev = "07dff6ad"
+version = "0.6.25"
+#git = "https://github.com/Thomblin/xml_schema_generator.git"
+#rev = "07dff6ad"
 # path = "/home/claudio/.cargo/registry/src/index.crates.io-6f17d22bba15001f/xml_schema_generator-0.6.7b"
 features = [
     "env_logger"

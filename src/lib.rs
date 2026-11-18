@@ -69,7 +69,9 @@ src/
 mod cli;
 mod core;
 mod error;
-mod example01;
+mod example_iso_8859_1;
+mod example_utf8;
+mod example_windows_1252;
 mod export;
 mod utils;
 mod xml_structs;

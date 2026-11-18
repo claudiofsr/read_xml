@@ -122,7 +122,7 @@ where
                 name
             ));
 
-            let worksheet = memory_mode.add_worksheet_to_workbook(&mut workbook);
+            let worksheet = memory_mode.add_worksheet_to_workbook(&mut workbook)?;
             worksheet.set_name(&name)?;
             populate_worksheet(worksheet, chunk)?;
         }
