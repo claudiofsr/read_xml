@@ -273,23 +273,41 @@ pub trait XmlBufReadExt: BufRead + Sized {
         let enc = {
             // Espia os bytes iniciais do buffer sem consumi-los.
             let peek = self.fill_buf()?;
-            let mut probe = Reader::from_reader(peek);
-            let mut buf = Vec::new();
+            let trimmed = peek
+                .strip_prefix(b"\xEF\xBB\xBF")
+                .unwrap_or(peek)
+                .trim_ascii_start();
 
-            loop {
-                match probe.read_event_into(&mut buf) {
-                    Ok(Event::Decl(_)) | Ok(Event::Start(_)) | Ok(Event::Empty(_))
-                    | Ok(Event::Eof) | Err(_) => break probe.encoding(),
-                    _ => {}
+            if trimmed.starts_with(b"<?xml") {
+                // Uma declaração <?xml ...?> válida cabe com folga nos primeiros 4 KB
+                // e é sempre o 1º evento a partir de `trimmed`.
+                let head = &trimmed[..trimmed.len().min(4096)];
+                let mut probe = Reader::from_reader(head);
+                let mut buf = Vec::with_capacity(64);
+
+                if let Ok(Event::Decl(decl)) = probe.read_event_into(&mut buf) {
+                    if let Some(Ok(label)) = decl.encoding()
+                        && encoding_rs::Encoding::for_label(label.as_bytes()).is_none()
+                    {
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidData,
+                            format!("Encoding XML desconhecido ou não suportado: {label}"),
+                        ));
+                    }
+                    Some(probe.encoding())
+                } else {
+                    None
                 }
-                buf.clear();
+            } else {
+                None
             }
         };
 
         let mut decoder = DecodingReader::new(self);
+
         // Só sobrescreve quando a declaração XML indica explicitamente um encoding não-UTF-8;
         // para UTF-8 e UTF-16 (via BOM/padrão), o próprio `DecodingReader` já resolve.
-        if enc.name() != "UTF-8" {
+        if let Some(enc) = enc.filter(|e| e.name() != "UTF-8") {
             decoder.set_encoding(enc);
         }
 
@@ -582,5 +600,208 @@ mod tests_opt_ext {
         assert!(valor9.to_float64().is_none());
         assert!(valor10.to_float64().is_none());
         assert!(valor11.to_float64().is_none());
+    }
+}
+
+#[cfg(test)]
+mod tests_xml_edge_cases {
+    use super::*;
+    use quick_xml::de::from_reader;
+    use quick_xml::events::Event;
+    use serde::Deserialize;
+    use std::fs;
+    use std::path::PathBuf;
+
+    #[derive(Debug, PartialEq, Deserialize)]
+    #[serde(rename_all = "PascalCase")]
+    struct DummyDoc {
+        nome: String,
+    }
+
+    struct TempXmlFile(PathBuf);
+
+    impl TempXmlFile {
+        fn new(name: &str, bytes: &[u8]) -> std::io::Result<Self> {
+            let path = std::env::temp_dir().join(format!("read_xml_{}_{name}", std::process::id()));
+            fs::write(&path, bytes)?;
+            Ok(Self(path))
+        }
+    }
+
+    impl Drop for TempXmlFile {
+        fn drop(&mut self) {
+            let _ = fs::remove_file(&self.0);
+        }
+    }
+
+    fn to_utf16_le_with_bom(s: &str) -> Vec<u8> {
+        let mut bytes = vec![0xFF, 0xFE];
+        for unit in s.encode_utf16() {
+            bytes.extend_from_slice(&unit.to_le_bytes());
+        }
+        bytes
+    }
+
+    fn to_utf16_be_with_bom(s: &str) -> Vec<u8> {
+        let mut bytes = vec![0xFE, 0xFF];
+        for unit in s.encode_utf16() {
+            bytes.extend_from_slice(&unit.to_be_bytes());
+        }
+        bytes
+    }
+
+    #[test]
+    /// Arquivo e slice completamente vazios (0 bytes) não devem causar panic.
+    fn edge_empty_file_and_bytes() -> XmlParserResult<()> {
+        let empty: &[u8] = b"";
+
+        // Modo eventos: deve retornar Eof imediatamente
+        let mut reader = empty.into_xml_reader()?;
+        let mut buf = Vec::new();
+        assert!(matches!(reader.read_event_into(&mut buf)?, Event::Eof));
+
+        // Modo Serde (bytes): deve retornar Err
+        let res_bytes: Result<DummyDoc, _> = from_reader(empty.into_decoding_reader()?);
+        assert!(res_bytes.is_err());
+
+        // Modo Serde (arquivo em disco): deve retornar Err
+        let tmp = TempXmlFile::new("edge_empty.xml", empty)?;
+        assert!(tmp.0.parse_xml::<DummyDoc>().is_err());
+        Ok(())
+    }
+
+    #[test]
+    /// Arquivo contendo apenas espaços, tabs e quebras de linha.
+    fn edge_whitespace_only() -> XmlParserResult<()> {
+        let ws: &[u8] = b"   \n\t\r\n   ";
+
+        let res: Result<DummyDoc, _> = from_reader(ws.into_decoding_reader()?);
+        assert!(res.is_err());
+
+        let mut reader = ws.into_xml_reader()?;
+        let mut buf = Vec::new();
+        // Pula Event::Text de espaços e chega em Eof sem erro nem panic
+        loop {
+            match reader.read_event_into(&mut buf)? {
+                Event::Eof => break,
+                _ => buf.clear(),
+            }
+        }
+        Ok(())
+    }
+
+    #[test]
+    /// Caminho inexistente deve retornar XmlParserError::IoContext sem panic.
+    fn edge_nonexistent_file() {
+        let fake_path = Path::new("/caminho/que/nao/existe/xml_fantasma_12345.xml");
+        let res = fake_path.parse_xml::<DummyDoc>();
+
+        assert!(matches!(res, Err(XmlParserError::IoContext { .. })));
+    }
+
+    #[test]
+    /// Texto comum que não é XML.
+    fn edge_plain_text_not_xml() -> XmlParserResult<()> {
+        let txt: &[u8] = b"Isso definitivamente nao e um XML valido.";
+        let res: Result<DummyDoc, _> = from_reader(txt.into_decoding_reader()?);
+        assert!(res.is_err());
+
+        let tmp = TempXmlFile::new("edge_plain_text.xml", txt)?;
+        assert!(tmp.0.parse_xml::<DummyDoc>().is_err());
+        Ok(())
+    }
+
+    #[test]
+    /// Arquivo binário (ex.: assinatura de PNG / bytes nulos) disfarçado de .xml.
+    fn edge_binary_garbage_disguised_as_xml() -> XmlParserResult<()> {
+        let fake_png: &[u8] = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\xFF\xFE\xFD\x00\x81\x8D";
+
+        let res: Result<DummyDoc, _> = from_reader(fake_png.into_decoding_reader()?);
+        assert!(res.is_err());
+
+        let tmp = TempXmlFile::new("edge_fake_png.xml", fake_png)?;
+        assert!(tmp.0.parse_xml::<DummyDoc>().is_err());
+        Ok(())
+    }
+
+    #[test]
+    /// Declaração <?xml ... cortada no meio (sem fechamento '?>').
+    fn edge_truncated_xml_declaration() -> XmlParserResult<()> {
+        let truncated_decl: &[u8] = b"<?xml version=\"1.0\" encoding=\"ISO-8859-1";
+
+        let res: Result<DummyDoc, _> = from_reader(truncated_decl.into_decoding_reader()?);
+        assert!(res.is_err());
+        Ok(())
+    }
+
+    #[test]
+    /// XML ISO-8859-1 truncado no meio do conteúdo (sem fechar as tags).
+    fn edge_truncated_body_iso_8859_1() -> XmlParserResult<()> {
+        let truncated_body: &[u8] =
+            b"<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><Doc><Nome>Jo\xE3o";
+
+        let res: Result<DummyDoc, _> = from_reader(truncated_body.into_decoding_reader()?);
+        assert!(res.is_err());
+        Ok(())
+    }
+
+    #[test]
+    /// Tags de abertura e fechamento incompatíveis (</Outro> fechando <Nome>).
+    fn edge_mismatched_tags() -> XmlParserResult<()> {
+        let mismatched: &[u8] = b"<Doc><Nome>Teste</Outro></Doc>";
+
+        let res: Result<DummyDoc, _> = from_reader(mismatched.into_decoding_reader()?);
+        assert!(res.is_err());
+        Ok(())
+    }
+
+    #[test]
+    /// Encoding inventado/absurdo deve ser rejeitado (inclusive pelo fallback em arquivo).
+    fn edge_absurd_unknown_encoding() -> XmlParserResult<()> {
+        let absurd: &[u8] =
+            b"<?xml version=\"1.0\" encoding=\"Klingon-9000\"?><Doc><Nome>Oi</Nome></Doc>";
+
+        assert!(absurd.into_decoding_reader().is_err());
+
+        let tmp = TempXmlFile::new("edge_absurd_enc.xml", absurd)?;
+        assert!(tmp.0.parse_xml::<DummyDoc>().is_err());
+        Ok(())
+    }
+
+    #[test]
+    /// UTF-8 com BOM (\xEF\xBB\xBF) e espaços antes de <?xml ...?>.
+    fn edge_utf8_with_bom_and_leading_whitespace() -> XmlParserResult<()> {
+        let xml_bom: &[u8] =
+            b"\xEF\xBB\xBF  \n<?xml version=\"1.0\" encoding=\"UTF-8\"?><Doc><Nome>A\xC3\xA7\xC3\xA3o</Nome></Doc>";
+
+        let doc: DummyDoc = from_reader(xml_bom.into_decoding_reader()?)?;
+        assert_eq!(doc.nome, "Ação");
+        Ok(())
+    }
+
+    #[test]
+    /// Fast-path da micro-otimização: XML UTF-8 começando direto na tag raiz (sem <?xml ...?>).
+    fn edge_utf8_without_xml_decl_fast_path() -> XmlParserResult<()> {
+        let xml_no_decl: &[u8] = b"  \n<Doc><Nome>Sem cabe\xC3\xA7alho</Nome></Doc>";
+
+        let doc: DummyDoc = from_reader(xml_no_decl.into_decoding_reader()?)?;
+        assert_eq!(doc.nome, "Sem cabeçalho");
+        Ok(())
+    }
+
+    #[test]
+    /// UTF-16LE e UTF-16BE com BOM devem funcionar via into_decoding_reader e parse_xml.
+    fn edge_utf16_le_and_be_with_bom() -> XmlParserResult<()> {
+        let raw = r#"<?xml version="1.0" encoding="UTF-16"?><Doc><Nome>Ação UTF-16 €</Nome></Doc>"#;
+
+        let le_bytes = to_utf16_le_with_bom(raw);
+        let doc_le: DummyDoc = from_reader(le_bytes.as_slice().into_decoding_reader()?)?;
+        assert_eq!(doc_le.nome, "Ação UTF-16 €");
+
+        let be_bytes = to_utf16_be_with_bom(raw);
+        let tmp_be = TempXmlFile::new("edge_utf16_be.xml", &be_bytes)?;
+        let doc_be: DummyDoc = tmp_be.0.parse_xml()?;
+        assert_eq!(doc_be.nome, "Ação UTF-16 €");
+        Ok(())
     }
 }
