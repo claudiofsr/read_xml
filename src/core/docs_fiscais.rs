@@ -9,12 +9,13 @@ use std::{
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     fs::File,
     io::Write,
+    path::PathBuf,
 };
 
 use crate::{
-    Arguments, Correlacoes, GraphExtension, Information, KeyDoc, UniqueIdentification,
-    XmlParserResult, get_ctes_grouped_by_payer, get_nfes_grouped_by_ncm_description,
-    get_total_value_ctes, get_total_value_nfes,
+    Arguments, Correlacoes, GraphExtension, Information, KeyDoc, SanitizeSliceExt,
+    UniqueIdentification, XmlParserResult, get_ctes_grouped_by_payer,
+    get_nfes_grouped_by_ncm_description, get_total_value_ctes, get_total_value_nfes,
     xml_structs::{
         cancelamento_cte::InfoCteCancel, cancelamento_nfe::InfoNfeCancel, cte::InfoCte,
         cte_evento::InfoCteEvento, efinanceira::InfoEFinanceira, nfe::InfoNfe,
@@ -69,6 +70,7 @@ impl DocsFiscais {
         rayon::scope(|s| {
             s.spawn(|_| self.nfes = self.nfes.get_unique_id());
             s.spawn(|_| self.ctes = self.ctes.get_unique_id());
+            s.spawn(|_| self.efinanceiras = self.efinanceiras.get_unique_id());
         });
 
         self.ctes
@@ -78,8 +80,8 @@ impl DocsFiscais {
 
     /// Ordena os documentos fiscais em paralelo com base em critérios contábeis estáveis.
     pub fn sort(&mut self) {
-        rayon::join(
-            || {
+        rayon::scope(|s| {
+            s.spawn(|_| {
                 self.nfes.par_sort_by_key(|info_nfe| {
                     (
                         info_nfe.emitente_cnpj.clone(),
@@ -89,8 +91,8 @@ impl DocsFiscais {
                         info_nfe.n_item,
                     )
                 });
-            },
-            || {
+            });
+            s.spawn(|_| {
                 self.ctes.par_sort_by_key(|info_cte| {
                     (
                         info_cte.emitente_cnpj.clone(),
@@ -107,24 +109,51 @@ impl DocsFiscais {
                         info_cte.cte.clone(),
                     )
                 });
-            },
-        );
+            });
+            s.spawn(|_| {
+                self.efinanceiras.par_sort_by_key(|info_ef| {
+                    (
+                        info_ef.cnpj_do_declarante.clone(),
+                        info_ef.ni_do_declarado.clone(),
+                        info_ef.ano_mes_caixa,
+                        info_ef.num_conta.clone(),
+                        info_ef.id.clone(),
+                    )
+                });
+            });
+        });
     }
 
-    /// Relacionar KeyDoc com InfoCte
-    ///
-    /// keydoc.chave = cte
-    fn groupby_cte_info(&self) -> BTreeMap<KeyDoc, Vec<InfoCte>> {
-        self.ctes
+    /// Remove quebras de linha e tabulações em paralelo (comportamento padrão).
+    pub fn strip_line_breaks(&mut self) {
+        rayon::scope(|s| {
+            s.spawn(|_| self.ctes.strip_line_breaks_par());
+            s.spawn(|_| self.nfes.strip_line_breaks_par());
+            s.spawn(|_| self.efinanceiras.strip_line_breaks_par());
+        });
+    }
+
+    /// Colapsa múltiplos espaços consecutivos para um único espaço em paralelo.
+    pub fn clean_spaces(&mut self) {
+        rayon::scope(|s| {
+            s.spawn(|_| self.ctes.clean_spaces_par());
+            s.spawn(|_| self.nfes.clean_spaces_par());
+            s.spawn(|_| self.efinanceiras.clean_spaces_par());
+        });
+    }
+
+    /// Agrupa registros em paralelo utilizando uma função extratora de chave [`KeyDoc`].
+    fn groupby_info<T, F>(items: &[T], key_fn: F) -> BTreeMap<KeyDoc, Vec<T>>
+    where
+        T: Clone + Send + Sync,
+        F: Fn(&T) -> Option<KeyDoc> + Sync,
+    {
+        items
             .par_iter()
-            .flat_map(|info| {
-                info.cte
-                    .as_ref()
-                    .map(|cte| (KeyDoc::new(cte, info.is_valid()), info.clone()))
-            })
+            .filter_map(|info| key_fn(info).map(|key| (key, info.clone())))
             .fold(
                 BTreeMap::new,
-                |mut acc: BTreeMap<KeyDoc, Vec<InfoCte>>, (k, v)| {
+                |mut acc: BTreeMap<KeyDoc, Vec<T>>, (k, v)| {
                     acc.entry(k).or_default().push(v);
                     acc
                 },
@@ -137,125 +166,49 @@ impl DocsFiscais {
             })
     }
 
-    /// Relacionar KeyDoc com InfoNfe
-    ///
-    /// keydoc.chave = nfe
-    ///
-    /// 1 NFe pode conter vários InfoNfe, tal que cada InfoNfe contém informação de 1 Item.
-    fn groupby_nfe_info(&self) -> BTreeMap<KeyDoc, Vec<InfoNfe>> {
-        self.nfes
-            .par_iter()
-            .flat_map(|info| {
-                info.nfe.as_ref().map(|nfe| {
-                    // (key, value)
-                    (KeyDoc::new(nfe, info.is_valid()), info.clone())
-                })
-            })
-            .fold(
-                BTreeMap::new,
-                |mut acc: BTreeMap<KeyDoc, Vec<InfoNfe>>, (k, v)| {
-                    acc.entry(k).or_default().push(v);
-                    acc
-                },
-            )
-            .reduce(BTreeMap::new, |mut acc, map| {
-                for (k, v) in map {
-                    acc.entry(k).or_default().extend(v);
-                }
-                acc
-            })
-    }
-
-    fn get_ctes_nao_encontrados(
+    /// Coleta chaves referenciadas pelos CT-es que não constam (nem válidas nem canceladas) no índice informado.
+    fn get_chaves_nao_encontradas<V: Sync, I, F>(
         &self,
-        cte_info: &BTreeMap<KeyDoc, Vec<InfoCte>>,
-    ) -> HashSet<String> {
+        docs_info: &BTreeMap<KeyDoc, V>,
+        extractor: F,
+    ) -> HashSet<String>
+    where
+        I: IntoIterator<Item = String>,
+        F: Fn(&InfoCte) -> I + Sync,
+    {
         self.ctes
             .par_iter()
             .flat_map(|info| {
-                info.get_correlated_ctes()
+                extractor(info)
                     .into_iter()
-                    .filter(|cte| {
-                        let keydoc_val = KeyDoc::new(cte, true); // chave válida
-                        let keydoc_can = KeyDoc::new(cte, false); // chave cancelada
-                        !cte_info.contains_key(&keydoc_val) && !cte_info.contains_key(&keydoc_can)
+                    .filter(|chave| {
+                        !docs_info.contains_key(&KeyDoc::new(chave, true))
+                            && !docs_info.contains_key(&KeyDoc::new(chave, false))
                     })
                     .collect::<Vec<String>>()
             })
             .collect()
     }
 
-    fn get_nfes_nao_encontrados(
+    /// Mapeia cada CT-e para o conjunto de chaves correlacionadas válidas presentes em `docs_info`.
+    fn groupby_cte_correlated_valid<V: Sync, I, F>(
         &self,
-        nfe_info: &BTreeMap<KeyDoc, Vec<InfoNfe>>,
-    ) -> HashSet<String> {
+        docs_info: &BTreeMap<KeyDoc, V>,
+        extractor: F,
+    ) -> HashMap<String, HashSet<String>>
+    where
+        I: IntoIterator<Item = String>,
+        F: Fn(&InfoCte) -> I + Sync,
+    {
         self.ctes
             .par_iter()
-            .flat_map(|info| {
-                info.get_correlated_nfes()
+            .filter_map(|info| {
+                let cte_key = info.cte.as_ref()?;
+                let validos: HashSet<String> = extractor(info)
                     .into_iter()
-                    .filter(|nfe| {
-                        let keydoc_val = KeyDoc::new(nfe, true); // chave válida
-                        let keydoc_can = KeyDoc::new(nfe, false); // chave cancelada
-                        !nfe_info.contains_key(&keydoc_val) && !nfe_info.contains_key(&keydoc_can)
-                    })
-                    .collect::<Vec<String>>()
-            })
-            .collect()
-    }
-
-    /// CTe relacionado a CTes
-    ///
-    /// HashMap<chave_cte, HashSet<chave_cte>
-    fn groupby_cte_ctes(
-        &self,
-        cte_info: &BTreeMap<KeyDoc, Vec<InfoCte>>,
-    ) -> HashMap<String, HashSet<String>> {
-        self.ctes
-            .par_iter()
-            .filter_map(|info| {
-                if let Some(cte_a) = &info.cte {
-                    let ctes: HashSet<String> = info
-                        .get_correlated_ctes()
-                        .into_iter()
-                        .filter(|cte_complementar| {
-                            let chave_valida = KeyDoc::new(cte_complementar, true);
-                            cte_complementar != cte_a && cte_info.contains_key(&chave_valida)
-                        })
-                        .collect();
-
-                    Some((cte_a.clone(), ctes))
-                } else {
-                    None
-                }
-            })
-            .collect()
-    }
-
-    /// CTe relacionado a NFes
-    ///
-    /// HashMap<chave_cte, HashSet<chave_nfe>
-    fn groupby_cte_nfes(
-        &self,
-        nfe_info: &BTreeMap<KeyDoc, Vec<InfoNfe>>,
-    ) -> HashMap<String, HashSet<String>> {
-        self.ctes
-            .par_iter()
-            .filter_map(|info| {
-                if let Some(cte) = &info.cte {
-                    let nfes: HashSet<String> = info
-                        .get_correlated_nfes()
-                        .into_iter()
-                        .filter(|nfe| {
-                            let chave_valida = KeyDoc::new(nfe, true);
-                            nfe != cte && nfe_info.contains_key(&chave_valida)
-                        })
-                        .collect();
-
-                    Some((cte.clone(), nfes))
-                } else {
-                    None
-                }
+                    .filter(|doc| doc != cte_key && docs_info.contains_key(&KeyDoc::new(doc, true)))
+                    .collect();
+                Some((cte_key.clone(), validos))
             })
             .collect()
     }
@@ -267,11 +220,24 @@ impl DocsFiscais {
     /// NFe contém vários itens
     pub fn get_correlations(&mut self, arguments: &Arguments) {
         // 1. Primeira etapa: Agrupamento inicial
-        let (cte_info, nfe_info) =
-            rayon::join(|| self.groupby_cte_info(), || self.groupby_nfe_info());
+        let (cte_info, nfe_info) = rayon::join(
+            || {
+                Self::groupby_info(&self.ctes, |info| {
+                    info.cte
+                        .as_ref()
+                        .map(|cte| KeyDoc::new(cte, info.is_valid()))
+                })
+            },
+            || {
+                Self::groupby_info(&self.nfes, |info| {
+                    info.nfe
+                        .as_ref()
+                        .map(|nfe| KeyDoc::new(nfe, info.is_valid()))
+                })
+            },
+        );
 
-        // 2. Segunda etapa: Cruzamento de dados
-        // Aqui usamos rayon::scope pois temos 4 tarefas independentes.
+        // 2. Segunda etapa: Cruzamento de dados em paralelo
         let mut ctes_nao_encontrados: HashSet<String> = HashSet::new();
         let mut nfes_nao_encontrados: HashSet<String> = HashSet::new();
 
@@ -279,10 +245,22 @@ impl DocsFiscais {
         let mut cte_nfes: HashMap<String, HashSet<String>> = HashMap::new();
 
         rayon::scope(|s| {
-            s.spawn(|_| ctes_nao_encontrados = self.get_ctes_nao_encontrados(&cte_info));
-            s.spawn(|_| nfes_nao_encontrados = self.get_nfes_nao_encontrados(&nfe_info));
-            s.spawn(|_| cte_ctes = self.groupby_cte_ctes(&cte_info));
-            s.spawn(|_| cte_nfes = self.groupby_cte_nfes(&nfe_info));
+            s.spawn(|_| {
+                ctes_nao_encontrados =
+                    self.get_chaves_nao_encontradas(&cte_info, InfoCte::get_correlated_ctes);
+            });
+            s.spawn(|_| {
+                nfes_nao_encontrados =
+                    self.get_chaves_nao_encontradas(&nfe_info, InfoCte::get_correlated_nfes);
+            });
+            s.spawn(|_| {
+                cte_ctes =
+                    self.groupby_cte_correlated_valid(&cte_info, InfoCte::get_correlated_ctes);
+            });
+            s.spawn(|_| {
+                cte_nfes =
+                    self.groupby_cte_correlated_valid(&nfe_info, InfoCte::get_correlated_nfes);
+            });
         });
 
         // 3. Processamento Sequencial de Lógica de Negócio
@@ -296,8 +274,8 @@ impl DocsFiscais {
         cte_nfes.expand_nfes(&cte_ctes);
 
         // Filtros e Inversão de Mapas
-        let cte_nfes = cte_nfes.filtrar_nfes_validos(&nfe_info);
-        let nfe_ctes = cte_nfes.get_nfe_ctes().filtrar_ctes_validos(&cte_info);
+        let cte_nfes = cte_nfes.filtrar_validos(&nfe_info);
+        let nfe_ctes = cte_nfes.get_nfe_ctes().filtrar_validos(&cte_info);
 
         let correlacoes = Correlacoes {
             cte_info,
@@ -350,32 +328,45 @@ impl DocsFiscais {
     }
 
     /// Salva as chaves de CT-e apuradas em arquivos particionados de texto.
-    pub fn print_ctes(&self, filename: &str, size: usize) -> XmlParserResult<()> {
+    pub fn print_ctes(
+        &self,
+        filename: &str,
+        size: usize,
+    ) -> XmlParserResult<Vec<(PathBuf, usize)>> {
         let chaves = self.ctes.get_chaves();
         print_chaves(&chaves, filename, size)
     }
 
     /// Salva as chaves de NF-e apuradas em arquivos particionados de texto.
-    pub fn print_nfes(&self, filename: &str, size: usize) -> XmlParserResult<()> {
+    pub fn print_nfes(
+        &self,
+        filename: &str,
+        size: usize,
+    ) -> XmlParserResult<Vec<(PathBuf, usize)>> {
         let chaves = self.nfes.get_chaves();
         print_chaves(&chaves, filename, size)
     }
 }
 
-/// Salva um conjunto de chaves únicas ordenadas em blocos de até `size` linhas.
+/// Salva um conjunto de chaves únicas ordenadas em blocos de até `size` linhas,
+/// retornando os caminhos gerados e a quantidade de chaves gravadas em cada arquivo.
 pub fn print_chaves(
     all_keys: &BTreeSet<String>,
     filename: &str,
     size: usize,
-) -> XmlParserResult<()> {
+) -> XmlParserResult<Vec<(PathBuf, usize)>> {
+    let mut generated = Vec::new();
     for (index, chaves) in all_keys.iter().chunks(size).into_iter().enumerate() {
-        let file_txt = format!("{filename}-{:05}.txt", index + 1);
-        let mut output = File::create(file_txt)?;
+        let file_txt = PathBuf::from(format!("{filename}-{:05}.txt", index + 1));
+        let mut output = File::create(&file_txt)?;
+        let mut count = 0usize;
         for chave in chaves {
             writeln!(output, "{chave}")?;
+            count += 1;
         }
+        generated.push((file_txt, count));
     }
-    Ok(())
+    Ok(generated)
 }
 
 pub fn print_cte_nfes(correlacoes: &Correlacoes, arguments: &Arguments) {

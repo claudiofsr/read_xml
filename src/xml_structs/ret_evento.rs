@@ -72,6 +72,10 @@ pub struct RetInfEvento {
     #[serde(rename = "CNPJDest", default)]
     pub cnpjdest: Option<String>,
 
+    /// CPF do Destinatário associado ao documento fiscal (`CPFDest`).
+    #[serde(rename = "CPFDest", default)]
+    pub cpf_dest: Option<String>,
+
     /// Data e hora de registro oficial do evento no banco de dados governamental.
     #[serde(rename = "dhRegEvento", default)]
     pub dh_reg_evento: Option<String>,

@@ -4,18 +4,18 @@
 
 use indicatif::{ProgressBar, ProgressStyle};
 use quick_xml::events::Event;
-use quick_xml::reader::Reader;
 use rayon::prelude::*;
 use serde_aux::prelude::serde_introspect;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::path::{Path, PathBuf};
+use std::sync::LazyLock;
 
-use crate::XmlPathExt;
 use crate::xml_structs::{
     agente, aut_xml, cancelamento, cancelamento_cte, cancelamento_nfe, cobranca, cte,
     cte_detalhamento, cte_evento, efinanceira, endereco, entrega, impostos, integrated_dev_env,
     nfe, nfe_detalhamento, nfe_evento, pagamento, ret_evento,
 };
+use crate::{XmlPathExt, peek_root_tag};
 
 /// Coleta de forma estática todas as tags XML esperadas pelo domínio de NF-e.
 fn get_nfe_expected_tags() -> HashSet<&'static str> {
@@ -33,6 +33,7 @@ fn get_nfe_expected_tags() -> HashSet<&'static str> {
     expected.extend(serde_introspect::<nfe_detalhamento::Comb>());
     expected.extend(serde_introspect::<nfe_detalhamento::Compra>());
     expected.extend(serde_introspect::<nfe_detalhamento::Deduc>());
+    expected.extend(serde_introspect::<nfe_detalhamento::DFeReferenciado>());
     expected.extend(serde_introspect::<nfe_detalhamento::DetExport>());
     expected.extend(serde_introspect::<nfe_detalhamento::Detalhes>());
     expected.extend(serde_introspect::<nfe_detalhamento::Di>());
@@ -68,6 +69,7 @@ fn get_nfe_expected_tags() -> HashSet<&'static str> {
     expected.extend(serde_introspect::<nfe_evento::InfEvento>());
     expected.extend(serde_introspect::<nfe_evento::InfoNfeEvento>());
     expected.extend(serde_introspect::<nfe_evento::Mdfe>());
+    expected.extend(serde_introspect::<nfe_evento::ModalRodov>());
     expected.extend(serde_introspect::<nfe_evento::ProcEventoNfe>());
     expected.extend(serde_introspect::<cancelamento_nfe::InfoNfeCancel>());
     expected.extend(serde_introspect::<cancelamento_nfe::ProcCancNfe>());
@@ -89,7 +91,18 @@ fn get_cte_expected_tags() -> HashSet<&'static str> {
     expected.extend(serde_introspect::<cte::InfoCte>());
     expected.extend(serde_introspect::<cte::ProtCte>());
     expected.extend(serde_introspect::<cte::VPrest>());
+    expected.extend(serde_introspect::<cte_detalhamento::Aereo>());
+    expected.extend(serde_introspect::<cte_detalhamento::Aquav>());
     expected.extend(serde_introspect::<cte_detalhamento::Compl>());
+    expected.extend(serde_introspect::<cte_detalhamento::DetCont>());
+    expected.extend(serde_introspect::<cte_detalhamento::EmiOcc>());
+    expected.extend(serde_introspect::<cte_detalhamento::InfSeg>());
+    expected.extend(serde_introspect::<cte_detalhamento::LacreAquav>());
+    expected.extend(serde_introspect::<cte_detalhamento::Multimodal>());
+    expected.extend(serde_introspect::<cte_detalhamento::NatCarga>());
+    expected.extend(serde_introspect::<cte_detalhamento::Occ>());
+    expected.extend(serde_introspect::<cte_detalhamento::SegMultimodal>());
+    expected.extend(serde_introspect::<cte_detalhamento::TarifaAereo>());
     expected.extend(serde_introspect::<cte_detalhamento::CteLacUnidCarga>());
     expected.extend(serde_introspect::<cte_detalhamento::DocAnt>());
     expected.extend(serde_introspect::<cte_detalhamento::EmiDocAnt>());
@@ -140,13 +153,26 @@ fn get_cte_expected_tags() -> HashSet<&'static str> {
     expected.extend(serde_introspect::<cte_detalhamento::UnidadeTransp>());
     expected.extend(serde_introspect::<cte_detalhamento::VeicNovos>());
     expected.extend(serde_introspect::<cte_evento::DetEvento>());
+    expected.extend(serde_introspect::<cte_evento::EvCancCeCte>());
     expected.extend(serde_introspect::<cte_evento::EvCancCte>());
+    expected.extend(serde_introspect::<cte_evento::EvCancCteComplementar>());
+    expected.extend(serde_introspect::<cte_evento::EvCancPrestDesacordo>());
+    expected.extend(serde_introspect::<cte_evento::EvEpecCte>());
+    expected.extend(serde_introspect::<cte_evento::EvGtveAutorizadoCteOs>());
+    expected.extend(serde_introspect::<cte_evento::EvCancInsucessoEntregaCte>());
+    expected.extend(serde_introspect::<cte_evento::EvIeCte>());
+    expected.extend(serde_introspect::<cte_evento::EvInsucessoEntregaCte>());
+    expected.extend(serde_introspect::<cte_evento::EvPrestDesacordo>());
     expected.extend(serde_introspect::<cte_evento::EvCceCte>());
     expected.extend(serde_introspect::<cte_evento::EvCteAutorizadoMdfe>());
+    expected.extend(serde_introspect::<cte_evento::EvCeCte>());
+    expected.extend(serde_introspect::<cte_evento::EvCteCanceladoMdfe>());
     expected.extend(serde_introspect::<cte_evento::EvCteComplementar>());
+    expected.extend(serde_introspect::<cte_evento::InfEntregaCeCte>());
     expected.extend(serde_introspect::<cte_evento::EvCteMultimodal>());
     expected.extend(serde_introspect::<cte_evento::EvCteRedespacho>());
     expected.extend(serde_introspect::<cte_evento::EvCteRedespachoInter>());
+    expected.extend(serde_introspect::<cte_evento::EvCteRegPassagem>());
     expected.extend(serde_introspect::<cte_evento::EvCteRegPassagemAuto>());
     expected.extend(serde_introspect::<cte_evento::EvCteSubcontratacao>());
     expected.extend(serde_introspect::<cte_evento::EvCteSubstituido>());
@@ -235,7 +261,30 @@ fn adicionar_tags_comuns(expected: &mut HashSet<&'static str>) {
     expected.extend(serde_introspect::<impostos::GIbsTot>());
     expected.extend(serde_introspect::<impostos::GIbsUfTot>());
     expected.extend(serde_introspect::<impostos::Ibs>());
+    expected.extend(serde_introspect::<impostos::GAjusteCompet>());
+    expected.extend(serde_introspect::<impostos::GCbsItem>());
+    expected.extend(serde_introspect::<impostos::GCredPresDet>());
+    expected.extend(serde_introspect::<impostos::GCredPresIbsZfm>());
+    expected.extend(serde_introspect::<impostos::GCredPresOper>());
+    expected.extend(serde_introspect::<impostos::GDevTrib>());
+    expected.extend(serde_introspect::<impostos::GDif>());
+    expected.extend(serde_introspect::<impostos::GEstornoCred>());
+    expected.extend(serde_introspect::<impostos::GIbsCbs>());
+    expected.extend(serde_introspect::<impostos::GIbsCbsMono>());
+    expected.extend(serde_introspect::<impostos::GIbsCbsMonoTot>());
+    expected.extend(serde_introspect::<impostos::GIbsMunItem>());
+    expected.extend(serde_introspect::<impostos::GIbsUfItem>());
+    expected.extend(serde_introspect::<impostos::GMonoDif>());
+    expected.extend(serde_introspect::<impostos::GMonoPadrao>());
+    expected.extend(serde_introspect::<impostos::GMonoRet>());
+    expected.extend(serde_introspect::<impostos::GMonoReten>());
+    expected.extend(serde_introspect::<impostos::GRed>());
+    expected.extend(serde_introspect::<impostos::GTransfCred>());
+    expected.extend(serde_introspect::<impostos::GTribCompraGov>());
+    expected.extend(serde_introspect::<impostos::GTribRegular>());
+    expected.extend(serde_introspect::<impostos::GTribSn>());
     expected.extend(serde_introspect::<impostos::Ibscbs>());
+    expected.extend(serde_introspect::<impostos::IsTot>());
     expected.extend(serde_introspect::<impostos::Ibscbstot>());
     expected.extend(serde_introspect::<impostos::Icms>());
     expected.extend(serde_introspect::<impostos::Icms00>());
@@ -281,6 +330,8 @@ fn adicionar_tags_comuns(expected: &mut HashSet<&'static str>) {
     expected.extend(serde_introspect::<impostos::Pisst>());
     expected.extend(serde_introspect::<impostos::RetTrib>());
     expected.extend(serde_introspect::<impostos::Total>());
+    expected.extend(serde_introspect::<integrated_dev_env::GCompraGov>());
+    expected.extend(serde_introspect::<integrated_dev_env::GPagAntecipado>());
     expected.extend(serde_introspect::<integrated_dev_env::Ide>());
     expected.extend(serde_introspect::<integrated_dev_env::NFref>());
     expected.extend(serde_introspect::<integrated_dev_env::RefEcf>());
@@ -295,29 +346,6 @@ fn adicionar_tags_comuns(expected: &mut HashSet<&'static str>) {
     expected.extend(serde_introspect::<cobranca::Cobranca>());
     expected.extend(serde_introspect::<cobranca::Dup>());
     expected.extend(serde_introspect::<cobranca::Fat>());
-}
-
-/// Detecta dinamicamente a tag de abertura raiz do XML de modo resiliente.
-fn detect_root_tag(xml_path: &Path) -> Option<String> {
-    let mut reader = xml_path.open_xml_reader().ok()?;
-    let mut buf = Vec::new();
-    loop {
-        match reader.read_event_into(&mut buf) {
-            Ok(Event::Start(e)) | Ok(Event::Empty(e)) => {
-                let tag_name = e.name().into_inner();
-                let clean_tag = tag_name
-                    .split(':')
-                    .next_back()
-                    .unwrap_or(tag_name)
-                    .to_string();
-                return Some(clean_tag);
-            }
-            Ok(Event::Eof) | Err(_) => break,
-            _ => {}
-        }
-        buf.clear();
-    }
-    None
 }
 
 /// Executa a varredura SAX concorrente em lote sobre todos os XMLs e exibe as
@@ -387,17 +415,21 @@ pub fn verificar_inconsistencias_de_xml(xml_paths: &[PathBuf]) {
 }
 
 /// Varre o XML físico e retorna a lista de tags que não estão mapeadas em nosso conjunto de structs.
+static NFE_EXPECTED_TAGS: LazyLock<HashSet<&'static str>> = LazyLock::new(get_nfe_expected_tags);
+static CTE_EXPECTED_TAGS: LazyLock<HashSet<&'static str>> = LazyLock::new(get_cte_expected_tags);
+static EFIN_EXPECTED_TAGS: LazyLock<HashSet<&'static str>> = LazyLock::new(get_efin_expected_tags);
+
 pub fn obter_tags_nao_mapeadas(xml_path: &Path) -> Option<HashSet<String>> {
-    let root_tag = detect_root_tag(xml_path)?;
+    let root_tag = peek_root_tag(xml_path).ok()??;
 
     let expected_tags = match root_tag.as_str() {
-        "nfeProc" | "NFe" | "procEventoNfe" | "procCancNfe" => get_nfe_expected_tags(),
-        "cteProc" | "CTe" | "procEventoCte" | "procCancCte" => get_cte_expected_tags(),
-        "eFinanceira" => get_efin_expected_tags(),
+        "nfeProc" | "NFe" | "procEventoNFe" | "evento" | "procCancNFe" => &*NFE_EXPECTED_TAGS,
+        "cteProc" | "CTe" | "procEventoCTe" | "eventoCTe" | "procCancCTe" => &*CTE_EXPECTED_TAGS,
+        "eFinanceira" => &*EFIN_EXPECTED_TAGS,
         _ => return None,
     };
 
-    let mut reader = Reader::from_file(xml_path).ok()?;
+    let mut reader = xml_path.open_xml_reader().ok()?;
     let mut buf = Vec::new();
     let mut unmapped = HashSet::new();
 
@@ -407,9 +439,20 @@ pub fn obter_tags_nao_mapeadas(xml_path: &Path) -> Option<HashSet<String>> {
                 let tag_name = e.name().into_inner();
                 let clean_tag = tag_name.split(':').next_back().unwrap_or(tag_name);
                 if !expected_tags.contains(clean_tag)
-                    && clean_tag != "nfeProc"
-                    && clean_tag != "cteProc"
-                    && clean_tag != "eFinanceira"
+                    && !matches!(
+                        clean_tag,
+                        "nfeProc"
+                            | "NFe"
+                            | "cteProc"
+                            | "CTe"
+                            | "eFinanceira"
+                            | "procEventoCTe"
+                            | "eventoCTe"
+                            | "procEventoNFe"
+                            | "evento"
+                            | "procCancCTe"
+                            | "procCancNFe"
+                    )
                     && !clean_tag.starts_with("Signature")
                     && !clean_tag.starts_with("SignedInfo")
                     && !clean_tag.starts_with("CanonicalizationMethod")

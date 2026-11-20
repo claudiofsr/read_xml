@@ -298,6 +298,42 @@ pub struct DetEvento {
     /// Descrição textual correspondente ao tipo de evento (p. ex., "Cancelamento").
     #[serde(rename = "descEvento")]
     pub desc_evento: String,
+
+    #[serde(rename = "cPostoUF", default)]
+    pub c_posto_uf: Option<String>,
+    #[serde(rename = "xPostoUF", default)]
+    pub x_posto_uf: Option<String>,
+    #[serde(rename = "latGPS", default)]
+    pub lat_gps: Option<String>,
+    #[serde(rename = "longGPS", default)]
+    pub long_gps: Option<String>,
+    #[serde(rename = "CPFOper", default)]
+    pub cpf_oper: Option<String>,
+    #[serde(rename = "xNomeOper", default)]
+    pub x_nome_oper: Option<String>,
+    #[serde(rename = "dhPas", default)]
+    pub dh_pas: Option<String>,
+    #[serde(rename = "sentidoVia", default)]
+    pub sentido_via: Option<String>,
+    #[serde(rename = "placaVeic", default)]
+    pub placa_veic: Option<String>,
+    #[serde(rename = "xObs", default)]
+    pub x_obs: Option<String>,
+    #[serde(rename = "modalRodov", default)]
+    pub modal_rodov: Option<ModalRodov>,
+}
+
+/// Modal rodoviário em evento de registro de passagem da NF-e (`<modalRodov>`).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ModalRodov {
+    #[serde(rename = "placaVeic", default)]
+    pub placa_veic: Option<String>,
+    #[serde(rename = "UF", default)]
+    pub uf: Option<String>,
+    #[serde(rename = "tpRodov", default)]
+    pub tp_rodov: Option<String>,
+    #[serde(rename = "chMDFe", default)]
+    pub ch_mdfe: Option<String>,
 }
 
 /// Dados correspondentes a Conhecimento de Transporte vinculado ao Evento (`<CTe>`).
@@ -330,6 +366,10 @@ pub struct Cte {
     /// Protocolo correspondente ao processamento de uso do CT-e.
     #[serde(rename = "nProtCTe", default)]
     pub n_prot_cte: Option<String>,
+
+    /// Protocolo correspondente ao cancelamento do CT-e vinculado (`nProtCTeCanc`).
+    #[serde(rename = "nProtCTeCanc", default)]
+    pub n_prot_cte_canc: Option<String>,
 
     /// Data e hora em que ocorreu a entrega das mercadorias.
     #[serde(rename = "dhEntrega", default)]

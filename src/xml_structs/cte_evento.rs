@@ -356,6 +356,255 @@ pub struct DetEvento {
     /// Evento de vinculação ao CT-e Multimodal se aplicável.
     #[serde(rename = "evCTeMultimodal", default)]
     pub ev_cte_multimodal: Option<EvCteMultimodal>,
+
+    /// Evento de Prestação de Serviço em Desacordo (`evPrestDesacordo`).
+    #[serde(rename = "evPrestDesacordo", default)]
+    pub ev_prest_desacordo: Option<EvPrestDesacordo>,
+
+    /// Evento de Insucesso na Entrega do CT-e (`evInsucessoEntregaCTe`).
+    #[serde(rename = "evInsucessoEntregaCTe", default)]
+    pub ev_insucesso_entrega_cte: Option<EvInsucessoEntregaCte>,
+
+    /// Evento de Cancelamento do Insucesso na Entrega (`evCancInsucessoEntregaCTe`).
+    #[serde(rename = "evCancInsucessoEntregaCTe", default)]
+    pub ev_canc_insucesso_entrega_cte: Option<EvCancInsucessoEntregaCte>,
+
+    /// Evento de Comprovante de Entrega do CT-e (`evIECTe`).
+    #[serde(rename = "evIECTe", default)]
+    pub ev_ie_cte: Option<EvIeCte>,
+
+    /// Evento de Cancelamento do Comprovante de Entrega (`evCancCECTe`).
+    #[serde(rename = "evCancCECTe", default)]
+    pub ev_canc_ce_cte: Option<EvCancCeCte>,
+
+    /// Evento de cancelamento de MDF-e vinculado ao CT-e (`evCTeCanceladoMDFe`).
+    #[serde(rename = "evCTeCanceladoMDFe", default)]
+    pub ev_cte_cancelado_mdfe: Option<EvCteCanceladoMdfe>,
+
+    /// Evento de Comprovante de Entrega do CT-e (`evCECTe`).
+    #[serde(rename = "evCECTe", default)]
+    pub ev_ce_cte: Option<EvCeCte>,
+
+    /// Cancelamento de Insucesso na Entrega (`evCancIECTe`).
+    #[serde(rename = "evCancIECTe", default)]
+    pub ev_canc_ie_cte: Option<EvCancInsucessoEntregaCte>,
+
+    /// GTV-e Autorizado no CT-e OS (`evGTVeAutorizadoCTeOS`).
+    #[serde(rename = "evGTVeAutorizadoCTeOS", default)]
+    pub ev_gtve_autorizado_cteos: Option<EvGtveAutorizadoCteOs>,
+
+    /// Evento Prévio de Emissão em Contingência (`evEPECCTe`).
+    #[serde(rename = "evEPECCTe", default)]
+    pub ev_epec_cte: Option<EvEpecCte>,
+
+    /// Cancelamento de CT-e Complementar (`evCancCTeComplementar`).
+    #[serde(rename = "evCancCTeComplementar", default)]
+    pub ev_canc_cte_complementar: Option<EvCancCteComplementar>,
+
+    /// Cancelamento de Prestação de Serviço em Desacordo (`evCancPrestDesacordo`).
+    #[serde(rename = "evCancPrestDesacordo", default)]
+    pub ev_canc_prest_desacordo: Option<EvCancPrestDesacordo>,
+
+    /// Evento de registro de passagem em posto fiscal (`evCTeRegPassagem`).
+    #[serde(rename = "evCTeRegPassagem", default)]
+    pub ev_cte_reg_passagem: Option<EvCteRegPassagem>,
+}
+
+/// Evento de registro de passagem em posto fiscal (`<evCTeRegPassagem>`).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EvCteRegPassagem {
+    #[serde(rename = "descEvento", default)]
+    pub desc_evento: Option<String>,
+    #[serde(rename = "cUnidFiscal", default)]
+    pub c_unid_fiscal: Option<String>,
+    #[serde(rename = "xUnidFiscal", default)]
+    pub x_unid_fiscal: Option<String>,
+    #[serde(rename = "CPFFunc", default)]
+    pub cpf_func: Option<String>,
+    #[serde(rename = "xFunc", default)]
+    pub x_func: Option<String>,
+    #[serde(rename = "tpTransm", default)]
+    pub tp_transm: Option<String>,
+    #[serde(rename = "infPass", default)]
+    pub inf_pass: Option<InfPass>,
+    #[serde(rename = "chMDFe", default)]
+    pub ch_mdfe: Option<String>,
+}
+
+/// Evento GTV-e Autorizado no CT-e OS (`<evGTVeAutorizadoCTeOS>`).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EvGtveAutorizadoCteOs {
+    #[serde(rename = "descEvento", default)]
+    pub desc_evento: Option<String>,
+    #[serde(rename = "chCTeOS", default)]
+    pub ch_cte_os: Option<String>,
+    #[serde(rename = "nProt", default)]
+    pub n_prot: Option<String>,
+    #[serde(rename = "dhEmi", default)]
+    pub dh_emi: Option<String>,
+    #[serde(rename = "dhRecbto", default)]
+    pub dh_recbto: Option<String>,
+}
+
+/// Evento Prévio de Emissão em Contingência (`<evEPECCTe>`).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EvEpecCte {
+    #[serde(rename = "descEvento", default)]
+    pub desc_evento: Option<String>,
+    #[serde(rename = "xJust", default)]
+    pub x_just: Option<String>,
+    #[serde(rename = "vICMS", default)]
+    pub v_icms: Option<String>,
+    #[serde(rename = "vTPrest", default)]
+    pub v_tprest: Option<String>,
+    #[serde(rename = "vCarga", default)]
+    pub v_carga: Option<String>,
+    #[serde(rename = "toma4", default)]
+    pub toma4: Option<Agente>,
+    #[serde(rename = "modal", default)]
+    pub modal: Option<String>,
+    #[serde(rename = "UFIni", default)]
+    pub uf_ini: Option<String>,
+    #[serde(rename = "UFFim", default)]
+    pub uf_fim: Option<String>,
+    #[serde(rename = "tpCTe", default)]
+    pub tp_cte: Option<String>,
+    #[serde(rename = "dhEmi", default)]
+    pub dh_emi: Option<String>,
+}
+
+/// Cancelamento de CT-e Complementar (`<evCancCTeComplementar>`).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EvCancCteComplementar {
+    #[serde(rename = "descEvento", default)]
+    pub desc_evento: Option<String>,
+    #[serde(rename = "chCTeCompl", default)]
+    pub ch_cte_compl: Option<String>,
+    #[serde(rename = "nProt", default)]
+    pub n_prot: Option<String>,
+    #[serde(rename = "dhRecbto", default)]
+    pub dh_recbto: Option<String>,
+}
+
+/// Cancelamento de Prestação de Serviço em Desacordo (`<evCancPrestDesacordo>`).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EvCancPrestDesacordo {
+    #[serde(rename = "descEvento", default)]
+    pub desc_evento: Option<String>,
+    #[serde(rename = "nProtEvPrestDes", default)]
+    pub n_prot_ev_prest_des: Option<String>,
+    #[serde(rename = "indDesacordoOper", default)]
+    pub ind_desacordo_oper: Option<String>,
+    #[serde(rename = "xObs", default)]
+    pub x_obs: Option<String>,
+}
+
+/// Evento de cancelamento de MDF-e emitido para CT-e autorizado (`<evCTeCanceladoMDFe>`).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EvCteCanceladoMdfe {
+    #[serde(rename = "descEvento", default)]
+    pub desc_evento: Option<String>,
+    #[serde(rename = "MDFe", default)]
+    pub mdfe: Option<Mdfe>,
+    #[serde(rename = "emit", default)]
+    pub emit: Option<Agente>,
+}
+
+/// Evento oficial de Comprovante de Entrega do CT-e (`<evCECTe>`).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EvCeCte {
+    #[serde(rename = "descEvento", default)]
+    pub desc_evento: Option<String>,
+    #[serde(rename = "nProt", default)]
+    pub n_prot: Option<String>,
+    #[serde(rename = "dhEntrega", default)]
+    pub dh_entrega: Option<String>,
+    #[serde(rename = "nDoc", default)]
+    pub n_doc: Option<String>,
+    #[serde(rename = "xNome", default)]
+    pub x_nome: Option<String>,
+    #[serde(rename = "hashEntrega", default)]
+    pub hash_entrega: Option<String>,
+    #[serde(rename = "dhHashEntrega", default)]
+    pub dh_hash_entrega: Option<String>,
+    #[serde(rename = "infEntrega", default)]
+    pub inf_entrega: Option<Vec<InfEntregaCeCte>>,
+}
+
+/// Documentos vinculados ao comprovante de entrega (`<infEntrega>`).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfEntregaCeCte {
+    #[serde(rename = "chNFe", default)]
+    pub ch_nfe: Option<String>,
+}
+
+/// Evento de Prestação de Serviço em Desacordo (`<evPrestDesacordo>`).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EvPrestDesacordo {
+    #[serde(rename = "descEvento", default)]
+    pub desc_evento: Option<String>,
+    #[serde(rename = "indDesacordoOper", default)]
+    pub ind_desacordo_oper: Option<String>,
+    #[serde(rename = "xObs", default)]
+    pub x_obs: Option<String>,
+}
+
+/// Evento de Insucesso na Entrega (`<evInsucessoEntregaCTe>`).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EvInsucessoEntregaCte {
+    #[serde(rename = "descEvento", default)]
+    pub desc_evento: Option<String>,
+    #[serde(rename = "nProt", default)]
+    pub n_prot: Option<String>,
+    #[serde(rename = "dhTentativaEntrega", default)]
+    pub dh_tentativa_entrega: Option<String>,
+    #[serde(rename = "nTentativa", default)]
+    pub n_tentativa: Option<String>,
+    #[serde(rename = "tpMotivo", default)]
+    pub tp_motivo: Option<String>,
+    #[serde(rename = "xJustMotivo", default)]
+    pub x_just_motivo: Option<String>,
+    #[serde(rename = "hashTentativaEntrega", default)]
+    pub hash_tentativa_entrega: Option<String>,
+    #[serde(rename = "dhHashTentativaEntrega", default)]
+    pub dh_hash_tentativa_entrega: Option<String>,
+}
+
+/// Cancelamento de Insucesso na Entrega (`<evCancInsucessoEntregaCTe>`).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EvCancInsucessoEntregaCte {
+    #[serde(rename = "descEvento", default)]
+    pub desc_evento: Option<String>,
+    #[serde(rename = "nProt", default)]
+    pub n_prot: Option<String>,
+    #[serde(rename = "nProtIE", default)]
+    pub n_prot_ie: Option<String>,
+}
+
+/// Comprovante de Entrega do CT-e (`<evIECTe>` / `<evCECTe>`).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EvIeCte {
+    #[serde(rename = "descEvento", default)]
+    pub desc_evento: Option<String>,
+    #[serde(rename = "nProt", default)]
+    pub n_prot: Option<String>,
+    #[serde(rename = "dhEntrega", default)]
+    pub dh_entrega: Option<String>,
+    #[serde(rename = "nDoc", default)]
+    pub n_doc: Option<String>,
+    #[serde(rename = "xNome", default)]
+    pub x_nome: Option<String>,
+}
+
+/// Cancelamento de Comprovante de Entrega (`<evCancCECTe>`).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EvCancCeCte {
+    #[serde(rename = "descEvento", default)]
+    pub desc_evento: Option<String>,
+    #[serde(rename = "nProt", default)]
+    pub n_prot: Option<String>,
+    #[serde(rename = "nProtCE", default)]
+    pub n_prot_ce: Option<String>,
 }
 
 /// Dados relativos à Carta de Correção Eletrônica do CT-e (`<evCCeCTe>`).
@@ -388,6 +637,10 @@ pub struct InfCorrecao {
     /// Novo valor correspondente atribuído ao campo retificado.
     #[serde(rename = "valorAlterado", default)]
     pub valor_alterado: Option<String>,
+
+    /// Número sequencial do item retificado (`nroItemAlterado`).
+    #[serde(rename = "nroItemAlterado", default)]
+    pub nro_item_alterado: Option<String>,
 }
 
 /// Evento correspondente à autorização emitida pelo webservice MDF-e (`<evCTeAutorizadoMDFe>`).
@@ -424,6 +677,10 @@ pub struct Mdfe {
     /// Número do protocolo de recebimento emitido pela SEFAZ.
     #[serde(rename = "nProt", default)]
     pub n_prot: Option<String>,
+
+    /// Número do protocolo de cancelamento do MDF-e (`nProtCanc`).
+    #[serde(rename = "nProtCanc", default)]
+    pub n_prot_canc: Option<String>,
 
     /// Data e hora de recepção final da MDF-e pela SEFAZ.
     #[serde(rename = "dhRecbto", default)]

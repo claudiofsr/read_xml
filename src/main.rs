@@ -1,6 +1,10 @@
 use execution_time::ExecutionTime;
 use indicatif::MultiProgress;
-use std::{path::PathBuf, process};
+use std::{
+    collections::HashSet,
+    path::{Path, PathBuf},
+    process,
+};
 use walkdir::DirEntry;
 
 use read_xml::*;
@@ -142,46 +146,115 @@ fn run(arguments: &Arguments) -> XmlParserResult<()> {
     docs_fiscais.sort();
     docs_fiscais.get_correlations(arguments);
 
+    let mut generated_files: Vec<GeneratedFileSummary> = Vec::new();
+
     // 8. Opcional: Gravação de arquivos particionados com as chaves encontradas (-l)
     if let Some(size) = arguments.linhas {
         let size_u = size.try_into()?;
-        docs_fiscais.print_ctes("ctes", size_u)?;
-        docs_fiscais.print_nfes("nfes", size_u)?;
+        for (txt_path, count) in docs_fiscais.print_ctes("ctes", size_u)? {
+            generated_files.push(GeneratedFileSummary::new(
+                "TXT",
+                "CTes (chaves)",
+                &txt_path,
+                count,
+                None,
+            ));
+        }
+        for (txt_path, count) in docs_fiscais.print_nfes("nfes", size_u)? {
+            generated_files.push(GeneratedFileSummary::new(
+                "TXT",
+                "NFes (chaves)",
+                &txt_path,
+                count,
+                None,
+            ));
+        }
+    }
+
+    if arguments.clean_spaces {
+        docs_fiscais.clean_spaces();
+    } else {
+        docs_fiscais.strip_line_breaks();
     }
 
     let mut output = OutputFilename::default();
 
+    // Transformação opcional para o layout padrão de 56 colunas da Receita Federal (-r / --receita)
+    let mut receita_data = if arguments.receita && (arguments.csv || !arguments.avoid) {
+        Some(rayon::join(
+            || ctes_to_receita(&docs_fiscais.ctes),
+            || nfes_to_receita(&docs_fiscais.nfes),
+        ))
+    } else {
+        None
+    };
+
+    if arguments.clean_spaces
+        && let Some((ctes_rec, nfes_rec)) = &mut receita_data
+    {
+        rayon::join(
+            || ctes_rec.clean_spaces_par(),
+            || nfes_rec.clean_spaces_par(),
+        );
+    }
+
     // 9. Opcional: Exportação tabular em formato CSV (-c / --csv)
+    let ctes_label = if arguments.receita {
+        "CTes (Receita)"
+    } else {
+        "CTes"
+    };
+    let nfes_label = if arguments.receita {
+        "NFes (Receita)"
+    } else {
+        "NFes"
+    };
+
     if arguments.csv {
         output.set_extension("csv");
         multi_progressbar.add_print_csv(&multi_progress, docs_fiscais.total())?;
 
-        /// Função interna auxiliar para gravação genérica de CSV com feedback na barra.
-        fn exportar_tabela_csv<T: serde::Serialize>(
-            caminho: &std::path::Path,
-            dados: &[T],
-            delimitador: char,
-            barra_progresso: &indicatif::ProgressBar,
-        ) {
-            let writer = CsvWriter::new(caminho.to_path_buf(), delimitador);
-            if writer.write(dados).is_ok() {
-                barra_progresso.inc(1);
-            }
-        }
-
         let delimiter = arguments.delimiter;
         let pb = &multi_progressbar.show_csval;
 
-        // Escrita concorrente dos três arquivos CSV
+        let (mut ctes_res, mut nfes_res, mut efin_res) = (Ok(None), Ok(None), Ok(None));
+
         rayon::scope(|s| {
-            s.spawn(|_| exportar_tabela_csv(&output.ctes, &docs_fiscais.ctes, delimiter, pb));
-            s.spawn(|_| exportar_tabela_csv(&output.nfes, &docs_fiscais.nfes, delimiter, pb));
             s.spawn(|_| {
-                exportar_tabela_csv(&output.efin, &docs_fiscais.efinanceiras, delimiter, pb)
+                ctes_res = match &receita_data {
+                    Some((ctes_rec, _)) => {
+                        exportar_csv(&output.ctes, ctes_label, ctes_rec, delimiter, pb)
+                    }
+                    None => {
+                        exportar_csv(&output.ctes, ctes_label, &docs_fiscais.ctes, delimiter, pb)
+                    }
+                };
+            });
+            s.spawn(|_| {
+                nfes_res = match &receita_data {
+                    Some((_, nfes_rec)) => {
+                        exportar_csv(&output.nfes, nfes_label, nfes_rec, delimiter, pb)
+                    }
+                    None => {
+                        exportar_csv(&output.nfes, nfes_label, &docs_fiscais.nfes, delimiter, pb)
+                    }
+                };
+            });
+            s.spawn(|_| {
+                efin_res = exportar_csv(
+                    &output.efin,
+                    "eFinanceiras",
+                    &docs_fiscais.efinanceiras,
+                    delimiter,
+                    pb,
+                );
             });
         });
 
         pb.finish();
+        for summary in [ctes_res?, nfes_res?, efin_res?].into_iter().flatten() {
+            generated_files.push(summary);
+        }
     }
 
     // 10. Exportação padrão em formato Excel XLSX (a menos que `-a` esteja ativo)
@@ -190,54 +263,272 @@ fn run(arguments: &Arguments) -> XmlParserResult<()> {
         multi_progressbar.add_print_xls(&multi_progress, docs_fiscais.total())?;
 
         let memory_mode = arguments.memory_mode;
-        let mut ctes_res = Ok(Vec::new());
-        let mut nfes_res = Ok(Vec::new());
-        let mut efin_res = Ok(Vec::new());
+        let pb = &multi_progressbar.show_excel;
 
-        // Geração concorrente das planilhas na thread-pool do Rayon
+        let (mut ctes_res, mut nfes_res, mut efin_res) = (
+            Ok((Vec::new(), None)),
+            Ok((Vec::new(), None)),
+            Ok((Vec::new(), None)),
+        );
+
         rayon::scope(|s| {
             s.spawn(|_| {
-                ctes_res = write_xlsx(&docs_fiscais.ctes, "CTes", &output.ctes, memory_mode);
-                if ctes_res.is_ok() {
-                    multi_progressbar.show_excel.inc(1);
-                }
+                ctes_res = match &receita_data {
+                    Some((ctes_rec, _)) => {
+                        exportar_xlsx(ctes_rec, "CTes", ctes_label, &output.ctes, memory_mode, pb)
+                    }
+                    None => exportar_xlsx(
+                        &docs_fiscais.ctes,
+                        "CTes",
+                        ctes_label,
+                        &output.ctes,
+                        memory_mode,
+                        pb,
+                    ),
+                };
             });
             s.spawn(|_| {
-                nfes_res = write_xlsx(&docs_fiscais.nfes, "NFes", &output.nfes, memory_mode);
-                if nfes_res.is_ok() {
-                    multi_progressbar.show_excel.inc(1);
-                }
+                nfes_res = match &receita_data {
+                    Some((_, nfes_rec)) => {
+                        exportar_xlsx(nfes_rec, "NFes", nfes_label, &output.nfes, memory_mode, pb)
+                    }
+                    None => exportar_xlsx(
+                        &docs_fiscais.nfes,
+                        "NFes",
+                        nfes_label,
+                        &output.nfes,
+                        memory_mode,
+                        pb,
+                    ),
+                };
             });
             s.spawn(|_| {
-                efin_res = write_xlsx(
+                efin_res = exportar_xlsx(
                     &docs_fiscais.efinanceiras,
+                    "eFinanceiras",
                     "eFinanceiras",
                     &output.efin,
                     memory_mode,
+                    pb,
                 );
-                if efin_res.is_ok() {
-                    multi_progressbar.show_excel.inc(1);
-                }
             });
         });
 
-        multi_progressbar.show_excel.finish();
+        pb.finish();
 
-        // Propaga o primeiro erro eventual antes de imprimir mensagens de sucesso
-        let ctes_logs = ctes_res?;
-        let nfes_logs = nfes_res?;
-        let efin_logs = efin_res?;
-
-        // Descarrega no stderr os logs descritivos de criação dos arquivos
-        for line in ctes_logs.into_iter().chain(nfes_logs).chain(efin_logs) {
-            eprintln!("{line}");
+        for (logs, summary) in [ctes_res?, nfes_res?, efin_res?] {
+            if arguments.verbose {
+                for line in logs {
+                    eprintln!("{line}");
+                }
+            }
+            if let Some(item) = summary {
+                generated_files.push(item);
+            }
         }
     }
 
-    // 11. Exibição do tempo total de execução (-t / --time)
+    // 11. Resumo final dos documentos analisados e arquivos gerados
+    print_execution_summary(xml_entries.len(), &docs_fiscais, &generated_files);
+
+    // 12. Exibição do tempo total de execução (-t / --time)
     if arguments.time {
         timer.print_elapsed_time();
     }
 
     Ok(())
+}
+
+/// Metadados resumidos de cada arquivo gerado ao final da execução.
+struct GeneratedFileSummary {
+    format: &'static str,
+    dataset: String,
+    path: PathBuf,
+    rows: usize,
+    columns: Option<usize>,
+    size_bytes: u64,
+}
+
+impl GeneratedFileSummary {
+    fn new(
+        format: &'static str,
+        dataset: impl Into<String>,
+        path: &Path,
+        rows: usize,
+        columns: Option<usize>,
+    ) -> Self {
+        let resolved_path = resolve_display_path(path);
+        let size_bytes = std::fs::metadata(&resolved_path)
+            .map(|m| m.len())
+            .unwrap_or(0);
+
+        Self {
+            format,
+            dataset: dataset.into(),
+            path: resolved_path,
+            rows,
+            columns,
+            size_bytes,
+        }
+    }
+}
+
+fn resolve_display_path(path: &Path) -> PathBuf {
+    std::fs::canonicalize(path).unwrap_or_else(|_| {
+        if path.is_absolute() {
+            path.to_path_buf()
+        } else {
+            std::env::current_dir()
+                .map(|cwd| cwd.join(path))
+                .unwrap_or_else(|_| path.to_path_buf())
+        }
+    })
+}
+
+fn format_file_size(bytes: u64) -> String {
+    const KIB: f64 = 1024.0;
+    const MIB: f64 = KIB * 1024.0;
+    const GIB: f64 = MIB * 1024.0;
+    let b = bytes as f64;
+
+    if b >= GIB {
+        format!("{:.2} GiB ({bytes} bytes)", b / GIB)
+    } else if b >= MIB {
+        format!("{:.2} MiB ({bytes} bytes)", b / MIB)
+    } else if b >= KIB {
+        format!("{:.2} KiB ({bytes} bytes)", b / KIB)
+    } else {
+        format!("{bytes} bytes")
+    }
+}
+
+fn print_execution_summary(
+    xml_total: usize,
+    docs: &DocsFiscais,
+    generated_files: &[GeneratedFileSummary],
+) {
+    let ctes_cancelados = docs.ctes.iter().filter(|c| c.is_canceled()).count();
+
+    let (nfes_unicas, nfes_canceladas) = {
+        let mut unique_keys = HashSet::new();
+        let mut canceled_keys = HashSet::new();
+        for item in &docs.nfes {
+            if let Some(chave) = item.nfe.as_deref() {
+                unique_keys.insert(chave);
+                if item.is_canceled() {
+                    canceled_keys.insert(chave);
+                }
+            }
+        }
+        (unique_keys.len(), canceled_keys.len())
+    };
+
+    eprintln!("\n=== Resumo da Execução ===");
+    eprintln!("Arquivos XML analisados : {xml_total}");
+    eprintln!(
+        "CT-es únicos            : {} (cancelados: {ctes_cancelados})",
+        docs.ctes.len()
+    );
+    eprintln!(
+        "NF-es (itens / únicas)  : {} / {nfes_unicas} (canceladas: {nfes_canceladas})",
+        docs.nfes.len()
+    );
+    eprintln!("e-Financeiras           : {}", docs.efinanceiras.len());
+    eprintln!(
+        "Eventos / Cancelamentos : CTe={}, NFe={}, CancCTe={}, CancNFe={}",
+        docs.eventos_cte.len(),
+        docs.eventos_nfe.len(),
+        docs.cancel_cte.len(),
+        docs.cancel_nfe.len()
+    );
+
+    if generated_files.is_empty() {
+        eprintln!("\nNenhum arquivo de saída gerado.");
+        return;
+    }
+
+    eprintln!("\nArquivos gerados ({}):", generated_files.len());
+    for (idx, item) in generated_files.iter().enumerate() {
+        let shape = match item.columns {
+            Some(cols) => format!("{} linhas x {cols} colunas", item.rows),
+            None => format!("{} chaves", item.rows),
+        };
+        let size = format_file_size(item.size_bytes);
+        eprintln!("  {}. [{}] {}", idx + 1, item.format, item.dataset);
+        eprintln!("     Path   : {}", item.path.display());
+        eprintln!("     Resumo : {shape} | {size}");
+    }
+    eprintln!();
+}
+
+/// Exporta uma fatia genérica para CSV, atualizando a barra de progresso apenas se houver dados.
+fn exportar_csv<'de, T>(
+    caminho: &Path,
+    dataset: &str,
+    dados: &[T],
+    delimitador: char,
+    barra_progresso: &indicatif::ProgressBar,
+) -> XmlParserResult<Option<GeneratedFileSummary>>
+where
+    T: serde::Serialize + serde::Deserialize<'de> + InfoExtension,
+{
+    if dados.is_empty() {
+        return Ok(None);
+    }
+    let writer = CsvWriter::new(caminho.to_path_buf(), delimitador);
+    writer.write(dados)?;
+    barra_progresso.inc(1);
+    Ok(Some(GeneratedFileSummary::new(
+        "CSV",
+        dataset,
+        caminho,
+        dados.len(),
+        Some(T::get_headers().len()),
+    )))
+}
+
+/// Exporta uma fatia genérica para XLSX, atualizando a barra de progresso apenas se houver dados.
+fn exportar_xlsx<'de, T>(
+    dados: &[T],
+    sheet_name: &str,
+    dataset: &str,
+    caminho: &Path,
+    memory_mode: ExcelMemoryMode,
+    barra_progresso: &indicatif::ProgressBar,
+) -> XmlParserResult<(Vec<String>, Option<GeneratedFileSummary>)>
+where
+    T: serde::Serialize
+        + serde::Deserialize<'de>
+        + InfoExtension
+        + struct_iterable::Iterable
+        + Sync,
+{
+    if dados.is_empty() {
+        return Ok((Vec::new(), None));
+    }
+    let logs = write_xlsx(dados, sheet_name, caminho, memory_mode)?;
+    barra_progresso.inc(1);
+    let summary = GeneratedFileSummary::new(
+        "XLSX",
+        dataset,
+        caminho,
+        dados.len(),
+        Some(T::get_headers().len()),
+    );
+    Ok((logs, Some(summary)))
+}
+
+#[cfg(test)]
+mod tests_main {
+    use super::format_file_size;
+
+    #[test]
+    fn test_format_file_size() {
+        assert_eq!(format_file_size(512), "512 bytes");
+        assert_eq!(format_file_size(2048), "2.00 KiB (2048 bytes)");
+        assert_eq!(
+            format_file_size(5 * 1024 * 1024),
+            "5.00 MiB (5242880 bytes)"
+        );
+    }
 }

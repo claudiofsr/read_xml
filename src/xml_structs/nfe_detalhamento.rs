@@ -12,7 +12,10 @@
 use claudiofsr_lib::StrExtension;
 use serde::{Deserialize, Serialize};
 
-use crate::xml_structs::{aut_xml::InfProtocolo, impostos::Imposto};
+use crate::{
+    strip_line_breaks,
+    xml_structs::{aut_xml::InfProtocolo, impostos::Imposto},
+};
 
 /// Bloco de Detalhes dos Itens da NF-e (`<det>`).
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -44,6 +47,21 @@ pub struct Detalhes {
     /// Valor líquido do item (valor do produto - descontos + acréscimos) (vItem).
     #[serde(rename = "vItem", default)]
     pub v_item: Option<String>,
+
+    /// Documento Fiscal Eletrônico referenciado no item (`<DFeReferenciado>`).
+    #[serde(rename = "DFeReferenciado", default)]
+    pub dfe_referenciado: Option<DFeReferenciado>,
+}
+
+/// Documento Fiscal Eletrônico referenciado no item (`<DFeReferenciado>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DFeReferenciado {
+    #[serde(rename = "chaveAcesso", default)]
+    pub chave_acesso: Option<String>,
+    #[serde(rename = "nItem", default)]
+    pub n_item: Option<String>,
+    #[serde(rename = "$text", default)]
+    pub text: Option<String>,
 }
 
 /// Bloco de Informações dos Produtos e Serviços (`<prod>`).
@@ -56,6 +74,10 @@ pub struct Produto {
     /// Código de barras global do produto (GTIN/EAN).
     #[serde(rename = "cEAN", default)]
     pub c_ean: Option<String>,
+
+    /// Código de barras alternativo do item (`cBarra`).
+    #[serde(rename = "cBarra", default)]
+    pub c_barra: Option<String>,
 
     /// Nome detalhado do produto.
     #[serde(rename = "xProd", default)]
@@ -112,6 +134,10 @@ pub struct Produto {
     /// Código EAN de tributação correspondente.
     #[serde(rename = "cEANTrib", default)]
     pub c_eantrib: Option<String>,
+
+    /// Código de barras tributável alternativo (`cBarraTrib`).
+    #[serde(rename = "cBarraTrib", default)]
+    pub c_barra_trib: Option<String>,
 
     /// Unidade tributada de medida correspondente.
     #[serde(rename = "uTrib", default)]
@@ -195,11 +221,12 @@ pub struct Produto {
 }
 
 impl Produto {
-    /// Retorna a descrição detalhada sanitizada em caixa alta.
+    /// Retorna a descrição detalhada sem quebras de linha, preservando caixa e espaços internos.
     pub fn get_descricao(&self) -> Option<String> {
-        self.x_prod
-            .as_ref()
-            .map(|descr| descr.trim().replace_multiple_whitespaces().to_uppercase())
+        self.x_prod.as_deref().and_then(|descr| {
+            let clean = strip_line_breaks(descr);
+            (!clean.is_empty()).then_some(clean)
+        })
     }
 
     /// Retorna o CFOP de forma puramente numérica.

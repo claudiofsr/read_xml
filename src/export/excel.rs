@@ -278,7 +278,10 @@ where
 
         let split_idx = column_names
             .iter()
-            .position(|name| name.contains("Chave do Documento Fiscal"))
+            .position(|name| {
+                name.contains("Chave do Documento Fiscal")
+                    || name.contains("Chave da Nota Fiscal Eletrônica")
+            })
             .unwrap_or(total_cols);
 
         // Divisão segura: se o índice falhar, faz fallback para (tudo, vazio)

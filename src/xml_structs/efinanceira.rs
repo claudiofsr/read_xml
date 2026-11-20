@@ -36,8 +36,8 @@ use serde::{Deserialize, Serialize};
 use struct_iterable::Iterable;
 
 use crate::{
-    Arguments, InfoExtension, Information, OptExt, StructExtension, get_naive_date_from_yyyymm,
-    xml_structs::assinaturas::Signature,
+    Arguments, GetID, InfoExtension, Information, OptExt, StructExtension,
+    get_naive_date_from_yyyymm, xml_structs::assinaturas::Signature,
 };
 
 /// Macro auxiliar de exemplo para extração de nomes de campos de structs via reflexão.
@@ -69,6 +69,14 @@ pub struct InfoEFinanceira {
     #[serde(rename = "Identificação da Entidade Declarante", default)]
     pub id: Option<String>,
 
+    /// Indicador de retificação do evento (`ideEvento/indRetificacao`).
+    #[serde(rename = "Indicador de Retificação", default)]
+    pub ind_retificacao: Option<String>,
+
+    /// Número do recibo anterior em caso de retificação (`ideEvento/nrRecibo`).
+    #[serde(rename = "Nº do Recibo", default)]
+    pub nr_recibo: Option<String>,
+
     /// CNPJ formatado da instituição financeira declarante.
     #[serde(rename = "CNPJ da Entidade Declarante", default)]
     pub cnpj_do_declarante: Option<String>,
@@ -89,9 +97,17 @@ pub struct InfoEFinanceira {
     )]
     pub ano_mes_caixa: Option<NaiveDate>,
 
+    /// Tipo da conta financeira (`infoConta/tpConta`).
+    #[serde(rename = "Tipo da Conta", default)]
+    pub tp_conta: Option<String>,
+
     /// Número identificador da conta financeira.
     #[serde(rename = "Nº da Conta", default)]
     pub num_conta: Option<String>,
+
+    /// Moeda da conta (`infoConta/moeda`).
+    #[serde(rename = "Moeda", default)]
+    pub moeda: Option<String>,
 
     /// Lista consolidada de países onde o titular possui domicílio fiscal.
     #[serde(rename = "País Reportado", default)]
@@ -104,9 +120,69 @@ pub struct InfoEFinanceira {
     /// Acumulado anual/mensal correspondente a débitos na conta.
     #[serde(rename = "Balanço da Conta: Total de Débitos", default)]
     pub tot_debitos: Option<f64>,
+
+    /// Acumulado de créditos de mesma titularidade (`totCreditosMesmaTitularidade`).
+    #[serde(
+        rename = "Balanço da Conta: Total de Créditos Mesma Titularidade",
+        default
+    )]
+    pub tot_creditos_mesma_titularidade: Option<f64>,
+
+    /// Acumulado de débitos de mesma titularidade (`totDebitosMesmaTitularidade`).
+    #[serde(
+        rename = "Balanço da Conta: Total de Débitos Mesma Titularidade",
+        default
+    )]
+    pub tot_debitos_mesma_titularidade: Option<f64>,
+
+    /// Saldo no último dia útil do período (`BalancoConta/vlrUltDia`).
+    #[serde(rename = "Balanço da Conta: Valor no Último Dia", default)]
+    pub vlr_ult_dia: Option<f64>,
 }
 
 impl InfoExtension for InfoEFinanceira {}
+
+impl
+    GetID<(
+        Option<String>,
+        Option<String>,
+        Option<NaiveDate>,
+        Option<String>,
+        Option<String>,
+    )> for InfoEFinanceira
+{
+    fn get_id(
+        &self,
+    ) -> (
+        Option<String>,
+        Option<String>,
+        Option<NaiveDate>,
+        Option<String>,
+        Option<String>,
+    ) {
+        (
+            self.cnpj_do_declarante.clone(),
+            self.ni_do_declarado.clone(),
+            self.ano_mes_caixa,
+            self.num_conta.clone(),
+            self.id.clone(),
+        )
+    }
+}
+
+crate::impl_sanitize_text!(
+    InfoEFinanceira,
+    id,
+    ind_retificacao,
+    nr_recibo,
+    cnpj_do_declarante,
+    ni_do_declarado,
+    nome_declarado,
+    tp_conta,
+    num_conta,
+    moeda,
+    pais_reportado,
+);
 
 impl InfoEFinanceira {
     /// Calcula o comprimento em caracteres de cada campo para formatação em planilha Excel.
@@ -188,22 +264,35 @@ impl EFinanceira {
             .map(|cnpj| cnpj.trim().format_cnpj())
     }
 
-    /// Retorna o Número de Identificação Fiscal ou CNPJ/CPF do titular declarado.
+    /// Retorna o Número de Identificação Fiscal (CPF, CNPJ ou NIF estrangeiro) formatado.
     pub fn get_ni_do_declarado(&self) -> Option<String> {
-        self.evt_mov_op_fin
+        let ni = self
+            .evt_mov_op_fin
             .ide_declarado
             .nideclarado
-            .as_ref()
-            .map(|ni| ni.trim().format_cnpj())
+            .as_deref()?
+            .trim();
+        if ni.is_empty() {
+            return None;
+        }
+        let digits = ni.remove_non_digits();
+        match digits.len() {
+            11 => Some(digits.format_cpf()),
+            14 => Some(digits.format_cnpj()),
+            _ => Some(ni.to_string()),
+        }
     }
 
-    /// Retorna o nome civil ou razão social do declarado com espaçamentos duplicados removidos.
+    /// Retorna o nome civil ou razão social do declarado sem quebras de linha.
     pub fn get_nome_declarado(&self) -> Option<String> {
         self.evt_mov_op_fin
             .ide_declarado
             .nome_declarado
-            .as_ref()
-            .map(|nome| nome.replace_multiple_whitespaces())
+            .as_deref()
+            .and_then(|nome| {
+                let clean = crate::strip_line_breaks(nome);
+                (!clean.is_empty()).then_some(clean)
+            })
     }
 
     /// Filtra e coleta referências seguras para as contas listadas no evento.
@@ -223,9 +312,13 @@ impl EFinanceira {
 
     /// Consolida todos os metadados e balanços de contas em uma coleção de `InfoEFinanceira`.
     pub fn get_infos(&self) -> Vec<InfoEFinanceira> {
-        // Otimização: Executa o parse dos dados estáticos uma única vez fora do loop de contas,
-        // reduzindo drasticamente as alocações em heap redundantes por iteração.
         let id = self.get_id();
+        let ind_retificacao = self
+            .evt_mov_op_fin
+            .ide_evento
+            .ind_retificacao
+            .get_not_empty();
+        let nr_recibo = self.evt_mov_op_fin.ide_evento.nr_recibo.get_not_empty();
         let cnpj_do_declarante = self.get_cnpj_do_declarante();
         let ni_do_declarado = self.get_ni_do_declarado();
         let nome_declarado = self.get_nome_declarado();
@@ -234,21 +327,28 @@ impl EFinanceira {
         self.get_contas()
             .into_iter()
             .map(|conta| {
-                let num_conta = conta.info_conta.num_conta.clone();
-                let pais_reportado = conta.info_conta.get_paises();
-                let tot_creditos = conta.info_conta.balanco_conta.tot_creditos.to_float64();
-                let tot_debitos = conta.info_conta.balanco_conta.tot_debitos.to_float64();
-
+                let balanco = &conta.info_conta.balanco_conta;
                 InfoEFinanceira {
                     id: id.clone(),
+                    ind_retificacao: ind_retificacao.clone(),
+                    nr_recibo: nr_recibo.clone(),
                     cnpj_do_declarante: cnpj_do_declarante.clone(),
                     ni_do_declarado: ni_do_declarado.clone(),
                     nome_declarado: nome_declarado.clone(),
                     ano_mes_caixa,
-                    num_conta,
-                    pais_reportado,
-                    tot_creditos,
-                    tot_debitos,
+                    tp_conta: conta.info_conta.tp_conta.get_not_empty(),
+                    num_conta: conta.info_conta.num_conta.get_not_empty(),
+                    moeda: conta.info_conta.moeda.get_not_empty(),
+                    pais_reportado: conta.info_conta.get_paises(),
+                    tot_creditos: balanco.tot_creditos.to_float64(),
+                    tot_debitos: balanco.tot_debitos.to_float64(),
+                    tot_creditos_mesma_titularidade: balanco
+                        .tot_creditos_mesma_titularidade
+                        .to_float64(),
+                    tot_debitos_mesma_titularidade: balanco
+                        .tot_debitos_mesma_titularidade
+                        .to_float64(),
+                    vlr_ult_dia: balanco.vlr_ult_dia.to_float64(),
                 }
             })
             .collect()
@@ -432,12 +532,12 @@ pub struct NifNomeOutros {
     pub text: Option<String>,
 
     /// Nome estruturado de Pessoa Física.
-    #[serde(rename = "NomePF")]
-    pub nome_pf: NifNomeOutrosNomePf,
+    #[serde(rename = "NomePF", default)]
+    pub nome_pf: Option<NifNomeOutrosNomePf>,
 
     /// Nome estruturado de Pessoa Jurídica.
-    #[serde(rename = "NomePJ")]
-    pub nome_pj: NomePj,
+    #[serde(rename = "NomePJ", default)]
+    pub nome_pj: Option<NomePj>,
 }
 
 /// Dados estruturados de nome alternativo de Pessoa Física (`<NomePF>`).
@@ -1244,6 +1344,7 @@ mod lib_functions {
             pais_reportado: Some("país 01".to_string()),
             tot_creditos: Some(12.45),
             tot_debitos: Some(0.45),
+            ..Default::default()
         };
 
         let info_b = InfoEFinanceira {
@@ -1256,6 +1357,7 @@ mod lib_functions {
             pais_reportado: Some("país 02".to_string()),
             tot_creditos: Some(5.45),
             tot_debitos: None,
+            ..Default::default()
         };
 
         let info_c = InfoEFinanceira {
@@ -1268,6 +1370,7 @@ mod lib_functions {
             pais_reportado: Some("país 03".to_string()),
             tot_creditos: None,
             tot_debitos: Some(-327.4056),
+            ..Default::default()
         };
 
         let infos = [info_a, info_b, info_c];

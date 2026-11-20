@@ -126,7 +126,7 @@ fn benchmark_expand_ctes(c: &mut Criterion) {
         b.iter_batched(
             || grafo_cadeias.clone(),
             |mut g| {
-                g.expand_ctes_old(black_box(false));
+                g.expand_ctes(black_box(false));
                 g
             },
             BatchSize::SmallInput,
@@ -160,7 +160,7 @@ fn benchmark_expand_ctes(c: &mut Criterion) {
         b.iter_batched(
             || grafo_lote.clone(),
             |mut g| {
-                g.expand_ctes_old(black_box(false));
+                g.expand_ctes(black_box(false));
                 g
             },
             BatchSize::LargeInput,

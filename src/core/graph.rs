@@ -204,8 +204,6 @@ pub trait GraphExtension {
     /// ```
     fn expand_ctes(&mut self, verbose: bool);
 
-    fn expand_ctes_old(&mut self, verbose: bool);
-
     /// Propaga as Notas Fiscais Eletrônicas (NF-es) entre todos os CT-es correlacionados.
     ///
     /// Se um `CTe_A` transporta a `NFe_1` e está vinculado ao `CTe_B` (via subcontratação ou
@@ -215,11 +213,8 @@ pub trait GraphExtension {
     /// * `cte_ctes`: Grafo previamente expandido contendo as correlações entre CT-es.
     fn expand_nfes(&mut self, cte_ctes: &Self);
 
-    /// Filtra as NF-es mantendo apenas aquelas confirmadas como ativas/válidas no lote.
-    fn filtrar_nfes_validos(&self, nfe_info: &BTreeMap<KeyDoc, Vec<InfoNfe>>) -> Self;
-
-    /// Filtra os CT-es mantendo apenas aqueles confirmados como ativos/válidos no lote.
-    fn filtrar_ctes_validos(&self, cte_info: &BTreeMap<KeyDoc, Vec<InfoCte>>) -> Self;
+    /// Filtra os documentos mantendo apenas aqueles confirmados como ativos/válidos no lote.
+    fn filtrar_validos<V: Sync>(&self, docs_info: &BTreeMap<KeyDoc, V>) -> Self;
 
     /// Inverte a direção das arestas do grafo bipartido (`CT-e -> NF-e` para `NF-e -> CT-e`).
     ///
@@ -337,129 +332,40 @@ impl GraphExtension for HashMap<String, HashSet<String>> {
         *self = novo_grafo;
     }
 
-    fn expand_ctes_old(&mut self, verbose: bool) {
-        // Laço de ponto fixo: repete rodadas de expansão até o grafo estabilizar
-        loop {
-            // Contador de novas arestas inseridas NESTA rodada específica
-            let mut novas_arestas = 0;
-
-            // Fila de trabalho (Worklist): armazena em um vetor contíguo (memória contínua e rápida)
-            // os pares (Origem, Destino) que precisam ser inseridos no mapa principal.
-            // Isso evita conflitos com o Borrow Checker durante a leitura imutável do `self`.
-            let mut worklist: Vec<(String, String)> = Vec::new();
-
-            // -----------------------------------------------------------------
-            // FASE 1: DESCOBERTA DE NOVAS RELAÇÕES (simétricas e transitivas)
-            // -----------------------------------------------------------------
-            for (cte_a, vizinhos_de_a) in self.iter() {
-                for cte_b in vizinhos_de_a {
-                    // Evita auto-referência: um CT-e não deve apontar para si mesmo
-                    if cte_a == cte_b {
-                        continue;
-                    }
-                    // Simetria: Se A -> B, então B -> A
-                    if !self
-                        .get(cte_b)
-                        .is_some_and(|vizinhos_b| vizinhos_b.contains(cte_a))
-                    {
-                        worklist.push((cte_b.clone(), cte_a.clone()));
-                    }
-
-                    // Transitividade: Se A -> B e B -> C, então A -> C
-                    if let Some(vizinhos_de_b) = self.get(cte_b) {
-                        for cte_c in vizinhos_de_b {
-                            // Garante que não criaremos auto-laço (cte_a -> cte_a)
-                            if cte_a != cte_c && !vizinhos_de_a.contains(cte_c) {
-                                worklist.push((cte_a.clone(), cte_c.clone()));
-                            }
-                        }
-                    }
-                }
-            }
-
-            // -----------------------------------------------------------------
-            // FASE 2: APLICAÇÃO E MEDIÇÃO DE NOVIDADES (Mutação Controlada)
-            // -----------------------------------------------------------------
-            // Aplica no grafo principal todas as arestas descobertas na Fase 1.
-            for (origem, destino) in worklist {
-                // Por segurança redundante, assegurar exclusão de auto-referência.
-                if origem == destino {
-                    continue;
-                }
-                // `HashSet::insert()` retorna `true` se o valor era INÉDITO no conjunto,
-                // e `false` se o elemento já existia previamente.
-                // Usamos esse retorno nativo do Rust para saber se o grafo realmente cresceu!
-                if self.entry(origem).or_default().insert(destino) {
-                    novas_arestas += 1;
-                }
-            }
-
-            // Diagnóstico visual opcional para depuração e rastreamento de lotes
-            if verbose && novas_arestas > 0 {
-                println!("--- Estado Atual da Convergência de CT-es ---");
-                for (k, chaves) in self.iter() {
-                    println!(" {k}: {chaves:?}");
-                }
-                println!("Novas conexões adicionadas nesta rodada: {novas_arestas}\n");
-            }
-
-            // -----------------------------------------------------------------
-            // FASE 3: VERIFICAÇÃO DO PONTO FIXO (Critério de Parada)
-            // -----------------------------------------------------------------
-            // Se nenhuma nova aresta foi inserida nesta rodada (novas_arestas == 0),
-            // significa que todas as conexões transitivas e simétricas possíveis já
-            // foram descobertas. O grafo atingiu a estabilidade final.
-            if novas_arestas == 0 {
-                break;
-            }
-        }
-    }
-
     fn expand_nfes(&mut self, cte_ctes: &Self) {
-        for (cte_a, nfes) in self.clone() {
-            if let Some(ctes_relacionados) = cte_ctes.get(&cte_a) {
-                for cte_relacionado in ctes_relacionados {
-                    self.entry(cte_relacionado.clone())
-                        .or_default()
-                        .extend(nfes.clone());
+        let propagacoes: Vec<(String, Vec<String>)> = self
+            .iter()
+            .filter_map(|(cte_a, nfes)| {
+                let ctes_relacionados = cte_ctes.get(cte_a)?;
+                if nfes.is_empty() {
+                    return None;
                 }
-            }
+                let nfes_vec: Vec<String> = nfes.iter().cloned().collect();
+                Some((ctes_relacionados, nfes_vec))
+            })
+            .flat_map(|(ctes_rel, nfes_vec)| {
+                ctes_rel
+                    .iter()
+                    .map(move |cte_rel| (cte_rel.clone(), nfes_vec.clone()))
+            })
+            .collect();
+
+        for (cte_rel, nfes_vec) in propagacoes {
+            self.entry(cte_rel).or_default().extend(nfes_vec);
         }
     }
 
-    fn filtrar_nfes_validos(&self, nfe_info: &BTreeMap<KeyDoc, Vec<InfoNfe>>) -> Self {
+    fn filtrar_validos<V: Sync>(&self, docs_info: &BTreeMap<KeyDoc, V>) -> Self {
         self.par_iter()
-            .map(|(cte, nfes)| {
-                let docs_validos: HashSet<String> = nfes
+            .filter_map(|(chave, docs)| {
+                let docs_validos: HashSet<String> = docs
                     .iter()
-                    .filter(|&nfe| {
-                        let chave_valida = KeyDoc::new(nfe, true);
-                        nfe_info.contains_key(&chave_valida)
-                    })
+                    .filter(|&doc| docs_info.contains_key(&KeyDoc::new(doc, true)))
                     .cloned()
                     .collect();
 
-                (cte.clone(), docs_validos)
+                (!docs_validos.is_empty()).then(|| (chave.clone(), docs_validos))
             })
-            .filter(|(_, docs_validos)| !docs_validos.is_empty())
-            .collect()
-    }
-
-    fn filtrar_ctes_validos(&self, cte_info: &BTreeMap<KeyDoc, Vec<InfoCte>>) -> Self {
-        self.par_iter()
-            .map(|(cte, ctes)| {
-                let docs_validos: HashSet<String> = ctes
-                    .iter()
-                    .filter(|&cte| {
-                        let chave_valida = KeyDoc::new(cte, true);
-                        cte_info.contains_key(&chave_valida)
-                    })
-                    .cloned()
-                    .collect();
-
-                (cte.clone(), docs_validos)
-            })
-            .filter(|(_, docs_validos)| !docs_validos.is_empty())
             .collect()
     }
 
@@ -1137,21 +1043,10 @@ mod tests_graphos_comparativos {
         // ---------------------------------------------------------------------
         // EXECUÇÃO DOS DOIS MÉTODOS SOBRE CÓPIAS INDEPENDENTES
         // ---------------------------------------------------------------------
-        let mut grafo_dsu = grafo_original.clone();
-        let mut grafo_old = grafo_original.clone();
-
+        let mut grafo_dsu = grafo_original;
         grafo_dsu.expand_ctes(false);
-        grafo_old.expand_ctes_old(false);
 
         println!("grafo_dsu: {grafo_dsu:#?}");
-
-        // ---------------------------------------------------------------------
-        // VALIDAÇÃO: OS RESULTADOS DEVEM SER 100% IGUAIS
-        // ---------------------------------------------------------------------
-        assert_eq!(
-            grafo_dsu, grafo_old,
-            "Inconsistência detectada: o resultado do DSU difere do algoritmo de Ponto Fixo!"
-        );
 
         // ---------------------------------------------------------------------
         // VALIDAÇÕES ADICIONAIS DE INTEGRIDADE CONTÁBIL

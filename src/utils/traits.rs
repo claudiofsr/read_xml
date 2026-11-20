@@ -262,6 +262,170 @@ where
 
 // ---------------------------------------------------------------------------//
 
+/// Verifica em passada única (zero-allocation) se a string possui bordas com espaços,
+/// quebras de linha ou tabulações.
+#[inline]
+fn needs_line_break_strip(s: &str) -> bool {
+    s.starts_with(char::is_whitespace)
+        || s.ends_with(char::is_whitespace)
+        || s.contains(['\r', '\n', '\t'])
+}
+
+/// Verifica em passada única (zero-allocation) se a string possui bordas com espaços,
+/// quebras de linha, tabulações ou dois ou mais espaços consecutivos.
+#[inline]
+fn needs_space_collapse(s: &str) -> bool {
+    let mut prev_ws = false;
+    let mut first = true;
+    let mut last_ws = false;
+
+    for ch in s.chars() {
+        if matches!(ch, '\r' | '\n' | '\t') {
+            return true;
+        }
+        let is_ws = ch.is_whitespace();
+        if (first && is_ws) || (prev_ws && is_ws) {
+            return true;
+        }
+        first = false;
+        prev_ws = is_ws;
+        last_ws = is_ws;
+    }
+
+    last_ws
+}
+
+/// Remove quebras de linha (`\r\n`, `\r`, `\n`) e tabulações (`\t`),
+/// substituindo-as por espaço simples e aparando bordas (preserva múltiplos espaços internos).
+#[inline]
+pub fn strip_line_breaks(s: &str) -> String {
+    s.trim()
+        .replace("\r\n", " ")
+        .replace(['\r', '\n', '\t'], " ")
+}
+
+/// Extrai a chave de acesso de 44 dígitos a partir do atributo `@Id` (ex.: `"CTe4126..."` ou `"NFe3525..."`).
+#[inline]
+pub fn extract_chave_from_id(id: Option<&str>, prefix: &str) -> Option<String> {
+    let raw = id?.trim();
+    let chave = raw
+        .strip_prefix(prefix)
+        .or_else(|| raw.strip_prefix(&prefix.to_lowercase()))
+        .unwrap_or(raw)
+        .trim();
+    (!chave.is_empty()).then(|| chave.to_lowercase())
+}
+
+/// Normalização textual em lote para campos e coleções de documentos fiscais.
+pub trait SanitizeText {
+    /// Remove quebras de linha, tabulações e espaços nas bordas, preservando múltiplos espaços internos.
+    fn strip_line_breaks(&mut self);
+
+    /// Remove quebras de linha, tabulações, espaços nas bordas e colapsa 2+ espaços em 1 espaço.
+    fn clean_spaces(&mut self);
+}
+
+impl SanitizeText for String {
+    #[inline]
+    fn strip_line_breaks(&mut self) {
+        if needs_line_break_strip(self) {
+            *self = strip_line_breaks(self);
+        }
+    }
+
+    #[inline]
+    fn clean_spaces(&mut self) {
+        if needs_space_collapse(self) {
+            *self = self.split_whitespace().collect::<Vec<_>>().join(" ");
+        }
+    }
+}
+
+impl<T: SanitizeText> SanitizeText for Option<T> {
+    #[inline]
+    fn strip_line_breaks(&mut self) {
+        if let Some(val) = self {
+            val.strip_line_breaks();
+        }
+    }
+
+    #[inline]
+    fn clean_spaces(&mut self) {
+        if let Some(val) = self {
+            val.clean_spaces();
+        }
+    }
+}
+
+impl<T: SanitizeText> SanitizeText for Vec<T> {
+    #[inline]
+    fn strip_line_breaks(&mut self) {
+        for item in self {
+            item.strip_line_breaks();
+        }
+    }
+
+    #[inline]
+    fn clean_spaces(&mut self) {
+        for item in self {
+            item.clean_spaces();
+        }
+    }
+}
+
+/// Extensão paralela para normalização textual em lote sobre slices.
+pub trait SanitizeSliceExt {
+    fn strip_line_breaks_par(&mut self);
+    fn clean_spaces_par(&mut self);
+}
+
+impl<T: SanitizeText + Send> SanitizeSliceExt for [T] {
+    fn strip_line_breaks_par(&mut self) {
+        self.par_iter_mut()
+            .for_each(SanitizeText::strip_line_breaks);
+    }
+
+    fn clean_spaces_par(&mut self) {
+        self.par_iter_mut().for_each(SanitizeText::clean_spaces);
+    }
+}
+
+/// Macro DRY que gera `impl SanitizeText` a partir de uma única lista de campos textuais.
+#[macro_export]
+macro_rules! impl_sanitize_text {
+    ($ty:ty, $( $field:ident ),+ $(,)?) => {
+        impl $crate::SanitizeText for $ty {
+            fn strip_line_breaks(&mut self) {
+                $( $crate::SanitizeText::strip_line_breaks(&mut self.$field); )+
+            }
+
+            fn clean_spaces(&mut self) {
+                $( $crate::SanitizeText::clean_spaces(&mut self.$field); )+
+            }
+        }
+    };
+}
+
+#[cfg(test)]
+mod tests_sanitize_text {
+    use super::*;
+
+    #[test]
+    fn test_strip_line_breaks_vs_clean_spaces() {
+        let raw = "  Linha 1\r\nLinha  2\tFim   ";
+
+        let mut s1 = raw.to_string();
+        s1.strip_line_breaks();
+        assert_eq!(s1, "Linha 1 Linha  2 Fim");
+
+        let mut s2 = raw.to_string();
+        s2.clean_spaces();
+        assert_eq!(s2, "Linha 1 Linha 2 Fim");
+    }
+}
+
+// ---------------------------------------------------------------------------//
+
 pub type XmlDecodingReader<R = BufReader<File>> = DecodingReader<R>;
 pub type XmlEventReader<R = BufReader<File>> = Reader<DecodingReader<R>>;
 

@@ -219,6 +219,48 @@ pub struct Ide {
     /// Nome do Município do término da prestação.
     #[serde(rename = "xMunFim", default)]
     pub x_mun_fim: Option<String>,
+
+    /// Código do Município de ocorrência do fato gerador do IBS (`cMunFGIBS`).
+    #[serde(rename = "cMunFGIBS", default)]
+    pub c_mun_fg_ibs: Option<String>,
+
+    /// Tipo de Nota Fiscal de Débito (`tpNFDebito`).
+    #[serde(rename = "tpNFDebito", default)]
+    pub tp_nf_debito: Option<String>,
+
+    /// Tipo de Nota Fiscal de Crédito (`tpNFCredito`).
+    #[serde(rename = "tpNFCredito", default)]
+    pub tp_nf_credito: Option<String>,
+
+    /// Data prevista de entrega (`dPrevEntrega`).
+    #[serde(rename = "dPrevEntrega", default)]
+    pub d_prev_entrega: Option<String>,
+
+    /// Grupo de Compra Governamental (`gCompraGov`).
+    #[serde(rename = "gCompraGov", default)]
+    pub g_compra_gov: Option<GCompraGov>,
+
+    /// Grupo de notas de pagamento antecipado (`gPagAntecipado`).
+    #[serde(rename = "gPagAntecipado", default)]
+    pub g_pag_antecipado: Option<GPagAntecipado>,
+}
+
+/// Grupo de informações de Compra Governamental (`<gCompraGov>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GCompraGov {
+    #[serde(rename = "tpEnteGov", default)]
+    pub tp_ente_gov: Option<String>,
+    #[serde(rename = "pRedutor", default)]
+    pub p_redutor: Option<String>,
+    #[serde(rename = "tpOperGov", default)]
+    pub tp_oper_gov: Option<String>,
+}
+
+/// Grupo de referências de pagamento antecipado (`<gPagAntecipado>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GPagAntecipado {
+    #[serde(rename = "refNFe", default)]
+    pub ref_nfe: Option<Vec<String>>,
 }
 
 impl Ide {

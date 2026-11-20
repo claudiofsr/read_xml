@@ -32,7 +32,6 @@
 //! * <https://dfe-portal.svrs.rs.gov.br/NFE/ConsultaSchema>
 
 use chrono::NaiveDate;
-use claudiofsr_lib::StrExtension;
 use rust_xlsxwriter::serialize_option_datetime_to_excel;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
@@ -62,7 +61,7 @@ use crate::{
 pub struct InfoNfe {
     /// Versão do leiaute XML correspondente.
     #[serde(rename = "Versão XML", default)]
-    versao: Option<String>,
+    pub versao: Option<String>,
 
     /// CNPJ do Emitente formatado.
     #[serde(rename = "CNPJ do Emitente", default)]
@@ -74,43 +73,43 @@ pub struct InfoNfe {
 
     /// Código do Regime Tributário (CRT) do Emitente.
     #[serde(rename = "CRT (Código do Regime Tributário) do Emitente", default)]
-    emitente_crt: Option<u8>,
+    pub emitente_crt: Option<u8>,
 
     /// Nome ou Razão Social do Emitente.
     #[serde(rename = "Nome ou Razão Social do Emitente", default)]
-    emitente_nome: Option<String>,
+    pub emitente_nome: Option<String>,
 
     /// Nome Fantasia do Emitente.
     #[serde(rename = "Nome Fantasia do Emitente", default)]
-    emitente_fantasia: Option<String>,
+    pub emitente_fantasia: Option<String>,
 
     /// Município do endereço do Emitente.
     #[serde(rename = "Municípo do Emitente", default)]
-    emitente_ender_municipio: Option<String>,
+    pub emitente_ender_municipio: Option<String>,
 
     /// Sigla do Estado (UF) do Emitente.
     #[serde(rename = "Estado do Emitente", default)]
-    emitente_ender_estado: Option<String>,
+    pub emitente_ender_estado: Option<String>,
 
     /// CNPJ do Destinatário formatado.
     #[serde(rename = "CNPJ do Destinatário", default)]
-    destinatario_cnpj: Option<String>,
+    pub destinatario_cnpj: Option<String>,
 
     /// CPF do Destinatário formatado.
     #[serde(rename = "CPF do Destinatário", default)]
-    destinatario_cpf: Option<String>,
+    pub destinatario_cpf: Option<String>,
 
     /// Nome ou Razão Social do Destinatário.
     #[serde(rename = "Nome ou Razão Social do Destinatário", default)]
-    destinatario_nome: Option<String>,
+    pub destinatario_nome: Option<String>,
 
     /// Município do endereço do Destinatário.
     #[serde(rename = "Municípo do Destinatário", default)]
-    destinatario_ender_municipio: Option<String>,
+    pub destinatario_ender_municipio: Option<String>,
 
     /// Sigla do Estado (UF) do Destinatário.
     #[serde(rename = "Estado do Destinatário", default)]
-    destinatario_ender_estado: Option<String>,
+    pub destinatario_ender_estado: Option<String>,
 
     /// Chave de acesso única do documento fiscal contendo 44 dígitos.
     #[serde(rename = "Chave do Documento Fiscal", default)]
@@ -118,15 +117,27 @@ pub struct InfoNfe {
 
     /// Registro indicador da origem do documento (p. ex., "NFe").
     #[serde(rename = "Registro de Origem")]
-    doc_tipo: String,
+    pub doc_tipo: String,
 
     /// Indicador se o documento fiscal correspondente foi cancelado.
     #[serde(rename = "Cancelado", default)]
     pub cancelado: Option<String>,
 
+    /// Modelo do documento fiscal (`55` = NF-e, `65` = NFC-e).
+    #[serde(rename = "Modelo", default)]
+    pub modelo: Option<String>,
+
+    /// Tipo da Operação (`0` = Entrada, `1` = Saída).
+    #[serde(rename = "Tipo da Operação (Entrada/Saída)", default)]
+    pub tp_nf: Option<String>,
+
+    /// Natureza da Operação (`<natOp>`).
+    #[serde(rename = "Natureza da Operação", default)]
+    pub nat_operacao: Option<String>,
+
     /// Número sequencial da Nota Fiscal.
     #[serde(rename = "Nº do Documento Fiscal", default)]
-    numero_da_nota: Option<u32>,
+    pub numero_da_nota: Option<u32>,
 
     /// Data de emissão da Nota Fiscal.
     #[serde(
@@ -142,7 +153,7 @@ pub struct InfoNfe {
         serialize_with = "serialize_option_datetime_to_excel",
         default
     )]
-    data_saida: Option<NaiveDate>,
+    pub data_saida: Option<NaiveDate>,
 
     /// Número do item dentro da Nota Fiscal.
     #[serde(rename = "Nº do Item", default)]
@@ -150,11 +161,11 @@ pub struct InfoNfe {
 
     /// Quantidade de itens totais contidos na Nota Fiscal.
     #[serde(rename = "Nº de Itens")]
-    numero_de_itens: usize,
+    pub numero_de_itens: usize,
 
     /// Número do Documento de Importação (DI/DSI/DA) se aplicável.
     #[serde(rename = "Nº do Documento de Importação", default)]
-    n_di: Option<u64>,
+    pub n_di: Option<u64>,
 
     /// Descrição detalhada do produto ou serviço correspondente ao item.
     #[serde(rename = "Descrição", default)]
@@ -162,7 +173,7 @@ pub struct InfoNfe {
 
     /// Código Fiscal de Operações e Prestações (CFOP) do item.
     #[serde(rename = "CFOP (Código Fiscal de Operações e Prestações)", default)]
-    cfop: Option<u16>,
+    pub cfop: Option<u16>,
 
     /// Código da Nomenclatura Comum do Mercosul (NCM).
     #[serde(rename = "NCM (Nomenclatura Comum do Mercosul)", default)]
@@ -173,19 +184,19 @@ pub struct InfoNfe {
         rename = "Informações complementares de interesse do Contribuinte",
         default
     )]
-    info_adic_contribuinte: Option<String>,
+    pub info_adic_contribuinte: Option<String>,
 
     /// Informações adicionais de interesse do Fisco.
     #[serde(rename = "Informações adicionais de interesse do Fisco", default)]
-    info_adic_fisco: Option<String>,
+    pub info_adic_fisco: Option<String>,
 
     /// Código de Situação Tributária (CST) do PIS.
     #[serde(rename = "CST de PIS/PASEP", default)]
-    cst_pis: Option<u8>,
+    pub cst_pis: Option<u8>,
 
     /// Código de Situação Tributária (CST) do COFINS.
     #[serde(rename = "CST de COFINS", default)]
-    cst_cofins: Option<u8>,
+    pub cst_cofins: Option<u8>,
 
     /// Chaves de CT-e relacionados a este documento fiscal.
     #[serde(
@@ -213,7 +224,7 @@ pub struct InfoNfe {
 
     /// Valor somado correspondente a todos os produtos listados na NF-e.
     #[serde(rename = "Valor Total dos Itens", default)]
-    valor_total_itens: Option<f64>,
+    pub valor_total_itens: Option<f64>,
 
     /// Valor do produto correspondente a este item específico (vProd).
     #[serde(rename = "Valor do Item", default)]
@@ -221,52 +232,88 @@ pub struct InfoNfe {
 
     /// Valor de desconto aplicado sobre o item.
     #[serde(rename = "Valor do Desconto", default)]
-    v_desc: Option<f64>,
+    pub v_desc: Option<f64>,
 
     /// Valor de frete imputado a este item fiscal.
     #[serde(rename = "Valor do Frete", default)]
-    v_frete: Option<f64>,
+    pub v_frete: Option<f64>,
 
     /// Valor de seguro imputado a este item fiscal.
     #[serde(rename = "Valor do Seguro", default)]
-    v_seg: Option<f64>,
+    pub v_seg: Option<f64>,
 
     /// Alíquota correspondente ao imposto PIS.
     #[serde(rename = "Alíquota de PIS/PASEP", default)]
-    aliq_pis: Option<f64>,
+    pub aliq_pis: Option<f64>,
 
     /// Alíquota correspondente ao imposto COFINS.
     #[serde(rename = "Alíquota de COFINS", default)]
-    aliq_cofins: Option<f64>,
+    pub aliq_cofins: Option<f64>,
 
     /// Valor monetário calculado correspondente ao PIS do item.
     #[serde(rename = "Valor de PIS/PASEP", default)]
-    v_pis: Option<f64>,
+    pub v_pis: Option<f64>,
 
     /// Valor monetário calculado correspondente ao COFINS do item.
     #[serde(rename = "Valor de COFINS", default)]
-    v_cofins: Option<f64>,
+    pub v_cofins: Option<f64>,
 
     /// Valor monetário calculado correspondente ao IPI do item.
     #[serde(rename = "Valor de IPI", default)]
-    v_ipi: Option<f64>,
+    pub v_ipi: Option<f64>,
+
+    /// Base de cálculo monetária do ISS do item.
+    #[serde(rename = "Valor da Base de Cálculo do ISS", default)]
+    pub v_bc_iss: Option<f64>,
 
     /// Valor monetário calculado correspondente ao ISS do item.
     #[serde(rename = "Valor de ISS", default)]
-    v_iss: Option<f64>,
+    pub v_iss: Option<f64>,
 
     /// Base de cálculo monetária adotada para apuração do ICMS do item.
     #[serde(rename = "Valor da Base de Cálculo do ICMS", default)]
-    v_bc_icms: Option<f64>,
+    pub v_bc_icms: Option<f64>,
 
     /// Alíquota percentual do ICMS correspondente.
     #[serde(rename = "Alíquota de ICMS", default)]
-    aliq_icms: Option<f64>,
+    pub aliq_icms: Option<f64>,
 
     /// Valor calculado correspondente ao ICMS debitado para o item.
     #[serde(rename = "Valor de ICMS", default)]
-    v_icms: Option<f64>,
+    pub v_icms: Option<f64>,
+
+    /// Valor calculado correspondente ao ICMS-ST do item.
+    #[serde(rename = "Valor de ICMS ST", default)]
+    pub v_icms_st: Option<f64>,
 }
+
+crate::impl_sanitize_text!(
+    InfoNfe,
+    versao,
+    emitente_cnpj,
+    emitente_cpf,
+    emitente_nome,
+    emitente_fantasia,
+    emitente_ender_municipio,
+    emitente_ender_estado,
+    destinatario_cnpj,
+    destinatario_cpf,
+    destinatario_nome,
+    destinatario_ender_municipio,
+    destinatario_ender_estado,
+    nfe,
+    doc_tipo,
+    cancelado,
+    modelo,
+    tp_nf,
+    nat_operacao,
+    descricao,
+    ncm,
+    info_adic_contribuinte,
+    info_adic_fisco,
+    ctes,
+    tomadores,
+);
 
 impl InfoNfe {
     /// Retorna a chave de acesso da NF-e caso esteja presente.
@@ -347,6 +394,8 @@ pub struct Item {
     v_cofins: Option<f64>,
     /// Valor acumulado apurado para o IPI.
     v_ipi: Option<f64>,
+    /// Base de cálculo do ISS.
+    v_bc_iss: Option<f64>,
     /// Valor acumulado apurado para o ISS.
     v_iss: Option<f64>,
     /// Base de cálculo apurada para o ICMS.
@@ -355,6 +404,8 @@ pub struct Item {
     aliq_icms: Option<f64>,
     /// Valor de ICMS correspondente.
     v_icms: Option<f64>,
+    /// Valor de ICMS-ST correspondente.
+    v_icms_st: Option<f64>,
 }
 
 /// Estrutura correspondente ao protocolo de recepção e processamento de NF-e (`<nfeProc>`).
@@ -399,7 +450,11 @@ impl NfeProc {
 
     /// Extrai a chave de acesso da NF-e a partir dos metadados do protocolo de status.
     pub fn get_nfe(&self) -> Option<String> {
-        self.prot_nfe.inf_prot.ch_nfe.get_key()
+        self.prot_nfe
+            .inf_prot
+            .ch_nfe
+            .get_key()
+            .or_else(|| self.nfe.get_chave_from_id())
     }
 
     /// Extrai o CNPJ do Emitente associado à Nota Fiscal.
@@ -532,118 +587,22 @@ impl NfeProc {
 
     /// Mapeia sequencialmente todos os produtos associados aos itens fiscais contidos no documento.
     pub fn get_itens(&self) -> Vec<Item> {
-        match self.nfe.inf_nfe.as_ref() {
-            Some(info) => info
-                .det
-                .iter()
-                .map(|item| {
-                    let produto = &item.prod;
-                    let imposto = &item.imposto;
-                    Item {
-                        n_item: item.n_item.trim().parse().ok(),
-                        n_di: produto.get_num_dec_importacao(),
-                        x_prod: produto.get_descricao(),
-                        cfop: produto.get_cfop(),
-                        ncm: produto.get_ncm(),
-                        cst_pis: imposto.get_cst_pis(),
-                        cst_cofins: imposto.get_cst_cofins(),
-                        v_prod: produto.v_prod,
-                        v_desc: produto.v_desc,
-                        v_frete: produto.v_frete,
-                        v_seg: produto.v_seg,
-                        aliq_pis: imposto.get_aliq_pis(),
-                        aliq_cofins: imposto.get_aliq_cofins(),
-                        v_pis: imposto.get_v_pis(),
-                        v_cofins: imposto.get_v_cofins(),
-                        v_ipi: imposto.get_v_ipi(),
-                        v_iss: imposto.get_v_iss(),
-                        v_bc_icms: imposto.get_v_bc_icms(),
-                        aliq_icms: imposto.get_aliq_icms(),
-                        v_icms: imposto.get_v_icms(),
-                    }
-                })
-                .collect(),
-            None => Vec::new(),
-        }
+        self.nfe.get_itens()
     }
 
     /// Obtém as informações complementares destinadas ao contribuinte.
     pub fn get_info_adic_cpl(&self) -> Option<String> {
-        self.nfe
-            .inf_nfe
-            .as_ref()
-            .and_then(|information| information.get_info_adic_contribuinte())
+        self.nfe.get_info_adic_cpl()
     }
 
     /// Obtém as informações adicionais de interesse do fisco.
     pub fn get_info_adic_fisco(&self) -> Option<String> {
-        self.nfe
-            .inf_nfe
-            .as_ref()
-            .and_then(|information| information.get_info_adic_fisco())
+        self.nfe.get_info_adic_fisco()
     }
 
     /// Retorna uma coleção de estruturas `InfoNfe` unificadas a partir dos itens do XML da NF-e.
     pub fn get_infos(&self) -> Vec<InfoNfe> {
-        let mut infos = Vec::new();
-        let itens: Vec<Item> = self.get_itens();
-        let numero_de_itens = itens.len();
-        let valor_total_itens: Option<f64> = itens.iter().map(|item| item.v_prod).sum();
-
-        for item in itens {
-            let info_nfe = InfoNfe {
-                versao: self.get_versao(),
-                emitente_cnpj: self.get_emitente_cnpj(),
-                emitente_cpf: self.get_emitente_cpf(),
-                emitente_crt: self.get_cod_regime_tributario(),
-                emitente_nome: self.get_emitente_nome(),
-                emitente_fantasia: self.get_emitente_fantasia(),
-                emitente_ender_municipio: self.get_emitente_ender_municipio(),
-                emitente_ender_estado: self.get_emitente_ender_estado(),
-                destinatario_cnpj: self.get_destinatario_cnpj(),
-                destinatario_cpf: self.get_destinatario_cpf(),
-                destinatario_nome: self.get_destinatario_nome(),
-                destinatario_ender_municipio: self.get_destinatario_ender_municipio(),
-                destinatario_ender_estado: self.get_destinatario_ender_estado(),
-                nfe: self.get_nfe(),
-                doc_tipo: "NFe".to_string(),
-                cancelado: None,
-                numero_da_nota: self.get_numero_da_nota(),
-                data_emissao: self.get_data_emissao(),
-                data_saida: self.get_data_saida(),
-                n_item: item.n_item,
-                numero_de_itens,
-                n_di: item.n_di,
-                descricao: item.x_prod,
-                cfop: item.cfop,
-                ncm: item.ncm,
-                info_adic_contribuinte: self.get_info_adic_cpl(),
-                info_adic_fisco: self.get_info_adic_fisco(),
-                cst_pis: item.cst_pis,
-                cst_cofins: item.cst_cofins,
-                ctes: Vec::new(),
-                tomadores: Vec::new(),
-                valor_total_ctes: None,
-                valor_total_nfe: self.get_total_da_nfe(),
-                valor_total_itens,
-                v_prod: item.v_prod, // valor do Item
-                v_desc: item.v_desc,
-                v_frete: item.v_frete,
-                v_seg: item.v_seg,
-                aliq_pis: item.aliq_pis,
-                aliq_cofins: item.aliq_cofins,
-                v_pis: item.v_pis,
-                v_cofins: item.v_cofins,
-                v_ipi: item.v_ipi,
-                v_iss: item.v_iss,
-                v_bc_icms: item.v_bc_icms,
-                aliq_icms: item.aliq_icms,
-                v_icms: item.v_icms,
-            };
-            infos.push(info_nfe.clone());
-        }
-
-        infos
+        self.nfe.get_infos(self.get_nfe(), self.get_versao())
     }
 }
 
@@ -662,6 +621,164 @@ pub struct Nfe {
     /// Bloco contendo a assinatura digital da NF-e.
     #[serde(rename = "Signature")]
     pub signature: Signature,
+}
+
+impl StructExtension for Nfe {
+    fn get_information(&self, xml_path: &std::path::Path, arguments: &Arguments) -> Information {
+        if arguments.verbose {
+            println!("nfe xml_path: {xml_path:?}");
+            println!("nfe: {self:#?}\n");
+        }
+        let versao = self.inf_nfe.as_ref().and_then(|inf| inf.versao.clone());
+        Information::Nfe(self.get_infos(self.get_chave_from_id(), versao))
+    }
+}
+
+impl Nfe {
+    /// Extrai a chave de acesso de 44 dígitos do atributo `@Id` de `<infNFe>`.
+    pub fn get_chave_from_id(&self) -> Option<String> {
+        crate::extract_chave_from_id(self.inf_nfe.as_ref()?.id.as_deref(), "NFe")
+    }
+
+    /// Obtém as informações complementares destinadas ao contribuinte.
+    pub fn get_info_adic_cpl(&self) -> Option<String> {
+        self.inf_nfe
+            .as_ref()
+            .and_then(InfNfe::get_info_adic_contribuinte)
+    }
+
+    /// Obtém as informações adicionais de interesse do fisco.
+    pub fn get_info_adic_fisco(&self) -> Option<String> {
+        self.inf_nfe.as_ref().and_then(InfNfe::get_info_adic_fisco)
+    }
+
+    /// Mapeia sequencialmente os produtos associados aos itens fiscais de `<NFe>`.
+    pub fn get_itens(&self) -> Vec<Item> {
+        let Some(info) = self.inf_nfe.as_ref() else {
+            return Vec::new();
+        };
+
+        info.det
+            .iter()
+            .map(|item| {
+                let produto = &item.prod;
+                let imposto = &item.imposto;
+                Item {
+                    n_item: item.n_item.trim().parse().ok(),
+                    n_di: produto.get_num_dec_importacao(),
+                    x_prod: produto.get_descricao(),
+                    cfop: produto.get_cfop(),
+                    ncm: produto.get_ncm(),
+                    cst_pis: imposto.get_cst_pis(),
+                    cst_cofins: imposto.get_cst_cofins(),
+                    v_prod: produto.v_prod,
+                    v_desc: produto.v_desc,
+                    v_frete: produto.v_frete,
+                    v_seg: produto.v_seg,
+                    aliq_pis: imposto.get_aliq_pis(),
+                    aliq_cofins: imposto.get_aliq_cofins(),
+                    v_pis: imposto.get_v_pis(),
+                    v_cofins: imposto.get_v_cofins(),
+                    v_ipi: imposto.get_v_ipi(),
+                    v_bc_iss: imposto.get_v_bc_iss(),
+                    v_iss: imposto.get_v_iss(),
+                    v_bc_icms: imposto.get_v_bc_icms(),
+                    aliq_icms: imposto.get_aliq_icms(),
+                    v_icms: imposto.get_v_icms(),
+                    v_icms_st: imposto.get_v_icms_st(),
+                }
+            })
+            .collect()
+    }
+
+    /// Monta a coleção de estruturas `InfoNfe` a partir de `<NFe>`, chave e versão opcionais.
+    pub fn get_infos(&self, nfe: Option<String>, versao: Option<String>) -> Vec<InfoNfe> {
+        let itens = self.get_itens();
+        let numero_de_itens = itens.len();
+        let valor_total_itens =
+            (!itens.is_empty()).then(|| itens.iter().filter_map(|item| item.v_prod).sum());
+
+        let inf_nfe = self.inf_nfe.as_ref();
+        let emitente_cnpj = inf_nfe.and_then(InfNfe::get_emit_cnpj);
+        let emitente_cpf = inf_nfe.and_then(InfNfe::get_emit_cpf);
+        let emitente_crt = inf_nfe.and_then(InfNfe::get_cod_reg_trib);
+        let emitente_nome = inf_nfe.and_then(InfNfe::get_emit_nome);
+        let emitente_fantasia = inf_nfe.and_then(InfNfe::get_emit_fantasia);
+        let emitente_ender_municipio = inf_nfe.and_then(InfNfe::get_emit_ender_municipio);
+        let emitente_ender_estado = inf_nfe.and_then(InfNfe::get_emit_ender_estado);
+        let destinatario_cnpj = inf_nfe.and_then(InfNfe::get_dest_cnpj);
+        let destinatario_cpf = inf_nfe.and_then(InfNfe::get_dest_cpf);
+        let destinatario_nome = inf_nfe.and_then(InfNfe::get_dest_nome);
+        let destinatario_ender_municipio = inf_nfe.and_then(InfNfe::get_dest_ender_municipio);
+        let destinatario_ender_estado = inf_nfe.and_then(InfNfe::get_dest_ender_estado);
+        let modelo = inf_nfe.and_then(|inf| inf.ide.modelo.get_not_empty());
+        let tp_nf = inf_nfe.and_then(|inf| inf.ide.tp_nf.get_not_empty());
+        let nat_operacao = inf_nfe.and_then(|inf| inf.ide.nat_operacao.get_not_empty());
+        let numero_da_nota = inf_nfe.and_then(|inf| inf.ide.get_num_nfe());
+        let data_emissao = inf_nfe.and_then(|inf| inf.ide.get_dt_emissao());
+        let data_saida = inf_nfe.and_then(|inf| inf.ide.get_dt_saida());
+        let info_adic_contribuinte = self.get_info_adic_cpl();
+        let info_adic_fisco = self.get_info_adic_fisco();
+        let valor_total_nfe = inf_nfe.and_then(|inf| inf.total.get_valor_nfe());
+
+        itens
+            .into_iter()
+            .map(|item| InfoNfe {
+                versao: versao.clone(),
+                emitente_cnpj: emitente_cnpj.clone(),
+                emitente_cpf: emitente_cpf.clone(),
+                emitente_crt,
+                emitente_nome: emitente_nome.clone(),
+                emitente_fantasia: emitente_fantasia.clone(),
+                emitente_ender_municipio: emitente_ender_municipio.clone(),
+                emitente_ender_estado: emitente_ender_estado.clone(),
+                destinatario_cnpj: destinatario_cnpj.clone(),
+                destinatario_cpf: destinatario_cpf.clone(),
+                destinatario_nome: destinatario_nome.clone(),
+                destinatario_ender_municipio: destinatario_ender_municipio.clone(),
+                destinatario_ender_estado: destinatario_ender_estado.clone(),
+                nfe: nfe.clone(),
+                doc_tipo: "NFe".to_string(),
+                cancelado: None,
+                modelo: modelo.clone(),
+                tp_nf: tp_nf.clone(),
+                nat_operacao: nat_operacao.clone(),
+                numero_da_nota,
+                data_emissao,
+                data_saida,
+                n_item: item.n_item,
+                numero_de_itens,
+                n_di: item.n_di,
+                descricao: item.x_prod,
+                cfop: item.cfop,
+                ncm: item.ncm,
+                info_adic_contribuinte: info_adic_contribuinte.clone(),
+                info_adic_fisco: info_adic_fisco.clone(),
+                cst_pis: item.cst_pis,
+                cst_cofins: item.cst_cofins,
+                ctes: Vec::new(),
+                tomadores: Vec::new(),
+                valor_total_ctes: None,
+                valor_total_nfe,
+                valor_total_itens,
+                v_prod: item.v_prod,
+                v_desc: item.v_desc,
+                v_frete: item.v_frete,
+                v_seg: item.v_seg,
+                aliq_pis: item.aliq_pis,
+                aliq_cofins: item.aliq_cofins,
+                v_pis: item.v_pis,
+                v_cofins: item.v_cofins,
+                v_ipi: item.v_ipi,
+                v_bc_iss: item.v_bc_iss,
+                v_iss: item.v_iss,
+                v_bc_icms: item.v_bc_icms,
+                aliq_icms: item.aliq_icms,
+                v_icms: item.v_icms,
+                v_icms_st: item.v_icms_st,
+            })
+            .collect()
+    }
 }
 
 /// Bloco de Informações da Nota Fiscal Eletrônica (`<infNFe>`).
@@ -827,24 +944,25 @@ impl InfNfe {
         self.destinatario.get_ext_estado()
     }
 
-    /// Retorna as informações adicionais de interesse do contribuinte de forma sanitizada.
-    fn get_info_adic_contribuinte(&self) -> Option<String> {
-        self.inf_adic.as_ref().and_then(|information| {
-            information
-                .inf_cpl
-                .as_ref()
-                .map(|i| i.trim().replace_multiple_whitespaces())
+    fn sanitize_info_adic(text: Option<&String>) -> Option<String> {
+        text.and_then(|s| {
+            let clean = crate::strip_line_breaks(s);
+            (!clean.is_empty()).then_some(clean)
         })
     }
 
-    /// Retorna as informações adicionais de interesse do fisco de forma sanitizada.
+    /// Retorna as informações adicionais de interesse do contribuinte sem quebras de linha.
+    fn get_info_adic_contribuinte(&self) -> Option<String> {
+        self.inf_adic
+            .as_ref()
+            .and_then(|info| Self::sanitize_info_adic(info.inf_cpl.as_ref()))
+    }
+
+    /// Retorna as informações adicionais de interesse do fisco sem quebras de linha.
     fn get_info_adic_fisco(&self) -> Option<String> {
-        self.inf_adic.as_ref().and_then(|information| {
-            information
-                .inf_ad_fisco
-                .as_ref()
-                .map(|i| i.trim().replace_multiple_whitespaces())
-        })
+        self.inf_adic
+            .as_ref()
+            .and_then(|info| Self::sanitize_info_adic(info.inf_ad_fisco.as_ref()))
     }
 }
 

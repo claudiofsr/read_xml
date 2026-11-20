@@ -44,14 +44,14 @@ const APPLET_TEMPLATE: &str = "\
 )]
 pub struct Arguments {
     /// Avoid creating XLSX files after parsing XML files
-    ///
-    /// Para evitar a criação de arquivos XLSX, adicione a opção: --avoid ou -a
-    #[arg(short, long, default_value_t = false, action=ArgAction::SetTrue)]
+    #[arg(short, long, default_value_t = false, action = ArgAction::SetTrue)]
     pub avoid: bool,
 
+    /// Collapse two or more consecutive spaces into a single space
+    #[arg(long("clean-spaces"), default_value_t = false)]
+    pub clean_spaces: bool,
+
     /// Write CSV (Comma Separated Values) files
-    ///
-    /// Para imprimir o arquivo CSV, adicione a opção: --csv ou -c
     #[arg(
         short,
         long,
@@ -61,9 +61,7 @@ pub struct Arguments {
     )]
     pub csv: bool,
 
-    /// Set the field delimiter to use when writing CSV
-    ///
-    /// The default is b';'
+    /// Set the field delimiter to use when writing CSV (default: ';')
     #[arg(
         short('d'),
         long,
@@ -76,7 +74,7 @@ pub struct Arguments {
 
     /// Set the memory consumption mode when writing Excel files
     ///
-    /// Opções disponíveis: constant, low, memory
+    /// Available options: constant, low, memory
     #[arg(
         long = "memory-mode",
         value_enum,
@@ -85,21 +83,21 @@ pub struct Arguments {
     )]
     pub memory_mode: ExcelMemoryMode,
 
-    /// Exibir chaves de documentos fiscais (CTe e NFe) não encontradas
+    /// Display fiscal document keys (CTe and NFe) not found
     ///
-    /// Exemplo:
+    /// Example:
     ///
-    /// read_xml -tae > output_docs_nao_encotrados
+    /// read_xml -tae > output_missing_docs
     #[arg(short, long, default_value_t = false)]
     pub exibir_chaves_nao_encontradas: bool,
 
-    /// Exibir chaves de documentos fiscais (CTe e NFe) correlacionadas
+    /// Display correlated fiscal document keys (CTe and NFe)
     ///
-    /// Exemplos:
+    /// Examples:
     ///
-    /// read_xml -ta --exibir-correlacoes > output_docs_correlacionados
+    /// read_xml -ta --exibir-correlacoes > output_correlated_docs
     ///
-    /// read_xml -taei 100 --exibir-correlacoes > output_docs_nao_encontrados_e_docs_correlacionados
+    /// read_xml -taei 100 --exibir-correlacoes > output_missing_and_correlated_docs
     #[arg(long, default_value_t = false)]
     pub exibir_correlacoes: bool,
 
@@ -133,44 +131,19 @@ pub struct Arguments {
 
     /// Set maximum number of items with NCM information to be collected
     ///
-    /// Apresentar no máximo N itens com informaçoes de NCM e descrição
-    ///
-    /// Os itens são coletados em ordem decrescente de valores
-    ///
-    /// Ver função: `fn get_info_de_nfes()` em lib.rs
+    /// Items are collected in descending order of value
     #[arg(short('i'), long("itens"), required = false, default_value_t = 100)]
     pub itens: usize,
 
-    /// Set the maximum number of lines in the files with the found keys.
+    /// Set the maximum number of lines in the output files with the found keys
     ///
-    /// Definir o nº máximo de linhas nos arquivos contendo as chaves encontradas.
-    ///
-    /// A Chave é uma sequência alfanumérica de 44 dígitos que identifica de
-    /// forma única cada documento fiscal eletrônico (CTe e NFe).
-    ///
-    /// Cada arquivo conterá no máximo N chaves.
-    ///
-    /// Nomes dos arquivos gerados: nfes-00001.txt e ctes-00001.txt
-    ///
-    /// Exemplo: suponha que forem encontradas 1807 chaves de NFe e N = 900.
-    ///
-    /// read_xml -tal 900
-    ///
-    /// Portanto, serão gerados 3 arquivos:
-    ///
-    /// nfes-00001.txt com 900 chaves nfe;
-    ///
-    /// nfes-00002.txt com 900 chaves nfe;
-    ///
-    /// nfes-00003.txt com 7 chaves nfe.
+    /// Each file will contain at most N 44-digit fiscal document keys
+    /// (generated as nfes-00001.txt, ctes-00001.txt, etc.)
     #[arg(
         short,
         long,
         required = false,
-        //default_value_t = 10_000,
-        //default_missing_value = "10000",
         value_parser = clap::value_parser!(u64).range(900..)
-        //value_parser = |value: &str| value.parse::<usize>()
     )]
     pub linhas: Option<u64>,
 
@@ -189,6 +162,14 @@ pub struct Arguments {
     #[arg(short('p'), long("path"), required = false)]
     pub path: Option<PathBuf>,
 
+    /// Transform CTe and NFe output to the Receita Federal standard layout (56 columns)
+    ///
+    /// Example:
+    ///
+    /// read_xml -catr
+    #[arg(short('r'), long("receita"), default_value_t = false)]
+    pub receita: bool,
+
     /// Parse CTe or NFe XML file and print Rust struct
     ///
     /// Save this result as a file.rs and use it to (de)serialize an XML document with serde
@@ -201,27 +182,15 @@ pub struct Arguments {
     #[arg(short('t'), long("time"), default_value_t = false)]
     pub time: bool,
 
-    /// Apenas verificar a consistência das tags dos arquivos XML lidos (sem gerar planilhas)
-    ///
-    /// Compara as tags físicas do arquivo XML com as structs mapeadas no projeto.
-    /// Caso existam tags não mapeadas, exibe um alerta apontando o caminho do arquivo.
+    /// Verify XML tag consistency against mapped structs only (without generating spreadsheets)
     #[arg(short('k'), long("verificar-consistencia"), default_value_t = false)]
     pub verificar_consistencia: bool,
 
-    /// Wipe (Clear) the terminal screen before listing the identical files.
-    ///
-    /// On Linux, to clear use the command:
-    ///
-    /// tput reset
-    ///
-    /// Unlike the clear command, the reset command does more than just clear the terminal screen.
-    ///
-    /// It also resets the terminal to its default settings.
+    /// Wipe (Clear) the terminal screen before processing XML files
     #[arg(short('w'), long("wipe_terminal"), default_value_t = false)]
-    // action = ArgAction::SetTrue
     pub wipe_terminal: bool,
 
-    /// Show intermediate runtime messages.
+    /// Show intermediate runtime messages
     #[arg(short('v'), long("verbose"), default_value_t = false)]
     pub verbose: bool,
 }
@@ -263,6 +232,6 @@ impl Arguments {
 
         eprintln!("Generating completion file for {gnt:?}...");
         generate(gnt, &mut cmd, cmd_name, &mut stdout);
-        process::exit(1);
+        process::exit(0);
     }
 }

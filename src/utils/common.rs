@@ -67,7 +67,7 @@ where
     let digits = date.as_ref()?.remove_non_digits();
 
     if digits.chars_count() >= 8 {
-        match NaiveDate::parse_from_str(&digits[..8], "%Y%-m%-d") {
+        match NaiveDate::parse_from_str(&digits[..8], "%Y%m%d") {
             Ok(dt) => Some(dt),
             Err(why) => {
                 eprintln!("Error parsing date: '{date:?}'");
@@ -88,7 +88,7 @@ where
     let digits = date.as_ref()?.remove_non_digits();
     if digits.chars_count() >= 6 {
         let yyyymmdd = format!("{}01", &digits[..6]); // adicionar dia 01
-        match NaiveDate::parse_from_str(&yyyymmdd, "%Y%-m%-d") {
+        match NaiveDate::parse_from_str(&yyyymmdd, "%Y%m%d") {
             Ok(dt) => Some(dt),
             Err(why) => {
                 eprintln!("fn get_naive_date_from_yyyymm()");

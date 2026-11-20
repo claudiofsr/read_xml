@@ -79,6 +79,22 @@ pub struct Compl {
     pub x_obs: Option<String>,
 }
 
+impl Compl {
+    /// Retorna o nome do local de entrega limpo, se presente.
+    pub fn get_local_entrega_nome(&self) -> Option<String> {
+        self.entrega.as_ref().and_then(|e| e.x_nome.get_not_empty())
+    }
+
+    /// Retorna as observações gerais (`<xObs>`) com quebras de linha achatadas,
+    /// preservando espaçamentos internos originais.
+    pub fn get_obs_gerais(&self) -> Option<String> {
+        self.x_obs.as_deref().and_then(|s| {
+            let clean = crate::strip_line_breaks(s);
+            (!clean.is_empty()).then_some(clean)
+        })
+    }
+}
+
 /// Dados estruturados de observações do Contribuinte (`<ObsCont>`).
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ObsCont {
@@ -504,13 +520,14 @@ pub struct InfDoc {
 impl InfDoc {
     /// Extrai e consolida as chaves de acesso de NF-es localizadas nos subnós.
     pub fn get_chaves_de_nfes(&self) -> Vec<String> {
-        match self.inf_nfe.as_ref() {
-            Some(vec_info_nfe) => vec_info_nfe
-                .iter()
-                .map(|i| i.chave.to_string())
-                .collect::<Vec<String>>(),
-            None => Vec::new(),
-        }
+        self.inf_nfe
+            .iter()
+            .flatten()
+            .filter_map(|i| {
+                let chave = i.chave.trim();
+                (!chave.is_empty()).then(|| chave.to_string())
+            })
+            .collect()
     }
 }
 
@@ -1021,9 +1038,21 @@ pub struct InfModal {
     #[serde(rename = "$text", default)]
     pub text: Option<String>,
 
-    /// Detalhamento específico para o modal Rodoviário (rodo).
+    /// Detalhamento específico para o modal Rodoviário (`rodo`).
     #[serde(rename = "rodo", default)]
     pub rodo: Option<Rodo>,
+
+    /// Detalhamento específico para o modal Aéreo (`aereo`).
+    #[serde(rename = "aereo", default)]
+    pub aereo: Option<Aereo>,
+
+    /// Detalhamento específico para o modal Aquaviário (`aquav`).
+    #[serde(rename = "aquav", default)]
+    pub aquav: Option<Aquav>,
+
+    /// Detalhamento específico para o modal Multimodal (`multimodal`).
+    #[serde(rename = "multimodal", default)]
+    pub multimodal: Option<Multimodal>,
 }
 
 /// Dados específicos do Modal Rodoviário (`<rodo>`).
@@ -1033,9 +1062,138 @@ pub struct Rodo {
     #[serde(rename = "RNTRC", default)]
     pub rntrc: Option<String>,
 
+    /// Ordens de Coleta associadas (`occ`).
+    #[serde(rename = "occ", default)]
+    pub occ: Option<Vec<Occ>>,
+
     /// Conteúdo de texto bruto contido no nó se aplicável.
     #[serde(rename = "$text", default)]
     pub text: Option<String>,
+}
+
+/// Ordem de Coleta de Cargas (`<occ>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Occ {
+    #[serde(rename = "serie", default)]
+    pub serie: Option<String>,
+    #[serde(rename = "nOcc", default)]
+    pub n_occ: Option<String>,
+    #[serde(rename = "dEmi", default)]
+    pub d_emi: Option<String>,
+    #[serde(rename = "emiOcc", default)]
+    pub emi_occ: Option<EmiOcc>,
+}
+
+/// Emitente da Ordem de Coleta (`<emiOcc>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct EmiOcc {
+    #[serde(rename = "CNPJ", default)]
+    pub cnpj: Option<String>,
+    #[serde(rename = "cInt", default)]
+    pub c_int: Option<String>,
+    #[serde(rename = "IE", default)]
+    pub ie: Option<String>,
+    #[serde(rename = "UF", default)]
+    pub uf: Option<String>,
+    #[serde(rename = "fone", default)]
+    pub fone: Option<String>,
+}
+
+/// Dados específicos do Modal Aéreo (`<aereo>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Aereo {
+    #[serde(rename = "nMinu", default)]
+    pub n_minu: Option<String>,
+    #[serde(rename = "nOCA", default)]
+    pub n_oca: Option<String>,
+    #[serde(rename = "dPrevAereo", default)]
+    pub d_prev_aereo: Option<String>,
+    #[serde(rename = "natCarga", default)]
+    pub nat_carga: Option<NatCarga>,
+    #[serde(rename = "tarifa", default)]
+    pub tarifa: Option<TarifaAereo>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct NatCarga {
+    #[serde(rename = "xDime", default)]
+    pub x_dime: Option<String>,
+    #[serde(rename = "cInfManu", default)]
+    pub c_inf_manu: Option<Vec<String>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TarifaAereo {
+    #[serde(rename = "CL", default)]
+    pub cl: Option<String>,
+    #[serde(rename = "cTar", default)]
+    pub c_tar: Option<String>,
+    #[serde(rename = "vTar", default)]
+    pub v_tar: Option<String>,
+}
+
+/// Dados específicos do Modal Aquaviário (`<aquav>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Aquav {
+    #[serde(rename = "vPrest", default)]
+    pub v_prest: Option<String>,
+    #[serde(rename = "vAFRMM", default)]
+    pub v_afrmm: Option<String>,
+    #[serde(rename = "xNavio", default)]
+    pub x_navio: Option<String>,
+    #[serde(rename = "nViag", default)]
+    pub n_viag: Option<String>,
+    #[serde(rename = "direc", default)]
+    pub direc: Option<String>,
+    #[serde(rename = "irin", default)]
+    pub irin: Option<String>,
+    #[serde(rename = "tpNav", default)]
+    pub tp_nav: Option<String>,
+    #[serde(rename = "detCont", default)]
+    pub det_cont: Option<Vec<DetCont>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DetCont {
+    #[serde(rename = "nCont", default)]
+    pub n_cont: Option<String>,
+    #[serde(rename = "lacre", default)]
+    pub lacre: Option<Vec<LacreAquav>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LacreAquav {
+    #[serde(rename = "nLacre", default)]
+    pub n_lacre: Option<String>,
+}
+
+/// Dados específicos do Modal Multimodal (`<multimodal>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Multimodal {
+    #[serde(rename = "COTM", default)]
+    pub cotm: Option<String>,
+    #[serde(rename = "indNegociavel", default)]
+    pub ind_negociavel: Option<String>,
+    #[serde(rename = "seg", default)]
+    pub seg: Option<SegMultimodal>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SegMultimodal {
+    #[serde(rename = "infSeg", default)]
+    pub inf_seg: Option<InfSeg>,
+    #[serde(rename = "nApol", default)]
+    pub n_apol: Option<String>,
+    #[serde(rename = "nAver", default)]
+    pub n_aver: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct InfSeg {
+    #[serde(rename = "xSeg", default)]
+    pub x_seg: Option<String>,
+    #[serde(rename = "CNPJ", default)]
+    pub cnpj: Option<String>,
 }
 
 /// Grupo de informações sobre serviços de transporte vinculados (`<infServVinc>`).

@@ -60,7 +60,7 @@ use crate::{
 pub struct InfoCte {
     /// Versão do layout declarada no documento fiscal.
     #[serde(rename = "Versão XML", default)]
-    versao: Option<String>,
+    pub versao: Option<String>,
 
     /// CNPJ do Emitente formatado.
     #[serde(rename = "CNPJ do Emitente", default)]
@@ -75,23 +75,23 @@ pub struct InfoCte {
         rename = "CRT (Código do Regime Tributário) conforme Emitente",
         default
     )]
-    emitente_crt: Option<u8>,
+    pub emitente_crt: Option<u8>,
 
     /// Nome ou Razão Social do Emitente.
     #[serde(rename = "Nome ou Razão Social do Emitente", default)]
-    emitente_nome: Option<String>,
+    pub emitente_nome: Option<String>,
 
     /// Nome Fantasia do Emitente.
     #[serde(rename = "Nome Fantasia do Emitente", default)]
-    emitente_fantasia: Option<String>,
+    pub emitente_fantasia: Option<String>,
 
     /// Município do endereço do Emitente.
     #[serde(rename = "Municípo do Emitente", default)]
-    emitente_ender_municipio: Option<String>,
+    pub emitente_ender_municipio: Option<String>,
 
     /// Estado (UF) do Emitente.
     #[serde(rename = "Estado do Emitente", default)]
-    emitente_ender_estado: Option<String>,
+    pub emitente_ender_estado: Option<String>,
 
     /// CNPJ do Remetente formatado.
     #[serde(rename = "CNPJ do Remetente", default)]
@@ -106,23 +106,23 @@ pub struct InfoCte {
         rename = "CRT (Código do Regime Tributário) conforme Remetente",
         default
     )]
-    remetente_crt: Option<u8>,
+    pub remetente_crt: Option<u8>,
 
     /// Nome ou Razão Social do Remetente.
     #[serde(rename = "Nome ou Razão Social do Remetente", default)]
-    remetente_nome: Option<String>,
+    pub remetente_nome: Option<String>,
 
     /// Nome Fantasia do Remetente.
     #[serde(rename = "Nome Fantasia do Remetente", default)]
-    remetente_fantasia: Option<String>,
+    pub remetente_fantasia: Option<String>,
 
     /// Município do endereço do Remetente.
     #[serde(rename = "Municípo do Remetente", default)]
-    remetente_ender_municipio: Option<String>,
+    pub remetente_ender_municipio: Option<String>,
 
     /// Estado (UF) do Remetente.
     #[serde(rename = "Estado do Remetente", default)]
-    remetente_ender_estado: Option<String>,
+    pub remetente_ender_estado: Option<String>,
 
     /// Chaves das NF-es associadas ao Remetente.
     #[serde(
@@ -145,23 +145,23 @@ pub struct InfoCte {
         rename = "CRT (Código do Regime Tributário) conforme Destinatário",
         default
     )]
-    destinatario_crt: Option<u8>,
+    pub destinatario_crt: Option<u8>,
 
     /// Nome ou Razão Social do Destinatário.
     #[serde(rename = "Nome ou Razão Social do Destinatário", default)]
-    destinatario_nome: Option<String>,
+    pub destinatario_nome: Option<String>,
 
     /// Nome Fantasia do Destinatário.
     #[serde(rename = "Nome Fantasia do Destinatário", default)]
-    destinatario_fantasia: Option<String>,
+    pub destinatario_fantasia: Option<String>,
 
     /// Município do endereço do Destinatário.
     #[serde(rename = "Municípo do Destinatário", default)]
-    destinatario_ender_municipio: Option<String>,
+    pub destinatario_ender_municipio: Option<String>,
 
     /// Estado (UF) do Destinatário.
     #[serde(rename = "Estado do Destinatário", default)]
-    destinatario_ender_estado: Option<String>,
+    pub destinatario_ender_estado: Option<String>,
 
     /// CNPJ do Expedidor formatado.
     #[serde(rename = "CNPJ do Expedidor", default)]
@@ -176,23 +176,23 @@ pub struct InfoCte {
         rename = "CRT (Código do Regime Tributário) conforme Expedidor",
         default
     )]
-    expedidor_crt: Option<u8>,
+    pub expedidor_crt: Option<u8>,
 
     /// Nome ou Razão Social do Expedidor.
     #[serde(rename = "Nome ou Razão Social do Expedidor", default)]
-    expedidor_nome: Option<String>,
+    pub expedidor_nome: Option<String>,
 
     /// Nome Fantasia do Expedidor.
     #[serde(rename = "Nome Fantasia do Expedidor", default)]
-    expedidor_fantasia: Option<String>,
+    pub expedidor_fantasia: Option<String>,
 
     /// Município do endereço do Expedidor.
     #[serde(rename = "Municípo do Expedidor", default)]
-    expedidor_ender_municipio: Option<String>,
+    pub expedidor_ender_municipio: Option<String>,
 
     /// Estado (UF) do Expedidor.
     #[serde(rename = "Estado do Expedidor", default)]
-    expedidor_ender_estado: Option<String>,
+    pub expedidor_ender_estado: Option<String>,
 
     /// CNPJ do Recebedor formatado.
     #[serde(rename = "CNPJ do Recebedor", default)]
@@ -207,47 +207,47 @@ pub struct InfoCte {
         rename = "CRT (Código do Regime Tributário) conforme Recebedor",
         default
     )]
-    recebedor_crt: Option<u8>,
+    pub recebedor_crt: Option<u8>,
 
     /// Nome ou Razão Social do Recebedor.
     #[serde(rename = "Nome ou Razão Social do Recebedor", default)]
-    recebedor_nome: Option<String>,
+    pub recebedor_nome: Option<String>,
 
     /// Nome Fantasia do Recebedor.
     #[serde(rename = "Nome Fantasia do Recebedor", default)]
-    recebedor_fantasia: Option<String>,
+    pub recebedor_fantasia: Option<String>,
 
     /// Município do endereço do Recebedor.
     #[serde(rename = "Municípo do Recebedor", default)]
-    recebedor_ender_municipio: Option<String>,
+    pub recebedor_ender_municipio: Option<String>,
 
     /// Estado (UF) do Recebedor.
     #[serde(rename = "Estado do Recebedor", default)]
-    recebedor_ender_estado: Option<String>,
+    pub recebedor_ender_estado: Option<String>,
 
     /// CNPJ do Tomador do serviço formatado.
     #[serde(rename = "CNPJ do Tomador", default)]
-    tomador_cnpj: Option<String>,
+    pub tomador_cnpj: Option<String>,
 
     /// CPF do Tomador do serviço formatado.
     #[serde(rename = "CPF do Tomador", default)]
-    tomador_cpf: Option<String>,
+    pub tomador_cpf: Option<String>,
 
     /// Nome ou Razão Social do Tomador.
     #[serde(rename = "Nome ou Razão Social do Tomador", default)]
-    tomador_nome: Option<String>,
+    pub tomador_nome: Option<String>,
 
     /// Nome Fantasia do Tomador.
     #[serde(rename = "Nome Fantasia do Tomador", default)]
-    tomador_fantasia: Option<String>,
+    pub tomador_fantasia: Option<String>,
 
     /// Município do endereço do Tomador.
     #[serde(rename = "Municípo do Tomador", default)]
-    tomador_ender_municipio: Option<String>,
+    pub tomador_ender_municipio: Option<String>,
 
     /// Estado (UF) do Tomador.
     #[serde(rename = "Estado do Tomador", default)]
-    tomador_ender_estado: Option<String>,
+    pub tomador_ender_estado: Option<String>,
 
     /// Código do papel do Tomador responsável pelo pagamento do transporte.
     #[serde(
@@ -263,7 +263,7 @@ pub struct InfoCte {
 
     /// Tipo de documento de origem (ex: "CTe").
     #[serde(rename = "Registro de Origem")]
-    doc_tipo: String,
+    pub doc_tipo: String,
 
     /// Indicador se o documento foi cancelado.
     #[serde(rename = "Cancelado", default)]
@@ -271,11 +271,39 @@ pub struct InfoCte {
 
     /// Número sequencial da Nota Fiscal/Documento.
     #[serde(rename = "Nº do Documento Fiscal", default)]
-    numero_da_nota: Option<u32>,
+    pub numero_da_nota: Option<u32>,
+
+    /// Natureza da Operação (`<natOp>`).
+    #[serde(rename = "Natureza da Operação", default)]
+    pub nat_operacao: Option<String>,
+
+    /// UF de início da prestação (`<UFIni>`).
+    #[serde(rename = "UF de Início da Prestação", default)]
+    pub uf_inicio: Option<String>,
+
+    /// Município de início da prestação (`<xMunIni>`).
+    #[serde(rename = "Município de Início da Prestação", default)]
+    pub mun_inicio: Option<String>,
+
+    /// UF de término da prestação (`<UFFim>`).
+    #[serde(rename = "UF de Término da Prestação", default)]
+    pub uf_termino: Option<String>,
+
+    /// Município de término da prestação (`<xMunFim>`).
+    #[serde(rename = "Município de Término da Prestação", default)]
+    pub mun_termino: Option<String>,
+
+    /// Nome do local de entrega (`<compl><Entrega><xNome>`).
+    #[serde(rename = "Local de Entrega: Nome", default)]
+    pub local_entrega_nome: Option<String>,
+
+    /// Observações gerais do conhecimento (`<compl><xObs>`).
+    #[serde(rename = "Observações Gerais", default)]
+    pub obs_gerais: Option<String>,
 
     /// Código CFOP aplicável ao serviço.
     #[serde(rename = "CFOP (Código Fiscal de Operações e Prestações)", default)]
-    cfop: Option<u16>,
+    pub cfop: Option<u16>,
 
     /// Data de emissão oficial do CT-e.
     #[serde(
@@ -299,7 +327,7 @@ pub struct InfoCte {
         serialize_with = "serialize_vec_string",
         default
     )]
-    cte_anteriores: Vec<String>,
+    pub cte_anteriores: Vec<String>,
 
     /// Chaves de NF-es de terceiros vinculadas à operação.
     #[serde(
@@ -307,7 +335,7 @@ pub struct InfoCte {
         serialize_with = "serialize_vec_string",
         default
     )]
-    nfes_vinculados: Vec<String>,
+    pub nfes_vinculados: Vec<String>,
 
     /// Chaves de NF-es de terceiros cruzadas e correlacionadas.
     #[serde(
@@ -335,40 +363,105 @@ pub struct InfoCte {
 
     /// Alíquota correspondente ao imposto PIS.
     #[serde(rename = "Alíquota de PIS/PASEP", default)]
-    aliq_pis: Option<f64>,
+    pub aliq_pis: Option<f64>,
 
     /// Alíquota correspondente ao imposto COFINS.
     #[serde(rename = "Alíquota de COFINS", default)]
-    aliq_cofins: Option<f64>,
+    pub aliq_cofins: Option<f64>,
 
     /// Valor monetário calculado de PIS.
     #[serde(rename = "Valor de PIS/PASEP", default)]
-    v_pis: Option<f64>,
+    pub v_pis: Option<f64>,
 
     /// Valor monetário calculado de COFINS.
     #[serde(rename = "Valor de COFINS", default)]
-    v_cofins: Option<f64>,
+    pub v_cofins: Option<f64>,
 
     /// Valor monetário calculado de IPI se aplicável.
     #[serde(rename = "Valor de IPI", default)]
-    v_ipi: Option<f64>,
+    pub v_ipi: Option<f64>,
+
+    /// Base de cálculo monetária do ISS se aplicável.
+    #[serde(rename = "Valor da Base de Cálculo do ISS", default)]
+    pub v_bc_iss: Option<f64>,
 
     /// Valor monetário calculado de ISS se aplicável.
     #[serde(rename = "Valor de ISS", default)]
-    v_iss: Option<f64>,
+    pub v_iss: Option<f64>,
 
     /// Base de cálculo monetária apurada para o ICMS de transporte.
     #[serde(rename = "Valor da Base de Cálculo do ICMS", default)]
-    v_bc_icms: Option<f64>,
+    pub v_bc_icms: Option<f64>,
 
     /// Alíquota correspondente ao ICMS de transporte.
     #[serde(rename = "Alíquota de ICMS", default)]
-    aliq_icms: Option<f64>,
+    pub aliq_icms: Option<f64>,
 
     /// Valor calculado correspondente ao ICMS debitado.
     #[serde(rename = "Valor de ICMS", default)]
-    v_icms: Option<f64>,
+    pub v_icms: Option<f64>,
+
+    /// Valor calculado correspondente ao ICMS-ST.
+    #[serde(rename = "Valor de ICMS ST", default)]
+    pub v_icms_st: Option<f64>,
 }
+
+crate::impl_sanitize_text!(
+    InfoCte,
+    versao,
+    emitente_cnpj,
+    emitente_cpf,
+    emitente_nome,
+    emitente_fantasia,
+    emitente_ender_municipio,
+    emitente_ender_estado,
+    remetente_cnpj,
+    remetente_cpf,
+    remetente_nome,
+    remetente_fantasia,
+    remetente_ender_municipio,
+    remetente_ender_estado,
+    remetente_nfes,
+    destinatario_cnpj,
+    destinatario_cpf,
+    destinatario_nome,
+    destinatario_fantasia,
+    destinatario_ender_municipio,
+    destinatario_ender_estado,
+    expedidor_cnpj,
+    expedidor_cpf,
+    expedidor_nome,
+    expedidor_fantasia,
+    expedidor_ender_municipio,
+    expedidor_ender_estado,
+    recebedor_cnpj,
+    recebedor_cpf,
+    recebedor_nome,
+    recebedor_fantasia,
+    recebedor_ender_municipio,
+    recebedor_ender_estado,
+    tomador_cnpj,
+    tomador_cpf,
+    tomador_nome,
+    tomador_fantasia,
+    tomador_ender_municipio,
+    tomador_ender_estado,
+    cte,
+    doc_tipo,
+    cancelado,
+    nat_operacao,
+    uf_inicio,
+    mun_inicio,
+    uf_termino,
+    mun_termino,
+    local_entrega_nome,
+    obs_gerais,
+    cte_complementar,
+    cte_anteriores,
+    nfes_vinculados,
+    nfes,
+    ncm_descricao,
+);
 
 impl InfoCte {
     /// Obtém a chave de acesso única do CT-e se presente.
@@ -386,87 +479,52 @@ impl InfoCte {
         self.cte.is_some() && self.cancelado.is_some()
     }
 
-    /// Recupera a identificação base do Remetente (CNPJ ou CPF).
-    fn get_base_remetente(&self) -> Option<String> {
-        [
-            self.remetente_cnpj.get_first(10),
-            self.remetente_cpf.get_first(11),
-        ]
-        .into_iter()
-        .find_map(|x| x)
-        .get_not_empty()
-    }
-
-    /// Recupera a identificação base do Emitente (CNPJ ou CPF).
-    fn get_base_emitente(&self) -> Option<String> {
-        [
-            self.emitente_cnpj.get_first(10),
-            self.emitente_cpf.get_first(11),
-        ]
-        .into_iter()
-        .find_map(|x| x)
-        .get_not_empty()
-    }
-
-    /// Recupera a identificação base do Recebedor (CNPJ ou CPF).
-    fn get_base_recebedor(&self) -> Option<String> {
-        [
-            self.recebedor_cnpj.get_first(10),
-            self.recebedor_cpf.get_first(11),
-        ]
-        .into_iter()
-        .find_map(|x| x)
-        .get_not_empty()
-    }
-
-    /// Recupera a identificação base do Destinatário (CNPJ ou CPF).
-    fn get_base_destinatario(&self) -> Option<String> {
-        [
-            self.destinatario_cnpj.get_first(10),
-            self.destinatario_cpf.get_first(11),
-        ]
-        .into_iter()
-        .find_map(|x| x)
-        .get_not_empty()
-    }
-
-    /// Recupera a identificação base do Tomador (CNPJ ou CPF).
-    fn get_base_tomador(&self) -> Option<String> {
-        [
-            self.tomador_cnpj.get_first(10),
-            self.tomador_cpf.get_first(11),
-        ]
-        .into_iter()
-        .find_map(|x| x)
-        .get_not_empty()
+    /// Recupera a identificação base de um participante (primeiros 10 chars do CNPJ ou 11 do CPF).
+    fn get_base_doc(cnpj: &Option<String>, cpf: &Option<String>) -> Option<String> {
+        cnpj.get_first(10)
+            .or_else(|| cpf.get_first(11))
+            .get_not_empty()
     }
 
     /// Corrige e alinha o código do Tomador comparando seu CNPJ/CPF base com os demais agentes.
     pub fn corrigir_codigo_do_tomador(&mut self) {
+        let Some(base_toma) = Self::get_base_doc(&self.tomador_cnpj, &self.tomador_cpf) else {
+            return;
+        };
+
         for (codigo, opt_base_agente) in [
-            (0, self.get_base_remetente()),
-            (1, self.get_base_emitente()),
-            (2, self.get_base_recebedor()),
-            (3, self.get_base_destinatario()),
+            (
+                0,
+                Self::get_base_doc(&self.remetente_cnpj, &self.remetente_cpf),
+            ),
+            (
+                1,
+                Self::get_base_doc(&self.expedidor_cnpj, &self.expedidor_cpf),
+            ),
+            (
+                2,
+                Self::get_base_doc(&self.recebedor_cnpj, &self.recebedor_cpf),
+            ),
+            (
+                3,
+                Self::get_base_doc(&self.destinatario_cnpj, &self.destinatario_cpf),
+            ),
         ] {
-            match (self.get_base_tomador(), opt_base_agente) {
-                (Some(base_toma), Some(base_agente)) if base_toma == base_agente => {
-                    self.tomador_codigo = Some(codigo);
-                    break;
-                }
-                _ => continue,
+            if opt_base_agente.as_deref() == Some(base_toma.as_str()) {
+                self.tomador_codigo = Some(codigo);
+                break;
             }
         }
     }
 
     /// Retorna o CNPJ ou CPF base inferido correspondente ao tomador após correção de papéis.
     pub fn get_cnpj_cpf_base_do_tomador(&self) -> Option<String> {
-        match &self.tomador_codigo {
-            Some(0) => self.get_base_remetente(),
-            Some(1) => self.get_base_emitente(),
-            Some(2) => self.get_base_recebedor(),
-            Some(3) => self.get_base_destinatario(),
-            Some(4) => self.get_base_tomador(),
+        match self.tomador_codigo {
+            Some(0) => Self::get_base_doc(&self.remetente_cnpj, &self.remetente_cpf),
+            Some(1) => Self::get_base_doc(&self.expedidor_cnpj, &self.expedidor_cpf),
+            Some(2) => Self::get_base_doc(&self.recebedor_cnpj, &self.recebedor_cpf),
+            Some(3) => Self::get_base_doc(&self.destinatario_cnpj, &self.destinatario_cpf),
+            Some(4) => Self::get_base_doc(&self.tomador_cnpj, &self.tomador_cpf),
             _ => None,
         }
     }
@@ -900,7 +958,11 @@ impl CteProc {
     }
 
     pub fn get_cte(&self) -> Option<String> {
-        self.prot_cte.inf_prot.ch_cte.get_key()
+        self.prot_cte
+            .inf_prot
+            .ch_cte
+            .get_key()
+            .or_else(|| self.cte.get_chave_from_id())
     }
 
     pub fn get_data_emissao(&self) -> Option<NaiveDate> {
@@ -957,86 +1019,7 @@ impl CteProc {
 
     /// Executa a extração do subnó `InfCte` e monta a estrutura `InfoCte` consolidada.
     pub fn get_info(&self) -> InfoCte {
-        let imposto = self.get_imposto();
-        let mut info_cte = InfoCte {
-            versao: self.get_versao(),
-
-            emitente_cnpj: self.get_emitente_cnpj(),
-            emitente_cpf: self.get_emitente_cpf(),
-            emitente_crt: self.get_emitente_cod_regime_tributario(),
-            emitente_nome: self.get_emitente_nome(),
-            emitente_fantasia: self.get_emitente_fantasia(),
-            emitente_ender_municipio: self.get_emitente_ender_municipio(),
-            emitente_ender_estado: self.get_emitente_ender_estado(),
-
-            remetente_cnpj: self.get_remetente_cnpj(),
-            remetente_cpf: self.get_remetente_cpf(),
-            remetente_crt: self.get_remetente_cod_regime_tributario(),
-            remetente_nome: self.get_remetente_nome(),
-            remetente_fantasia: self.get_remetente_fantasia(),
-            remetente_ender_municipio: self.get_remetente_ender_municipio(),
-            remetente_ender_estado: self.get_remetente_ender_estado(),
-            remetente_nfes: self.get_remetente_nfes(),
-
-            destinatario_cnpj: self.get_destinatario_cnpj(),
-            destinatario_cpf: self.get_destinatario_cpf(),
-            destinatario_crt: self.get_destinatario_cod_regime_tributario(),
-            destinatario_nome: self.get_destinatario_nome(),
-            destinatario_fantasia: self.get_destinatario_fantasia(),
-            destinatario_ender_municipio: self.get_destinatario_ender_municipio(),
-            destinatario_ender_estado: self.get_destinatario_ender_estado(),
-
-            expedidor_cnpj: self.get_expedidor_cnpj(),
-            expedidor_cpf: self.get_expedidor_cpf(),
-            expedidor_crt: self.get_expedidor_cod_regime_tributario(),
-            expedidor_nome: self.get_expedidor_nome(),
-            expedidor_fantasia: self.get_expedidor_fantasia(),
-            expedidor_ender_municipio: self.get_expedidor_ender_municipio(),
-            expedidor_ender_estado: self.get_expedidor_ender_estado(),
-
-            recebedor_cnpj: self.get_recebedor_cnpj(),
-            recebedor_cpf: self.get_recebedor_cpf(),
-            recebedor_crt: self.get_recebedor_cod_regime_tributario(),
-            recebedor_nome: self.get_recebedor_nome(),
-            recebedor_fantasia: self.get_recebedor_fantasia(),
-            recebedor_ender_municipio: self.get_recebedor_ender_municipio(),
-            recebedor_ender_estado: self.get_recebedor_ender_estado(),
-
-            tomador_cnpj: self.get_tomador_cnpj(),
-            tomador_cpf: self.get_tomador_cpf(),
-            tomador_nome: self.get_tomador_nome(),
-            tomador_fantasia: self.get_tomador_fantasia(),
-            tomador_ender_municipio: self.get_tomador_ender_municipio(),
-            tomador_ender_estado: self.get_tomador_ender_estado(),
-            tomador_codigo: self.get_tomador_codigo(),
-
-            cte: self.get_cte(),
-            doc_tipo: "CTe".to_string(),
-            cancelado: None,
-            numero_da_nota: self.get_numero_da_nota(),
-            cfop: self.get_cfop(),
-            data_emissao: self.get_data_emissao(),
-            cte_complementar: self.get_cte_complementar(),
-            cte_anteriores: self.get_cte_anteriores(),
-            nfes_vinculados: self.get_nfes_vinculados(),
-            nfes: Vec::new(),
-            ncm_descricao: Vec::new(),
-            valor_total_nfes: None,
-            valor_total: self.get_value_total(),
-
-            aliq_pis: imposto.and_then(|i| i.get_aliq_pis()),
-            aliq_cofins: imposto.and_then(|i| i.get_aliq_cofins()),
-            v_pis: imposto.and_then(|i| i.get_v_pis()),
-            v_cofins: imposto.and_then(|i| i.get_v_cofins()),
-            v_ipi: imposto.and_then(|i| i.get_v_ipi()),
-            v_iss: imposto.and_then(|i| i.get_v_iss()),
-            v_bc_icms: imposto.and_then(|i| i.get_v_bc_icms()),
-            aliq_icms: imposto.and_then(|i| i.get_aliq_icms()),
-            v_icms: imposto.and_then(|i| i.get_v_icms()),
-        };
-
-        info_cte.corrigir_codigo_do_tomador();
-        info_cte
+        self.cte.get_info(self.get_cte())
     }
 }
 
@@ -1051,6 +1034,129 @@ pub struct Cte {
     pub inf_cte_supl: Option<InfCteSupl>,
     #[serde(rename = "Signature")]
     pub signature: Signature,
+}
+
+impl StructExtension for Cte {
+    fn get_information(&self, xml_path: &std::path::Path, arguments: &Arguments) -> Information {
+        if arguments.verbose {
+            println!("cte xml_path: {xml_path:?}");
+            println!("cte: {self:#?}\n");
+        }
+        Information::Cte(Box::new(self.get_info(self.get_chave_from_id())))
+    }
+}
+
+impl Cte {
+    /// Extrai a chave de acesso de 44 dígitos do atributo `@Id` de `<infCte>`.
+    pub fn get_chave_from_id(&self) -> Option<String> {
+        crate::extract_chave_from_id(self.inf_cte.as_ref()?.id.as_deref(), "CTe")
+    }
+
+    /// Monta a estrutura consolidada `InfoCte` a partir de `<CTe>` e de uma chave opcional.
+    pub fn get_info(&self, ch_cte: Option<String>) -> InfoCte {
+        let inf_cte = self.inf_cte.as_ref();
+        let imposto = inf_cte.map(|inf| &inf.imposto);
+        let compl = inf_cte.and_then(|inf| inf.compl.as_ref());
+        let cte_multimodal: Vec<String> =
+            inf_cte.iter().flat_map(|inf| inf.get_cte_mult()).collect();
+        let cte_comp_prop: Vec<String> =
+            inf_cte.iter().flat_map(|inf| inf.get_cte_comp()).collect();
+
+        let mut info_cte = InfoCte {
+            versao: inf_cte.and_then(|inf| inf.versao.clone()),
+
+            emitente_cnpj: inf_cte.and_then(InfCte::get_emit_cnpj),
+            emitente_cpf: inf_cte.and_then(InfCte::get_emit_cpf),
+            emitente_crt: inf_cte.and_then(InfCte::get_emit_cod_reg_trib),
+            emitente_nome: inf_cte.and_then(InfCte::get_emit_nome),
+            emitente_fantasia: inf_cte.and_then(InfCte::get_emit_fantasia),
+            emitente_ender_municipio: inf_cte.and_then(InfCte::get_emit_ender_municipio),
+            emitente_ender_estado: inf_cte.and_then(InfCte::get_emit_ender_estado),
+
+            remetente_cnpj: inf_cte.and_then(InfCte::get_rem_cnpj),
+            remetente_cpf: inf_cte.and_then(InfCte::get_rem_cpf),
+            remetente_crt: inf_cte.and_then(InfCte::get_rem_cod_reg_trib),
+            remetente_nome: inf_cte.and_then(InfCte::get_rem_nome),
+            remetente_fantasia: inf_cte.and_then(InfCte::get_rem_fantasia),
+            remetente_ender_municipio: inf_cte.and_then(InfCte::get_rem_ender_municipio),
+            remetente_ender_estado: inf_cte.and_then(InfCte::get_rem_ender_estado),
+            remetente_nfes: inf_cte.iter().flat_map(|inf| inf.get_rem_nfes()).collect(),
+
+            destinatario_cnpj: inf_cte.and_then(InfCte::get_dest_cnpj),
+            destinatario_cpf: inf_cte.and_then(InfCte::get_dest_cpf),
+            destinatario_crt: inf_cte.and_then(InfCte::get_dest_cod_reg_trib),
+            destinatario_nome: inf_cte.and_then(InfCte::get_dest_nome),
+            destinatario_fantasia: inf_cte.and_then(InfCte::get_dest_fantasia),
+            destinatario_ender_municipio: inf_cte.and_then(InfCte::get_dest_ender_municipio),
+            destinatario_ender_estado: inf_cte.and_then(InfCte::get_dest_ender_estado),
+
+            expedidor_cnpj: inf_cte.and_then(InfCte::get_exped_cnpj),
+            expedidor_cpf: inf_cte.and_then(InfCte::get_exped_cpf),
+            expedidor_crt: inf_cte.and_then(InfCte::get_exped_cod_reg_trib),
+            expedidor_nome: inf_cte.and_then(InfCte::get_exped_nome),
+            expedidor_fantasia: inf_cte.and_then(InfCte::get_exped_fantasia),
+            expedidor_ender_municipio: inf_cte.and_then(InfCte::get_exped_ender_municipio),
+            expedidor_ender_estado: inf_cte.and_then(InfCte::get_exped_ender_estado),
+
+            recebedor_cnpj: inf_cte.and_then(InfCte::get_receb_cnpj),
+            recebedor_cpf: inf_cte.and_then(InfCte::get_receb_cpf),
+            recebedor_crt: inf_cte.and_then(InfCte::get_receb_cod_reg_trib),
+            recebedor_nome: inf_cte.and_then(InfCte::get_receb_nome),
+            recebedor_fantasia: inf_cte.and_then(InfCte::get_receb_fantasia),
+            recebedor_ender_municipio: inf_cte.and_then(InfCte::get_receb_ender_municipio),
+            recebedor_ender_estado: inf_cte.and_then(InfCte::get_receb_ender_estado),
+
+            tomador_cnpj: inf_cte.and_then(|inf| inf.ide.get_toma_cnpj()),
+            tomador_cpf: inf_cte.and_then(|inf| inf.ide.get_toma_cpf()),
+            tomador_nome: inf_cte.and_then(|inf| inf.ide.get_toma_nome()),
+            tomador_fantasia: inf_cte.and_then(|inf| inf.ide.get_toma_fantasia()),
+            tomador_ender_municipio: inf_cte.and_then(|inf| inf.ide.get_toma_ender_municipio()),
+            tomador_ender_estado: inf_cte.and_then(|inf| inf.ide.get_toma_ender_estado()),
+            tomador_codigo: inf_cte.and_then(|inf| inf.ide.get_cod_tomador()),
+
+            cte: ch_cte,
+            doc_tipo: "CTe".to_string(),
+            cancelado: None,
+            numero_da_nota: inf_cte.and_then(|inf| inf.ide.get_num_cte()),
+            nat_operacao: inf_cte.and_then(|inf| inf.ide.nat_operacao.get_not_empty()),
+            uf_inicio: inf_cte.and_then(|inf| inf.ide.ufini.get_not_empty()),
+            mun_inicio: inf_cte.and_then(|inf| inf.ide.x_mun_ini.get_not_empty()),
+            uf_termino: inf_cte.and_then(|inf| inf.ide.uffim.get_not_empty()),
+            mun_termino: inf_cte.and_then(|inf| inf.ide.x_mun_fim.get_not_empty()),
+            local_entrega_nome: compl.and_then(Compl::get_local_entrega_nome),
+            obs_gerais: compl.and_then(Compl::get_obs_gerais),
+            cfop: inf_cte.and_then(|inf| inf.ide.get_cfop()),
+            data_emissao: inf_cte.and_then(|inf| inf.ide.get_dt_emissao()),
+            cte_complementar: [cte_multimodal, cte_comp_prop]
+                .into_iter()
+                .flatten()
+                .collect(),
+            cte_anteriores: inf_cte.map_or_else(Vec::new, InfCte::get_info_de_ctes),
+            nfes_vinculados: inf_cte
+                .iter()
+                .flat_map(|inf| inf.get_info_de_nfes())
+                .collect(),
+            nfes: Vec::new(),
+            ncm_descricao: Vec::new(),
+            valor_total_nfes: None,
+            valor_total: inf_cte.map(|inf| inf.v_prest.v_tprest),
+
+            aliq_pis: imposto.and_then(Imposto::get_aliq_pis),
+            aliq_cofins: imposto.and_then(Imposto::get_aliq_cofins),
+            v_pis: imposto.and_then(Imposto::get_v_pis),
+            v_cofins: imposto.and_then(Imposto::get_v_cofins),
+            v_ipi: imposto.and_then(Imposto::get_v_ipi),
+            v_bc_iss: imposto.and_then(Imposto::get_v_bc_iss),
+            v_iss: imposto.and_then(Imposto::get_v_iss),
+            v_bc_icms: imposto.and_then(Imposto::get_v_bc_icms),
+            aliq_icms: imposto.and_then(Imposto::get_aliq_icms),
+            v_icms: imposto.and_then(Imposto::get_v_icms),
+            v_icms_st: imposto.and_then(Imposto::get_v_icms_st),
+        };
+
+        info_cte.corrigir_codigo_do_tomador();
+        info_cte
+    }
 }
 
 /// Representação direta da estrutura interna `<infCte>` do XML de um CT-e.
@@ -1349,6 +1455,8 @@ pub struct VPrest {
     pub v_rec: f64,
     #[serde(rename = "vTPrest")]
     pub v_tprest: f64,
+    #[serde(rename = "vTPrestLiq", default)]
+    pub v_tprest_liq: Option<f64>,
 }
 
 /// Componente de Valor da Prestação (`<Comp>`).

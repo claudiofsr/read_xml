@@ -10,15 +10,15 @@ use std::path::Path;
 use walkdir::DirEntry;
 
 use crate::{
-    Arguments, DocsFiscais, MultiProgressBar, REGEX_ERROR_DUPLICATE_FIELD,
-    REGEX_ERROR_MISSING_FIELD, REGEX_FIELDS, XmlParserError, XmlParserResult, XmlPathExt,
+    Arguments, MultiProgressBar, REGEX_ERROR_DUPLICATE_FIELD, REGEX_ERROR_MISSING_FIELD,
+    REGEX_FIELDS, XmlParserError, XmlParserResult, XmlPathExt,
     xml_structs::{
         cancelamento_cte::{InfoCteCancel, ProcCancCte},
         cancelamento_nfe::{InfoNfeCancel, ProcCancNfe},
-        cte::{CteProc, InfoCte},
+        cte::{Cte, CteProc, InfoCte},
         cte_evento::{InfoCteEvento, ProcEventoCte},
         efinanceira::{EFinanceira, InfoEFinanceira},
-        nfe::{InfoNfe, NfeProc},
+        nfe::{InfoNfe, Nfe, NfeProc},
         nfe_evento::{InfoNfeEvento, ProcEventoNfe},
     },
 };
@@ -62,35 +62,12 @@ impl Information {
         matches!(*self, Self::EventoCte(_))
     }
 
-    pub const fn is_evendo_nfe(&self) -> bool {
+    pub const fn is_evento_nfe(&self) -> bool {
         matches!(*self, Self::EventoNfe(_))
     }
 
     pub const fn is_efinanceira(&self) -> bool {
         matches!(*self, Self::EFinanceira(_))
-    }
-
-    pub fn add_info_to_docs_fiscais(&self, docs_fiscais: &mut DocsFiscais) {
-        match self {
-            Self::Cte(info_cte) => docs_fiscais.ctes.push(*info_cte.clone()),
-            Self::Nfe(info_nfe) => docs_fiscais.nfes.extend(info_nfe.clone()),
-            Self::EventoCte(info_cte_evento) => {
-                docs_fiscais.eventos_cte.push(*info_cte_evento.clone())
-            }
-            Self::EventoNfe(info_nfe_evento) => {
-                docs_fiscais.eventos_nfe.push(*info_nfe_evento.clone())
-            }
-            Self::CancelamentoCte(info_cte_cancel) => {
-                docs_fiscais.cancel_cte.push(*info_cte_cancel.clone())
-            }
-            Self::CancelamentoNfe(info_nfe_cancel) => {
-                docs_fiscais.cancel_nfe.push(*info_nfe_cancel.clone())
-            }
-            Self::EFinanceira(info_efinanceira) => {
-                docs_fiscais.efinanceiras.extend(info_efinanceira.clone())
-            }
-            Self::None => (),
-        }
     }
 }
 
@@ -195,37 +172,20 @@ pub fn get_xml_serialized(xml_path: &Path, arguments: &Arguments) -> Option<Info
         }
     };
 
-    match root_tag.as_str() {
-        "cteProc" | "CTe" => match CteProc::struct_to_info(xml_path, arguments) {
-            Ok(info) if info.is_some() => Some(info),
-            _ => None,
-        },
-        "nfeProc" | "NFe" => match NfeProc::struct_to_info(xml_path, arguments) {
-            Ok(info) if info.is_some() => Some(info),
-            _ => None,
-        },
-        "procEventoCTe" | "eventoCTe" => match ProcEventoCte::struct_to_info(xml_path, arguments) {
-            Ok(info) if info.is_some() => Some(info),
-            _ => None,
-        },
-        "procEventoNFe" | "evento" => match ProcEventoNfe::struct_to_info(xml_path, arguments) {
-            Ok(info) if info.is_some() => Some(info),
-            _ => None,
-        },
-        "procCancCTe" => match ProcCancCte::struct_to_info(xml_path, arguments) {
-            Ok(info) if info.is_some() => Some(info),
-            _ => None,
-        },
-        "procCancNFe" => match ProcCancNfe::struct_to_info(xml_path, arguments) {
-            Ok(info) if info.is_some() => Some(info),
-            _ => None,
-        },
-        "eFinanceira" => match EFinanceira::struct_to_info(xml_path, arguments) {
-            Ok(info) if info.is_some() => Some(info),
-            _ => None,
-        },
-        _ => None,
-    }
+    let res = match root_tag.as_str() {
+        "cteProc" => CteProc::struct_to_info(xml_path, arguments),
+        "CTe" => Cte::struct_to_info(xml_path, arguments),
+        "nfeProc" => NfeProc::struct_to_info(xml_path, arguments),
+        "NFe" => Nfe::struct_to_info(xml_path, arguments),
+        "procEventoCTe" | "eventoCTe" => ProcEventoCte::struct_to_info(xml_path, arguments),
+        "procEventoNFe" | "evento" => ProcEventoNfe::struct_to_info(xml_path, arguments),
+        "procCancCTe" => ProcCancCte::struct_to_info(xml_path, arguments),
+        "procCancNFe" => ProcCancNfe::struct_to_info(xml_path, arguments),
+        "eFinanceira" => EFinanceira::struct_to_info(xml_path, arguments),
+        _ => return None,
+    };
+
+    res.ok().filter(Information::is_some)
 }
 
 /// Executa a varredura paralela dos arquivos XML reportando progresso.

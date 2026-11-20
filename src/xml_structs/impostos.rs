@@ -85,13 +85,17 @@ pub struct Imposto {
     #[serde(rename = "CBS", default)]
     pub cbs: Option<Cbs>,
 
-    /// Detalhamento consolidado do IBS e CBS (IVA Dual).
+    /// Detalhamento consolidado do IBS e CBS (IVA Dual - NT 2025.001 / NT 2025.002).
     #[serde(rename = "IBSCBS", default)]
     pub ibscbs: Option<Ibscbs>,
 
     /// Detalhamento do IS (Imposto Seletivo - Extrajudicial/Ambiental).
     #[serde(rename = "IS", default)]
     pub is_tributo: Option<ImpostoSeletivo>,
+
+    /// Valor Total do DFe no CT-e (vTPrest + IBS + CBS).
+    #[serde(rename = "vTotDFe", default)]
+    pub v_tot_dfe: Option<String>,
 }
 
 impl Imposto {
@@ -146,26 +150,39 @@ impl Imposto {
             .and_then(|imposto_de_circulacao| imposto_de_circulacao.get_icms_valor_tributo())
     }
 
+    /// Obtém a base de cálculo monetária do ISS.
+    pub fn get_v_bc_iss(&self) -> Option<f64> {
+        self.issqn.as_ref().and_then(Issqn::get_v_bc_iss)
+    }
+
     /// Obtém o valor monetário calculado do ISS devido.
     pub fn get_v_iss(&self) -> Option<f64> {
-        self.issqn
-            .as_ref()
-            .and_then(|imposto_sobre_servico| imposto_sobre_servico.get_valor_iss())
+        self.issqn.as_ref().and_then(Issqn::get_valor_iss)
+    }
+
+    /// Obtém o valor monetário do ICMS por Substituição Tributária (ICMS-ST).
+    pub fn get_v_icms_st(&self) -> Option<f64> {
+        self.icms.as_ref().and_then(Icms::get_icms_valor_st)
     }
 
     /// Obtém o valor monetário calculado do IPI devido (somando todas as ocorrências).
     pub fn get_v_ipi(&self) -> Option<f64> {
-        self.ipi.as_ref().and_then(|imposto_sobre_produto| {
-            imposto_sobre_produto
-                .iter()
-                .map(|tributo| tributo.get_valor_ipi())
-                .sum()
-        })
+        let ipis = self.ipi.as_ref()?;
+        let mut has_value = false;
+        let sum = ipis
+            .iter()
+            .filter_map(Ipi::get_valor_ipi)
+            .inspect(|_| has_value = true)
+            .sum();
+        has_value.then_some(sum)
     }
 
     /// Recupera de forma segura o CST do IBS.
     pub fn get_cst_ibs(&self) -> Option<u8> {
-        self.ibs.as_ref().and_then(|i| i.get_ibs_cst())
+        self.ibs
+            .as_ref()
+            .and_then(|i| i.get_ibs_cst())
+            .or_else(|| self.ibscbs.as_ref().and_then(|ic| ic.cst.parse_opt()))
     }
 
     /// Recupera de forma segura a alíquota do IBS.
@@ -175,12 +192,23 @@ impl Imposto {
 
     /// Recupera de forma segura o valor calculado do IBS.
     pub fn get_v_ibs(&self) -> Option<f64> {
-        self.ibs.as_ref().and_then(|i| i.get_ibs_valor())
+        self.ibs
+            .as_ref()
+            .and_then(|i| i.get_ibs_valor())
+            .or_else(|| {
+                self.ibscbs
+                    .as_ref()
+                    .and_then(|ic| ic.g_ibs_cbs.as_ref())
+                    .and_then(|g| g.v_ibs.parse_opt())
+            })
     }
 
     /// Recupera de forma segura o CST da CBS.
     pub fn get_cst_cbs(&self) -> Option<u8> {
-        self.cbs.as_ref().and_then(|c| c.get_cbs_cst())
+        self.cbs
+            .as_ref()
+            .and_then(|c| c.get_cbs_cst())
+            .or_else(|| self.ibscbs.as_ref().and_then(|ic| ic.cst.parse_opt()))
     }
 
     /// Recupera de forma segura a alíquota da CBS.
@@ -190,7 +218,16 @@ impl Imposto {
 
     /// Recupera de forma segura o valor calculado da CBS.
     pub fn get_v_cbs(&self) -> Option<f64> {
-        self.cbs.as_ref().and_then(|c| c.get_cbs_valor())
+        self.cbs
+            .as_ref()
+            .and_then(|c| c.get_cbs_valor())
+            .or_else(|| {
+                self.ibscbs
+                    .as_ref()
+                    .and_then(|ic| ic.g_ibs_cbs.as_ref())
+                    .and_then(|g| g.g_cbs.as_ref())
+                    .and_then(|c| c.v_cbs.parse_opt())
+            })
     }
 
     /// Recupera de forma segura o CST do Imposto Seletivo (IS).
@@ -308,66 +345,78 @@ pub struct Icms {
     pub icms61: Option<Icms61>,
 }
 
+macro_rules! first_icms_opt {
+    ($self:ident, $( $variant:ident => $field:ident ),+ $(,)?) => {
+        None $( .or_else(|| $self.$variant.as_ref().and_then(|icms| icms.$field.parse_opt())) )+
+    };
+}
+
 impl Icms {
     /// Obtém o valor monetário da Base de Cálculo do ICMS de forma declarativa.
     pub fn get_icms_valor_base_calc(&self) -> Option<f64> {
-        self.icms00
-            .as_ref()
-            .and_then(|icms| icms.v_bc.parse_opt())
-            .or_else(|| self.icms10.as_ref().and_then(|icms| icms.v_bc.parse_opt()))
-            .or_else(|| self.icms20.as_ref().and_then(|icms| icms.v_bc.parse_opt()))
+        first_icms_opt!(
+            self,
+            icms00 => v_bc,
+            icms10 => v_bc,
+            icms20 => v_bc,
+            icms51 => v_bc,
+            icms70 => v_bc,
+            icms90 => v_bc,
+            icmspart => v_bc,
+            icmssn900 => v_bc,
+            icmsoutra_uf => v_bcoutra_uf,
+        )
     }
 
     /// Obtém a alíquota percentual do ICMS de forma declarativa.
     pub fn get_icms_aliquota(&self) -> Option<f64> {
-        self.icms00
-            .as_ref()
-            .and_then(|icms| icms.p_icms.parse_opt())
-            .or_else(|| {
-                self.icms10
-                    .as_ref()
-                    .and_then(|icms| icms.p_icms.parse_opt())
-            })
-            .or_else(|| {
-                self.icms20
-                    .as_ref()
-                    .and_then(|icms| icms.p_icms.parse_opt())
-            })
+        first_icms_opt!(
+            self,
+            icms00 => p_icms,
+            icms10 => p_icms,
+            icms20 => p_icms,
+            icms51 => p_icms,
+            icms70 => p_icms,
+            icms90 => p_icms,
+            icmspart => p_icms,
+            icmssn900 => p_icms,
+            icmsoutra_uf => p_icmsoutra_uf,
+        )
     }
 
-    /// Obtém o valor monetário do ICMS de forma declarativa (incluindo layouts monofásicos).
+    /// Obtém o valor monetário do ICMS de forma declarativa (incluindo layouts monofásicos e OutraUF).
     pub fn get_icms_valor_tributo(&self) -> Option<f64> {
-        self.icms00
-            .as_ref()
-            .and_then(|icms| icms.v_icms.parse_opt())
-            .or_else(|| {
-                self.icms10
-                    .as_ref()
-                    .and_then(|icms| icms.v_icms.parse_opt())
-            })
-            .or_else(|| {
-                self.icms20
-                    .as_ref()
-                    .and_then(|icms| icms.v_icms.parse_opt())
-            })
-            // Suporte a ICMS Monofásico Próprio (CST 02)
-            .or_else(|| {
-                self.icms02
-                    .as_ref()
-                    .and_then(|icms| icms.v_icms_mono.parse_opt())
-            })
-            // Suporte a ICMS Monofásico ST (CST 15)
-            .or_else(|| {
-                self.icms15
-                    .as_ref()
-                    .and_then(|icms| icms.v_icms_mono.parse_opt())
-            })
-            // Suporte a ICMS Monofásico retido anteriormente (CST 61)
-            .or_else(|| {
-                self.icms61
-                    .as_ref()
-                    .and_then(|icms| icms.v_icms_mono_ret.parse_opt())
-            })
+        first_icms_opt!(
+            self,
+            icms00 => v_icms,
+            icms10 => v_icms,
+            icms20 => v_icms,
+            icms51 => v_icms,
+            icms70 => v_icms,
+            icms90 => v_icms,
+            icmspart => v_icms,
+            icmssn900 => v_icms,
+            icmsoutra_uf => v_icmsoutra_uf,
+            icms02 => v_icms_mono,
+            icms15 => v_icms_mono,
+            icms53 => v_icms_mono,
+            icms61 => v_icms_mono_ret,
+        )
+    }
+
+    /// Obtém o valor monetário do ICMS por Substituição Tributária (ICMS-ST).
+    pub fn get_icms_valor_st(&self) -> Option<f64> {
+        first_icms_opt!(
+            self,
+            icms10 => v_icmsst,
+            icms30 => v_icmsst,
+            icms70 => v_icmsst,
+            icms90 => v_icmsst,
+            icmspart => v_icmsst,
+            icmssn201 => v_icmsst,
+            icmssn202 => v_icmsst,
+            icmssn900 => v_icmsst,
+        )
     }
 }
 
@@ -504,6 +553,12 @@ pub struct Icms20 {
     /// Motivo da desoneração do ICMS.
     #[serde(rename = "motDesICMS", default)]
     pub mot_des_icms: Option<String>,
+    /// Indicador de dedução do ICMS desonerado (`indDeduzDeson`).
+    #[serde(rename = "indDeduzDeson", default)]
+    pub ind_deduz_deson: Option<String>,
+    /// Valor do crédito outorgado/presumido (`vCred` no CT-e).
+    #[serde(rename = "vCred", default)]
+    pub v_cred: Option<String>,
     /// Texto descritivo bruto contido no nó se aplicável.
     #[serde(rename = "$text", default)]
     pub text: Option<String>,
@@ -551,6 +606,9 @@ pub struct Icms30 {
     /// Motivo da desoneração do ICMS.
     #[serde(rename = "motDesICMS", default)]
     pub mot_des_icms: Option<String>,
+    /// Indicador de dedução do ICMS desonerado (`indDeduzDeson`).
+    #[serde(rename = "indDeduzDeson", default)]
+    pub ind_deduz_deson: Option<String>,
     /// Texto descritivo bruto contido no nó se aplicável.
     #[serde(rename = "$text", default)]
     pub text: Option<String>,
@@ -571,6 +629,9 @@ pub struct Icms40 {
     /// Motivo da desoneração do ICMS.
     #[serde(rename = "motDesICMS", default)]
     pub mot_des_icms: Option<String>,
+    /// Indicador de dedução do ICMS desonerado (`indDeduzDeson`).
+    #[serde(rename = "indDeduzDeson", default)]
+    pub ind_deduz_deson: Option<String>,
     /// Texto descritivo bruto contido no nó se aplicável.
     #[serde(rename = "$text", default)]
     pub text: Option<String>,
@@ -650,6 +711,15 @@ pub struct Icms51 {
     /// Valor do FCP.
     #[serde(rename = "vFCP", default)]
     pub v_fcp: Option<String>,
+    /// Percentual de diferimento do FCP (`pFCPDif`).
+    #[serde(rename = "pFCPDif", default)]
+    pub p_fcp_dif: Option<String>,
+    /// Valor do FCP diferido (`vFCPDif`).
+    #[serde(rename = "vFCPDif", default)]
+    pub v_fcp_dif: Option<String>,
+    /// Valor efetivo do FCP (`vFCPEfet`).
+    #[serde(rename = "vFCPEfet", default)]
+    pub v_fcp_efet: Option<String>,
 
     /// Texto descritivo bruto contido no nó se aplicável.
     #[serde(rename = "$text", default)]
@@ -701,6 +771,9 @@ pub struct Icms60 {
     /// Valor do ICMS efetivo.
     #[serde(rename = "vICMSEfet", default)]
     pub v_icmsefet: Option<String>,
+    /// Valor do crédito outorgado/presumido (`vCred` no CT-e).
+    #[serde(rename = "vCred", default)]
+    pub v_cred: Option<String>,
     /// Texto descritivo bruto contido no nó se aplicável.
     #[serde(rename = "$text", default)]
     pub text: Option<String>,
@@ -772,6 +845,9 @@ pub struct Icms70 {
     /// Motivo da desoneração do ICMS.
     #[serde(rename = "motDesICMS", default)]
     pub mot_des_icms: Option<String>,
+    /// Indicador de dedução do ICMS desonerado (`indDeduzDeson`).
+    #[serde(rename = "indDeduzDeson", default)]
+    pub ind_deduz_deson: Option<String>,
     /// Texto descritivo bruto contido no nó se aplicável.
     #[serde(rename = "$text", default)]
     pub text: Option<String>,
@@ -843,6 +919,12 @@ pub struct Icms90 {
     /// Motivo da desoneração do ICMS.
     #[serde(rename = "motDesICMS", default)]
     pub mot_des_icms: Option<String>,
+    /// Indicador de dedução do ICMS desonerado (`indDeduzDeson`).
+    #[serde(rename = "indDeduzDeson", default)]
+    pub ind_deduz_deson: Option<String>,
+    /// Valor do crédito outorgado/presumido (`vCred` no CT-e).
+    #[serde(rename = "vCred", default)]
+    pub v_cred: Option<String>,
     /// Texto descritivo bruto contido no nó se aplicável.
     #[serde(rename = "$text", default)]
     pub text: Option<String>,
@@ -869,6 +951,9 @@ pub struct IcmsOutraUf {
     /// Valor do ICMS devido à outra UF.
     #[serde(rename = "vICMSOutraUF", default)]
     pub v_icmsoutra_uf: Option<String>,
+    /// Valor do crédito outorgado/presumido (`vCred` no CT-e).
+    #[serde(rename = "vCred", default)]
+    pub v_cred: Option<String>,
 }
 
 /// Mapeamento básico para optantes do Simples Nacional (`<ICMSSN>`).
@@ -1228,8 +1313,8 @@ pub struct Icmssn900 {
 /// ICMS devido à UF de destino para partilha e Fundo de Combate à Pobreza (`<ICMSUFFim>`).
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Icmsuffim {
-    /// Base de cálculo do ICMS na UF de destino.
-    #[serde(rename = "vBCUFDest", default)]
+    /// Base de cálculo do ICMS na UF de destino (`vBCUFFim`).
+    #[serde(rename = "vBCUFFim", alias = "vBCUFDest", default)]
     pub v_bcuffim: Option<String>,
 
     /// Percentual correspondente ao Fundo de Combate à Pobreza (FCP) na UF de destino.
@@ -1414,6 +1499,11 @@ pub struct Issqn {
 }
 
 impl Issqn {
+    /// Obtém a base de cálculo apurada do ISS.
+    fn get_v_bc_iss(&self) -> Option<f64> {
+        self.v_bc.parse_opt()
+    }
+
     /// Obtém o valor monetário apurado do ISS.
     fn get_valor_iss(&self) -> Option<f64> {
         self.v_issqn.parse_opt()
@@ -1462,6 +1552,11 @@ impl Pis {
                     .and_then(|p| p.v_aliq_prod.parse_opt())
             })
             .or_else(|| self.pisoutr.as_ref().and_then(|p| p.p_pis.parse_opt()))
+            .or_else(|| {
+                self.pisoutr
+                    .as_ref()
+                    .and_then(|p| p.v_aliq_prod.parse_opt())
+            })
     }
 
     /// Obtém de forma declarativa o valor monetário calculado do PIS.
@@ -1619,6 +1714,11 @@ impl Cofins {
                 self.cofinsoutr
                     .as_ref()
                     .and_then(|c| c.p_cofins.parse_opt())
+            })
+            .or_else(|| {
+                self.cofinsoutr
+                    .as_ref()
+                    .and_then(|c| c.v_aliq_prod.parse_opt())
             })
     }
 
@@ -1793,6 +1893,10 @@ pub struct Total {
     /// Retenções tributárias consolidadas.
     #[serde(rename = "retTrib", default)]
     pub ret_trib: Option<RetTrib>,
+
+    /// Total consolidado do Imposto Seletivo (`<ISTot>`).
+    #[serde(rename = "ISTot", default)]
+    pub istot: Option<IsTot>,
 
     /// Total consolidado do IBS e da CBS (IBSCBSTot).
     #[serde(rename = "IBSCBSTot", default)]
@@ -1983,6 +2087,15 @@ pub struct RetTrib {
     pub text: Option<String>,
 }
 
+/// Total consolidado do Imposto Seletivo (`<ISTot>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct IsTot {
+    #[serde(rename = "vIS", default)]
+    pub v_is: Option<String>,
+    #[serde(rename = "$text", default)]
+    pub text: Option<String>,
+}
+
 /// Total consolidado do IBS e da CBS (`<IBSCBSTot>`).
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Ibscbstot {
@@ -1998,7 +2111,34 @@ pub struct Ibscbstot {
     #[serde(rename = "gCBS", default)]
     pub g_cbs: Option<GCbsTot>,
 
+    /// Totais da tributação monofásica do IBS/CBS (`gMono`).
+    #[serde(rename = "gMono", default)]
+    pub g_mono: Option<GIbsCbsMonoTot>,
+
+    /// Totais de estorno de crédito (`gEstornoCred`).
+    #[serde(rename = "gEstornoCred", default)]
+    pub g_estorno_cred: Option<GEstornoCred>,
+
     /// Conteúdo de texto se aplicável.
+    #[serde(rename = "$text", default)]
+    pub text: Option<String>,
+}
+
+/// Totais de tributação monofásica do IBS e da CBS (`<gMono>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GIbsCbsMonoTot {
+    #[serde(rename = "vIBSMono", default)]
+    pub v_ibs_mono: Option<String>,
+    #[serde(rename = "vCBSMono", default)]
+    pub v_cbs_mono: Option<String>,
+    #[serde(rename = "vIBSMonoReten", default)]
+    pub v_ibs_mono_reten: Option<String>,
+    #[serde(rename = "vCBSMonoReten", default)]
+    pub v_cbs_mono_reten: Option<String>,
+    #[serde(rename = "vIBSMonoRet", default)]
+    pub v_ibs_mono_ret: Option<String>,
+    #[serde(rename = "vCBSMonoRet", default)]
+    pub v_cbs_mono_ret: Option<String>,
     #[serde(rename = "$text", default)]
     pub text: Option<String>,
 }
@@ -2185,16 +2325,291 @@ impl Cbs {
     }
 }
 
-/// Grupo de Tributação do IBS e da CBS nos itens (`<IBSCBS>`).
+/// Grupo de Tributação do IBS e da CBS (`<IBSCBS>` - DFeTiposBasicos_v1.00).
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Ibscbs {
-    /// Código de classificação tributária do IBS e da CBS.
+    #[serde(rename = "CST", default)]
+    pub cst: Option<String>,
     #[serde(rename = "cClassTrib", default)]
     pub c_class_trib: Option<String>,
-
-    /// Conteúdo de texto se aplicável.
+    #[serde(rename = "indDoacao", default)]
+    pub ind_doacao: Option<String>,
+    #[serde(rename = "gIBSCBS", default)]
+    pub g_ibs_cbs: Option<GIbsCbs>,
+    #[serde(rename = "gIBSCBSMono", default)]
+    pub g_ibs_cbs_mono: Option<GIbsCbsMono>,
+    #[serde(rename = "gTransfCred", default)]
+    pub g_transf_cred: Option<GTransfCred>,
+    #[serde(rename = "gAjusteCompet", default)]
+    pub g_ajuste_compet: Option<GAjusteCompet>,
+    #[serde(rename = "gEstornoCred", default)]
+    pub g_estorno_cred: Option<GEstornoCred>,
+    #[serde(rename = "gCredPresOper", default)]
+    pub g_cred_pres_oper: Option<GCredPresOper>,
+    #[serde(rename = "gCredPresIBSZFM", default)]
+    pub g_cred_pres_ibs_zfm: Option<GCredPresIbsZfm>,
+    #[serde(rename = "gTribSN", default)]
+    pub g_trib_sn: Option<GTribSn>,
     #[serde(rename = "$text", default)]
     pub text: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GIbsCbs {
+    #[serde(rename = "vBC", default)]
+    pub v_bc: Option<String>,
+    #[serde(rename = "gIBSUF", default)]
+    pub g_ibs_uf: Option<GIbsUfItem>,
+    #[serde(rename = "gIBSMun", default)]
+    pub g_ibs_mun: Option<GIbsMunItem>,
+    #[serde(rename = "vIBS", default)]
+    pub v_ibs: Option<String>,
+    #[serde(rename = "gCBS", default)]
+    pub g_cbs: Option<GCbsItem>,
+    #[serde(rename = "gTribRegular", default)]
+    pub g_trib_regular: Option<GTribRegular>,
+    #[serde(rename = "gTribCompraGov", default)]
+    pub g_trib_compra_gov: Option<GTribCompraGov>,
+    #[serde(rename = "$text", default)]
+    pub text: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GDif {
+    #[serde(rename = "pDif", default)]
+    pub p_dif: Option<String>,
+    #[serde(rename = "vDif", default)]
+    pub v_dif: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GDevTrib {
+    #[serde(rename = "pDevTrib", default)]
+    pub p_dev_trib: Option<String>,
+    #[serde(rename = "vDevTrib", default)]
+    pub v_dev_trib: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GRed {
+    #[serde(rename = "pRedAliq", default)]
+    pub p_red_aliq: Option<String>,
+    #[serde(rename = "pAliqEfet", default)]
+    pub p_aliq_efet: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GIbsUfItem {
+    #[serde(rename = "pIBSUF", default)]
+    pub p_ibs_uf: Option<String>,
+    #[serde(rename = "gDif", default)]
+    pub g_dif: Option<GDif>,
+    #[serde(rename = "gDevTrib", default)]
+    pub g_dev_trib: Option<GDevTrib>,
+    #[serde(rename = "gRed", default)]
+    pub g_red: Option<GRed>,
+    #[serde(rename = "vIBSUF", default)]
+    pub v_ibs_uf: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GIbsMunItem {
+    #[serde(rename = "pIBSMun", default)]
+    pub p_ibs_mun: Option<String>,
+    #[serde(rename = "gDif", default)]
+    pub g_dif: Option<GDif>,
+    #[serde(rename = "gDevTrib", default)]
+    pub g_dev_trib: Option<GDevTrib>,
+    #[serde(rename = "gRed", default)]
+    pub g_red: Option<GRed>,
+    #[serde(rename = "vIBSMun", default)]
+    pub v_ibs_mun: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GCbsItem {
+    #[serde(rename = "pCBS", default)]
+    pub p_cbs: Option<String>,
+    #[serde(rename = "gDif", default)]
+    pub g_dif: Option<GDif>,
+    #[serde(rename = "gDevTrib", default)]
+    pub g_dev_trib: Option<GDevTrib>,
+    #[serde(rename = "gRed", default)]
+    pub g_red: Option<GRed>,
+    #[serde(rename = "vCBS", default)]
+    pub v_cbs: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GTribRegular {
+    #[serde(rename = "CSTReg", default)]
+    pub cst_reg: Option<String>,
+    #[serde(rename = "cClassTribReg", default)]
+    pub c_class_trib_reg: Option<String>,
+    #[serde(rename = "pAliqEfetRegIBSUF", default)]
+    pub p_aliq_efet_reg_ibs_uf: Option<String>,
+    #[serde(rename = "vTribRegIBSUF", default)]
+    pub v_trib_reg_ibs_uf: Option<String>,
+    #[serde(rename = "pAliqEfetRegIBSMun", default)]
+    pub p_aliq_efet_reg_ibs_mun: Option<String>,
+    #[serde(rename = "vTribRegIBSMun", default)]
+    pub v_trib_reg_ibs_mun: Option<String>,
+    #[serde(rename = "pAliqEfetRegCBS", default)]
+    pub p_aliq_efet_reg_cbs: Option<String>,
+    #[serde(rename = "vTribRegCBS", default)]
+    pub v_trib_reg_cbs: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GTribCompraGov {
+    #[serde(rename = "pAliqIBSUF", default)]
+    pub p_aliq_ibs_uf: Option<String>,
+    #[serde(rename = "vTribIBSUF", default)]
+    pub v_trib_ibs_uf: Option<String>,
+    #[serde(rename = "pAliqIBSMun", default)]
+    pub p_aliq_ibs_mun: Option<String>,
+    #[serde(rename = "vTribIBSMun", default)]
+    pub v_trib_ibs_mun: Option<String>,
+    #[serde(rename = "pAliqCBS", default)]
+    pub p_aliq_cbs: Option<String>,
+    #[serde(rename = "vTribCBS", default)]
+    pub v_trib_cbs: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GIbsCbsMono {
+    #[serde(rename = "gMonoPadrao", default)]
+    pub g_mono_padrao: Option<GMonoPadrao>,
+    #[serde(rename = "gMonoReten", default)]
+    pub g_mono_reten: Option<GMonoReten>,
+    #[serde(rename = "gMonoRet", default)]
+    pub g_mono_ret: Option<GMonoRet>,
+    #[serde(rename = "gMonoDif", default)]
+    pub g_mono_dif: Option<GMonoDif>,
+    #[serde(rename = "vTotIBSMonoItem", default)]
+    pub v_tot_ibs_mono_item: Option<String>,
+    #[serde(rename = "vTotCBSMonoItem", default)]
+    pub v_tot_cbs_mono_item: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GMonoPadrao {
+    #[serde(rename = "qBCMono", default)]
+    pub q_bc_mono: Option<String>,
+    #[serde(rename = "adRemIBS", default)]
+    pub ad_rem_ibs: Option<String>,
+    #[serde(rename = "adRemCBS", default)]
+    pub ad_rem_cbs: Option<String>,
+    #[serde(rename = "vIBSMono", default)]
+    pub v_ibs_mono: Option<String>,
+    #[serde(rename = "vCBSMono", default)]
+    pub v_cbs_mono: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GMonoReten {
+    #[serde(rename = "qBCMonoReten", default)]
+    pub q_bc_mono_reten: Option<String>,
+    #[serde(rename = "adRemIBSReten", default)]
+    pub ad_rem_ibs_reten: Option<String>,
+    #[serde(rename = "adRemCBSReten", default)]
+    pub ad_rem_cbs_reten: Option<String>,
+    #[serde(rename = "vIBSMonoReten", default)]
+    pub v_ibs_mono_reten: Option<String>,
+    #[serde(rename = "vCBSMonoReten", default)]
+    pub v_cbs_mono_reten: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GMonoRet {
+    #[serde(rename = "qBCMonoRet", default)]
+    pub q_bc_mono_ret: Option<String>,
+    #[serde(rename = "adRemIBSRet", default)]
+    pub ad_rem_ibs_ret: Option<String>,
+    #[serde(rename = "adRemCBSRet", default)]
+    pub ad_rem_cbs_ret: Option<String>,
+    #[serde(rename = "vIBSMonoRet", default)]
+    pub v_ibs_mono_ret: Option<String>,
+    #[serde(rename = "vCBSMonoRet", default)]
+    pub v_cbs_mono_ret: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GMonoDif {
+    #[serde(rename = "pDifIBS", default)]
+    pub p_dif_ibs: Option<String>,
+    #[serde(rename = "vIBSMonoDif", default)]
+    pub v_ibs_mono_dif: Option<String>,
+    #[serde(rename = "pDifCBS", default)]
+    pub p_dif_cbs: Option<String>,
+    #[serde(rename = "vCBSMonoDif", default)]
+    pub v_cbs_mono_dif: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GTransfCred {
+    #[serde(rename = "vIBS", default)]
+    pub v_ibs: Option<String>,
+    #[serde(rename = "vCBS", default)]
+    pub v_cbs: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GAjusteCompet {
+    #[serde(rename = "competApur", default)]
+    pub compet_apur: Option<String>,
+    #[serde(rename = "vIBS", default)]
+    pub v_ibs: Option<String>,
+    #[serde(rename = "vCBS", default)]
+    pub v_cbs: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GEstornoCred {
+    #[serde(rename = "vIBSEstCred", default)]
+    pub v_ibs_est_cred: Option<String>,
+    #[serde(rename = "vCBSEstCred", default)]
+    pub v_cbs_est_cred: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GCredPresOper {
+    #[serde(rename = "vBCCredPres", default)]
+    pub v_bc_cred_pres: Option<String>,
+    #[serde(rename = "cCredPres", default)]
+    pub c_cred_pres: Option<String>,
+    #[serde(rename = "gIBSCredPres", default)]
+    pub g_ibs_cred_pres: Option<GCredPresDet>,
+    #[serde(rename = "gCBSCredPres", default)]
+    pub g_cbs_cred_pres: Option<GCredPresDet>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GCredPresDet {
+    #[serde(rename = "pCredPres", default)]
+    pub p_cred_pres: Option<String>,
+    #[serde(rename = "vCredPres", default)]
+    pub v_cred_pres: Option<String>,
+    #[serde(rename = "vCredPresCondSus", default)]
+    pub v_cred_pres_cond_sus: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GCredPresIbsZfm {
+    #[serde(rename = "competApur", default)]
+    pub compet_apur: Option<String>,
+    #[serde(rename = "tpCredPresIBSZFM", default)]
+    pub tp_cred_pres_ibs_zfm: Option<String>,
+    #[serde(rename = "vCredPresIBSZFM", default)]
+    pub v_cred_pres_ibs_zfm: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GTribSn {
+    #[serde(rename = "CST", default)]
+    pub cst: Option<String>,
+    #[serde(rename = "cClassTrib", default)]
+    pub c_class_trib: Option<String>,
 }
 
 /// Detalhes do Imposto Seletivo (`<IS>`) - Incidência extrafiscal sobre produtos específicos.
