@@ -448,7 +448,8 @@ fn inspecionar_xml(xml_path: &Path) -> XmlCheckOutcome {
                         "nfeProc" | "NFe" | "procEventoNFe" | "evento" | "procCancNFe" => {
                             (XmlDomain::Nfe, Some(&*NFE_EXPECTED_TAGS))
                         }
-                        "cteProc" | "CTe" | "GTVeProc" | "GTVe" | "cteSimpProc" | "CTeSimp" | "procEventoCTe" | "eventoCTe" | "procCancCTe" => {
+                        "cteProc" | "CTe" | "GTVeProc" | "GTVe" | "cteSimpProc" | "CTeSimp"
+                        | "procEventoCTe" | "eventoCTe" | "procCancCTe" => {
                             (XmlDomain::Cte, Some(&*CTE_EXPECTED_TAGS))
                         }
                         "eFinanceira" => (XmlDomain::EFinanceira, Some(&*EFIN_EXPECTED_TAGS)),
@@ -707,8 +708,7 @@ mod tests {
 
         let path_valido = create_temp_xml("nfe_valido_teste.xml", xml_valido_content);
         let path_incompleto = create_temp_xml("nfe_incompleto_teste.xml", xml_incompleto_content);
-        let path_desconhecido =
-            create_temp_xml("desconhecido_teste.xml", xml_desconhecido_content);
+        let path_desconhecido = create_temp_xml("desconhecido_teste.xml", xml_desconhecido_content);
 
         assert!(obter_tags_nao_mapeadas(&path_valido).is_none());
         assert!(obter_tags_nao_mapeadas(&path_desconhecido).is_none());
