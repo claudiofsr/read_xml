@@ -544,9 +544,14 @@ fn convert_cte(cte: &InfoCte) -> InfoReceita {
         cte_local_entrega_nome: opt_str_or_nd(cte.local_entrega_nome.as_deref()),
         desc_natureza_operacao: opt_str_or_nd(cte.nat_operacao.as_deref()),
         cancelada: format_cancelada(cte.cancelado.as_deref()),
-        registro_origem_item: "CTe".to_string(),
+        registro_origem_item: cte.doc_tipo.clone(),
         nat_bc_credito_desc: ND.to_string(),
-        modelo_descricao: "Conhecimento de Transporte Eletrônico CT-e".to_string(),
+        modelo_descricao: match cte.doc_tipo.as_str() {
+            "GTVe" => "Guia de Transporte de Valores Eletrônica GTV-e",
+            "CTeSimp" => "Conhecimento de Transporte Eletrônico Simplificado CT-e",
+            _ => "Conhecimento de Transporte Eletrônico CT-e",
+        }
+        .to_string(),
         numero_nota: opt_display_or_nd(cte.numero_da_nota),
         chave_nfe: opt_str_or_nd(cte.cte.as_deref()),
         inf_nfe_chave,

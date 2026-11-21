@@ -35,6 +35,24 @@ pub struct RetEvento {
     pub signature: Option<Signature>,
 }
 
+impl RetEvento {
+    /// Indica se o evento foi registrado/homologado com sucesso pela SEFAZ (`135` ou `136`).
+    #[inline]
+    pub fn is_success(&self) -> bool {
+        self.inf_evento
+            .as_ref()
+            .is_some_and(RetInfEvento::is_success)
+    }
+
+    /// Retorna a chave de acesso do documento afetado (NF-e ou CT-e).
+    #[inline]
+    pub fn get_chave_documento(&self) -> Option<&str> {
+        self.inf_evento
+            .as_ref()
+            .and_then(RetInfEvento::get_chave_documento)
+    }
+}
+
 /// Bloco contendo os dados de processamento do evento pela SEFAZ (`<infEvento>`).
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RetInfEvento {
@@ -71,6 +89,9 @@ pub struct RetInfEvento {
     /// CNPJ do Destinatário associado ao documento fiscal.
     #[serde(rename = "CNPJDest", default)]
     pub cnpjdest: Option<String>,
+    /// E-mail do destinatário no retorno do evento (`emailDest`).
+    #[serde(rename = "emailDest", default)]
+    pub email_dest: Option<String>,
 
     /// CPF do Destinatário associado ao documento fiscal (`CPFDest`).
     #[serde(rename = "CPFDest", default)]

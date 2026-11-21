@@ -165,6 +165,16 @@ impl Imposto {
         self.icms.as_ref().and_then(Icms::get_icms_valor_st)
     }
 
+    /// Obtém o valor do crédito outorgado/presumido do ICMS no CT-e (`vCred`).
+    pub fn get_v_cred_icms(&self) -> Option<f64> {
+        self.icms.as_ref().and_then(Icms::get_icms_valor_cred)
+    }
+
+    /// Obtém o valor total do DFe no CT-e (`vTotDFe`).
+    pub fn get_v_tot_dfe(&self) -> Option<f64> {
+        self.v_tot_dfe.parse_opt()
+    }
+
     /// Obtém o valor monetário calculado do IPI devido (somando todas as ocorrências).
     pub fn get_v_ipi(&self) -> Option<f64> {
         let ipis = self.ipi.as_ref()?;
@@ -416,6 +426,17 @@ impl Icms {
             icmssn201 => v_icmsst,
             icmssn202 => v_icmsst,
             icmssn900 => v_icmsst,
+        )
+    }
+
+    /// Obtém o valor do crédito outorgado/presumido de ICMS (`vCred`).
+    pub fn get_icms_valor_cred(&self) -> Option<f64> {
+        first_icms_opt!(
+            self,
+            icms20 => v_cred,
+            icms60 => v_cred,
+            icms90 => v_cred,
+            icmsoutra_uf => v_cred,
         )
     }
 }
@@ -1664,6 +1685,9 @@ pub struct Pisst {
     /// Valor calculado de PIS ST.
     #[serde(rename = "vPIS", default)]
     pub v_pis: Option<String>,
+    /// Indicador de soma do PIS-ST ao valor total da NF-e (`indSomaPISST`).
+    #[serde(rename = "indSomaPISST", default)]
+    pub ind_soma_pis_st: Option<String>,
     /// Texto descritivo bruto contido no nó se aplicável.
     #[serde(rename = "$text", default)]
     pub text: Option<String>,
@@ -1835,6 +1859,9 @@ pub struct Cofinsst {
     /// Valor calculado do COFINS ST.
     #[serde(rename = "vCOFINS", default)]
     pub v_cofins: Option<String>,
+    /// Indicador de soma do COFINS-ST ao valor total da NF-e (`indSomaCOFINSST`).
+    #[serde(rename = "indSomaCOFINSST", default)]
+    pub ind_soma_cofins_st: Option<String>,
     /// Texto descritivo bruto contido no nó se aplicável.
     #[serde(rename = "$text", default)]
     pub text: Option<String>,
@@ -1913,6 +1940,32 @@ impl Total {
         self.icmstot
             .as_ref()
             .and_then(|icms_total| icms_total.v_nf.parse_opt())
+    }
+
+    /// Obtém o valor total da NF-e considerando tributos da Reforma Tributária (`vNFTot`).
+    pub fn get_valor_nf_tot(&self) -> Option<f64> {
+        self.v_nf_tot.parse_opt().or_else(|| self.get_valor_nfe())
+    }
+
+    /// Obtém o valor total consolidado do Imposto Seletivo (`ISTot/vIS`).
+    pub fn get_valor_is_tot(&self) -> Option<f64> {
+        self.istot.as_ref().and_then(|t| t.v_is.parse_opt())
+    }
+
+    /// Obtém o valor total consolidado do IBS (`IBSCBSTot/gIBS/vIBS`).
+    pub fn get_valor_ibs_tot(&self) -> Option<f64> {
+        self.ibscbstot
+            .as_ref()
+            .and_then(|t| t.g_ibs.as_ref())
+            .and_then(|g| g.v_ibs.parse_opt())
+    }
+
+    /// Obtém o valor total consolidado da CBS (`IBSCBSTot/gCBS/vCBS`).
+    pub fn get_valor_cbs_tot(&self) -> Option<f64> {
+        self.ibscbstot
+            .as_ref()
+            .and_then(|t| t.g_cbs.as_ref())
+            .and_then(|g| g.v_cbs.parse_opt())
     }
 }
 

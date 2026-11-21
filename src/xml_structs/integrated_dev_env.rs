@@ -156,6 +156,7 @@ pub struct Ide {
         alias = "toma4",
         alias = "toma03",
         alias = "toma04",
+        alias = "tomaTerceiro",
         default
     )]
     pub tomador: Option<Agente>,
@@ -235,6 +236,14 @@ pub struct Ide {
     /// Data prevista de entrega (`dPrevEntrega`).
     #[serde(rename = "dPrevEntrega", default)]
     pub d_prev_entrega: Option<String>,
+
+    /// Data e hora de saída da origem na GTV-e (`dhSaidaOrig`).
+    #[serde(rename = "dhSaidaOrig", default)]
+    pub dh_saida_orig: Option<String>,
+
+    /// Data e hora de chegada ao destino na GTV-e (`dhChegadaDest`).
+    #[serde(rename = "dhChegadaDest", default)]
+    pub dh_chegada_dest: Option<String>,
 
     /// Grupo de Compra Governamental (`gCompraGov`).
     #[serde(rename = "gCompraGov", default)]
@@ -335,6 +344,34 @@ impl Ide {
     /// Extrai o código numérico bruto do tomador a partir do bloco estruturado cadastrado.
     pub fn get_cod_tomador_1(&self) -> Option<u8> {
         self.tomador.get_ext_tomador()
+    }
+
+    /// Indica se o documento é uma Nota Fiscal de Débito (`tpNFDebito`).
+    pub fn is_nf_debito(&self) -> bool {
+        self.tp_nf_debito
+            .as_deref()
+            .is_some_and(|s| !s.trim().is_empty())
+    }
+
+    /// Indica se o documento é uma Nota Fiscal de Crédito (`tpNFCredito`).
+    pub fn is_nf_credito(&self) -> bool {
+        self.tp_nf_credito
+            .as_deref()
+            .is_some_and(|s| !s.trim().is_empty())
+    }
+
+    /// Retorna as chaves referenciadas em pagamento antecipado (`gPagAntecipado/refNFe`).
+    pub fn get_pag_antecipado_chaves(&self) -> Vec<String> {
+        self.g_pag_antecipado
+            .as_ref()
+            .and_then(|g| g.ref_nfe.as_ref())
+            .map(|v| {
+                v.iter()
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     /// Retorna o código único correspondente ao Tomador do Serviço de Transporte sem alocações na Heap.

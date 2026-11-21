@@ -15,7 +15,7 @@ use crate::{
     xml_structs::{
         cancelamento_cte::{InfoCteCancel, ProcCancCte},
         cancelamento_nfe::{InfoNfeCancel, ProcCancNfe},
-        cte::{Cte, CteProc, InfoCte},
+        cte::{Cte, CteProc, CteSimp, CteSimpProc, Gtve, GtveProc, InfoCte},
         cte_evento::{InfoCteEvento, ProcEventoCte},
         efinanceira::{EFinanceira, InfoEFinanceira},
         nfe::{InfoNfe, Nfe, NfeProc},
@@ -175,6 +175,10 @@ pub fn get_xml_serialized(xml_path: &Path, arguments: &Arguments) -> Option<Info
     let res = match root_tag.as_str() {
         "cteProc" => CteProc::struct_to_info(xml_path, arguments),
         "CTe" => Cte::struct_to_info(xml_path, arguments),
+        "GTVeProc" => GtveProc::struct_to_info(xml_path, arguments),
+        "GTVe" => Gtve::struct_to_info(xml_path, arguments),
+        "cteSimpProc" => CteSimpProc::struct_to_info(xml_path, arguments),
+        "CTeSimp" => CteSimp::struct_to_info(xml_path, arguments),
         "nfeProc" => NfeProc::struct_to_info(xml_path, arguments),
         "NFe" => Nfe::struct_to_info(xml_path, arguments),
         "procEventoCTe" | "eventoCTe" => ProcEventoCte::struct_to_info(xml_path, arguments),

@@ -47,6 +47,9 @@ pub struct Detalhes {
     /// Valor líquido do item (valor do produto - descontos + acréscimos) (vItem).
     #[serde(rename = "vItem", default)]
     pub v_item: Option<String>,
+    /// Observações do Contribuinte e do Fisco vinculadas ao item (`<obsItem>`).
+    #[serde(rename = "obsItem", default)]
+    pub obs_item: Option<ObsItem>,
 
     /// Documento Fiscal Eletrônico referenciado no item (`<DFeReferenciado>`).
     #[serde(rename = "DFeReferenciado", default)]
@@ -60,6 +63,17 @@ pub struct DFeReferenciado {
     pub chave_acesso: Option<String>,
     #[serde(rename = "nItem", default)]
     pub n_item: Option<String>,
+    #[serde(rename = "$text", default)]
+    pub text: Option<String>,
+}
+
+/// Observações de uso livre do Contribuinte e do Fisco por item (`<obsItem>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ObsItem {
+    #[serde(rename = "obsCont", default)]
+    pub obs_cont: Option<ObsContribuinte>,
+    #[serde(rename = "obsFisco", default)]
+    pub obs_fisco: Option<ObsFisco>,
     #[serde(rename = "$text", default)]
     pub text: Option<String>,
 }
@@ -218,6 +232,9 @@ pub struct Produto {
     /// Dados específicos para faturamento de combustíveis líquidos ou gasosos.
     #[serde(rename = "comb", default)]
     pub comb: Option<Comb>,
+    /// Grupo de Crédito Presumido do item (`<gCred>`).
+    #[serde(rename = "gCred", default)]
+    pub g_cred: Option<Vec<GCred>>,
 }
 
 impl Produto {
@@ -248,6 +265,45 @@ impl Produto {
         self.di
             .as_ref()
             .and_then(|dec_importacao| dec_importacao.get_num_di())
+    }
+}
+
+/// Grupo de Crédito Presumido do item (`<gCred>` - NT 2023.004 / NT 2024.001).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GCred {
+    #[serde(rename = "cCredPresumido", default)]
+    pub c_cred_presumido: Option<String>,
+    #[serde(rename = "pCredPresumido", default)]
+    pub p_cred_presumido: Option<String>,
+    #[serde(rename = "vCredPresumido", default)]
+    pub v_cred_presumido: Option<String>,
+}
+
+impl GCred {
+    /// Retorna o valor monetário do crédito presumido, se presente.
+    pub fn get_valor_cred_presumido(&self) -> Option<f64> {
+        self.v_cred_presumido
+            .as_deref()
+            .and_then(|s| s.trim().replace(',', ".").parse::<f64>().ok())
+    }
+}
+
+impl Detalhes {
+    /// Retorna o valor líquido do item (`vItem`), se presente.
+    pub fn get_valor_liquido_item(&self) -> Option<f64> {
+        self.v_item
+            .as_deref()
+            .and_then(|s| s.trim().replace(',', ".").parse::<f64>().ok())
+    }
+}
+
+impl DFeReferenciado {
+    /// Retorna a chave de acesso referenciada no item, se presente.
+    pub fn get_chave_acesso(&self) -> Option<&str> {
+        self.chave_acesso
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
     }
 }
 

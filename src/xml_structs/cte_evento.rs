@@ -408,6 +408,9 @@ pub struct DetEvento {
     /// Evento de registro de passagem em posto fiscal (`evCTeRegPassagem`).
     #[serde(rename = "evCTeRegPassagem", default)]
     pub ev_cte_reg_passagem: Option<EvCteRegPassagem>,
+    /// Evento de registro de passagem automático via MDF-e (`evCTeRegPassagemAutoMDFe`).
+    #[serde(rename = "evCTeRegPassagemAutoMDFe", default)]
+    pub ev_cte_reg_passagem_auto_mdfe: Option<EvCteRegPassagemAuto>,
 }
 
 /// Evento de registro de passagem em posto fiscal (`<evCTeRegPassagem>`).
@@ -497,6 +500,30 @@ pub struct EvCancPrestDesacordo {
     pub ind_desacordo_oper: Option<String>,
     #[serde(rename = "xObs", default)]
     pub x_obs: Option<String>,
+}
+impl Mdfe {
+    /// Retorna a chave de acesso do MDF-e vinculada, se presente.
+    pub fn get_ch_mdfe(&self) -> Option<String> {
+        self.ch_mdfe.get_key()
+    }
+}
+
+impl EvCeCte {
+    /// Retorna as chaves de acesso das NF-es vinculadas ao comprovante de entrega.
+    pub fn get_chaves_nfes(&self) -> Vec<String> {
+        self.inf_entrega
+            .iter()
+            .flatten()
+            .filter_map(|inf| inf.ch_nfe.get_key())
+            .collect()
+    }
+}
+
+impl EvEpecCte {
+    /// Retorna o valor total da prestação informado no EPEC, se válido.
+    pub fn get_valor_total(&self) -> Option<f64> {
+        self.v_tprest.to_float64()
+    }
 }
 
 /// Evento de cancelamento de MDF-e emitido para CT-e autorizado (`<evCTeCanceladoMDFe>`).

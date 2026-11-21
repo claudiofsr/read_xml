@@ -46,8 +46,10 @@ use crate::{
         assinaturas::{ProtSignature, Signature},
         aut_xml::{AutXML, InfProtocolo, InfRespTec},
         // Re-exporta as estruturas de detalhamento secundárias do arquivo normalizado
+        cobranca::Cobranca,
         cte_detalhamento::*,
-        impostos::Imposto,
+        endereco::{Endereco, EnderecoExtension},
+        impostos::{Ibscbs, Ibscbstot, Imposto},
         integrated_dev_env::Ide,
     },
 };
@@ -1459,6 +1461,14 @@ pub struct VPrest {
     pub v_tprest_liq: Option<f64>,
 }
 
+impl VPrest {
+    /// Retorna o valor líquido da prestação de serviço (`vTPrestLiq`), se presente.
+    #[inline]
+    pub fn get_valor_liquido(&self) -> Option<f64> {
+        self.v_tprest_liq
+    }
+}
+
 /// Componente de Valor da Prestação (`<Comp>`).
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Comp {
@@ -1490,6 +1500,524 @@ pub struct InfCteSupl {
     pub text: Option<String>,
     #[serde(rename = "qrCodCTe", default)]
     pub qr_cod_cte: Option<String>,
+}
+
+// =========================================================================
+// GTV-e (Guia de Transporte de Valores Eletrônica - Modelo 64, NT 2020.002)
+// =========================================================================
+
+/// Envelope XML de processamento da GTV-e (`<GTVeProc>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GtveProc {
+    #[serde(rename = "@dhConexao", default)]
+    pub dh_conexao: Option<String>,
+    #[serde(rename = "@ipTransmissor", default)]
+    pub ip_transmissor: Option<String>,
+    #[serde(rename = "@nPortaCon", default)]
+    pub n_porta_con: Option<String>,
+    #[serde(rename = "@versao", default)]
+    pub versao: Option<String>,
+    #[serde(rename = "@xmlns", default)]
+    pub xmlns: Option<String>,
+    #[serde(rename = "$text", default)]
+    pub text: Option<String>,
+
+    #[serde(rename = "GTVe")]
+    pub gtve: Gtve,
+    #[serde(rename = "protCTe")]
+    pub prot_cte: ProtCte,
+}
+
+impl StructExtension for GtveProc {
+    fn get_information(&self, xml_path: &std::path::Path, arguments: &Arguments) -> Information {
+        if arguments.verbose {
+            println!("gtve xml_path: {xml_path:?}");
+            println!("gtve_proc: {self:#?}\n");
+        }
+        let ch_cte = self
+            .prot_cte
+            .inf_prot
+            .ch_cte
+            .get_key()
+            .or_else(|| self.gtve.get_chave_from_id());
+        Information::Cte(Box::new(self.gtve.get_info(ch_cte)))
+    }
+}
+
+/// Tag `<GTVe>` (avulsa ou dentro de `<GTVeProc>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Gtve {
+    #[serde(rename = "@xmlns", default)]
+    pub xmlns: Option<String>,
+    #[serde(rename = "infCte", default)]
+    pub inf_cte: Option<GtveInfCte>,
+    #[serde(rename = "infCTeSupl", default)]
+    pub inf_cte_supl: Option<InfCteSupl>,
+    #[serde(rename = "Signature", default)]
+    pub signature: Option<Signature>,
+}
+
+impl StructExtension for Gtve {
+    fn get_information(&self, xml_path: &std::path::Path, arguments: &Arguments) -> Information {
+        if arguments.verbose {
+            println!("gtve xml_path: {xml_path:?}");
+            println!("gtve: {self:#?}\n");
+        }
+        Information::Cte(Box::new(self.get_info(self.get_chave_from_id())))
+    }
+}
+
+impl Gtve {
+    pub fn get_chave_from_id(&self) -> Option<String> {
+        crate::extract_chave_from_id(self.inf_cte.as_ref()?.id.as_deref(), "CTe")
+    }
+
+    pub fn get_info(&self, ch_cte: Option<String>) -> InfoCte {
+        let inf = self.inf_cte.as_ref();
+        let compl = inf.and_then(|i| i.compl.as_ref());
+        let valor_total = inf
+            .and_then(|i| i.det_gtv.as_ref())
+            .and_then(DetGtv::get_valor_total);
+
+        let mut info_cte = InfoCte {
+            versao: inf.and_then(|i| i.versao.clone()),
+
+            emitente_cnpj: inf.and_then(|i| i.emitente.get_ext_cnpj()),
+            emitente_cpf: inf.and_then(|i| i.emitente.get_ext_cpf()),
+            emitente_crt: inf.and_then(|i| i.emitente.get_ext_crt()),
+            emitente_nome: inf.and_then(|i| i.emitente.get_ext_nome()),
+            emitente_fantasia: inf.and_then(|i| i.emitente.get_ext_fantasia()),
+            emitente_ender_municipio: inf.and_then(|i| i.emitente.get_ext_municipio()),
+            emitente_ender_estado: inf.and_then(|i| i.emitente.get_ext_estado()),
+
+            remetente_cnpj: inf.and_then(|i| i.remetente.get_ext_cnpj()),
+            remetente_cpf: inf.and_then(|i| i.remetente.get_ext_cpf()),
+            remetente_crt: inf.and_then(|i| i.remetente.get_ext_crt()),
+            remetente_nome: inf.and_then(|i| i.remetente.get_ext_nome()),
+            remetente_fantasia: inf.and_then(|i| i.remetente.get_ext_fantasia()),
+            remetente_ender_municipio: inf.and_then(|i| i.remetente.get_ext_municipio()),
+            remetente_ender_estado: inf.and_then(|i| i.remetente.get_ext_estado()),
+            remetente_nfes: Vec::new(),
+
+            destinatario_cnpj: inf.and_then(|i| i.destinatario.get_ext_cnpj()),
+            destinatario_cpf: inf.and_then(|i| i.destinatario.get_ext_cpf()),
+            destinatario_crt: inf.and_then(|i| i.destinatario.get_ext_crt()),
+            destinatario_nome: inf.and_then(|i| i.destinatario.get_ext_nome()),
+            destinatario_fantasia: inf.and_then(|i| i.destinatario.get_ext_fantasia()),
+            destinatario_ender_municipio: inf.and_then(|i| i.destinatario.get_ext_municipio()),
+            destinatario_ender_estado: inf.and_then(|i| i.destinatario.get_ext_estado()),
+
+            tomador_cnpj: inf.and_then(|i| i.ide.get_toma_cnpj()),
+            tomador_cpf: inf.and_then(|i| i.ide.get_toma_cpf()),
+            tomador_nome: inf.and_then(|i| i.ide.get_toma_nome()),
+            tomador_fantasia: inf.and_then(|i| i.ide.get_toma_fantasia()),
+            tomador_ender_municipio: inf.and_then(|i| i.ide.get_toma_ender_municipio()),
+            tomador_ender_estado: inf.and_then(|i| i.ide.get_toma_ender_estado()),
+            tomador_codigo: inf.and_then(|i| i.ide.get_cod_tomador()),
+
+            cte: ch_cte,
+            doc_tipo: "GTVe".to_string(),
+            cancelado: None,
+            numero_da_nota: inf.and_then(|i| i.ide.get_num_cte()),
+            nat_operacao: inf.and_then(|i| i.ide.nat_operacao.get_not_empty()),
+            uf_inicio: inf
+                .and_then(|i| i.ide.ufini.get_not_empty())
+                .or_else(|| inf.and_then(|i| i.origem.get_endereco_ext_estado()))
+                .or_else(|| inf.and_then(|i| i.remetente.get_ext_estado())),
+            mun_inicio: inf
+                .and_then(|i| i.ide.x_mun_ini.get_not_empty())
+                .or_else(|| inf.and_then(|i| i.origem.get_endereco_ext_municipio()))
+                .or_else(|| inf.and_then(|i| i.remetente.get_ext_municipio())),
+            uf_termino: inf
+                .and_then(|i| i.ide.uffim.get_not_empty())
+                .or_else(|| inf.and_then(|i| i.destino.get_endereco_ext_estado()))
+                .or_else(|| inf.and_then(|i| i.destinatario.get_ext_estado())),
+            mun_termino: inf
+                .and_then(|i| i.ide.x_mun_fim.get_not_empty())
+                .or_else(|| inf.and_then(|i| i.destino.get_endereco_ext_municipio()))
+                .or_else(|| inf.and_then(|i| i.destinatario.get_ext_municipio())),
+            local_entrega_nome: compl.and_then(Compl::get_local_entrega_nome),
+            obs_gerais: compl.and_then(Compl::get_obs_gerais),
+            cfop: inf.and_then(|i| i.ide.get_cfop()),
+            data_emissao: inf.and_then(|i| i.ide.get_dt_emissao()),
+            valor_total,
+            ..Default::default()
+        };
+
+        info_cte.corrigir_codigo_do_tomador();
+        info_cte
+    }
+}
+
+/// Conteúdo `<infCte>` específico da GTV-e.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GtveInfCte {
+    #[serde(rename = "@Id", default)]
+    pub id: Option<String>,
+    #[serde(rename = "@versao", default)]
+    pub versao: Option<String>,
+
+    #[serde(rename = "emit", default)]
+    pub emitente: Option<Agente>,
+    #[serde(rename = "rem", default)]
+    pub remetente: Option<Agente>,
+    #[serde(rename = "dest", default)]
+    pub destinatario: Option<Agente>,
+    #[serde(rename = "origem", default)]
+    pub origem: Option<Endereco>,
+    #[serde(rename = "destino", default)]
+    pub destino: Option<Endereco>,
+    #[serde(rename = "compl", default)]
+    pub compl: Option<Compl>,
+    #[serde(rename = "detGTV", default)]
+    pub det_gtv: Option<DetGtv>,
+    #[serde(rename = "autXML", default)]
+    pub aut_xml: Option<Vec<AutXML>>,
+    #[serde(rename = "infRespTec", default)]
+    pub inf_resp_tec: Option<InfRespTec>,
+    #[serde(rename = "infSolicNFF", default)]
+    pub inf_solic_nff: Option<InfSolicNff>,
+
+    #[serde(rename = "ide")]
+    pub ide: Ide,
+}
+
+/// Detalhamento da GTV-e (`<detGTV>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DetGtv {
+    #[serde(rename = "infEspecie", default)]
+    pub inf_especie: Option<Vec<InfEspecie>>,
+    #[serde(rename = "infVeiculo", default)]
+    pub inf_veiculo: Option<Vec<InfVeiculoGtve>>,
+    #[serde(rename = "qCarga", default)]
+    pub q_carga: Option<String>,
+    #[serde(rename = "$text", default)]
+    pub text: Option<String>,
+}
+
+impl DetGtv {
+    /// Soma os valores declarados em `<infEspecie><vEspecie>`.
+    pub fn get_valor_total(&self) -> Option<f64> {
+        let especies = self.inf_especie.as_ref()?;
+        let mut has_value = false;
+        let sum = especies
+            .iter()
+            .filter_map(|e| e.v_especie.to_float64())
+            .inspect(|_| has_value = true)
+            .sum();
+        has_value.then_some(sum)
+    }
+}
+
+/// Espécie transportada na GTV-e (`<infEspecie>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct InfEspecie {
+    #[serde(rename = "tpEspecie", default)]
+    pub tp_especie: Option<String>,
+    #[serde(rename = "vEspecie", default)]
+    pub v_especie: Option<String>,
+    #[serde(rename = "tpNumerario", default)]
+    pub tp_numerario: Option<String>,
+    #[serde(rename = "xMoedaEstr", default)]
+    pub x_moeda_estr: Option<String>,
+}
+
+/// Veículo informado na GTV-e (`<infVeiculo>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct InfVeiculoGtve {
+    #[serde(rename = "placa", default)]
+    pub placa: Option<String>,
+    #[serde(rename = "UF", default)]
+    pub uf: Option<String>,
+    #[serde(rename = "RNTRC", default)]
+    pub rntrc: Option<String>,
+}
+
+// =========================================================================
+// CT-e Simplificado (NT 2024.002 / NT 2026.004)
+// =========================================================================
+
+/// Envelope XML de processamento do CT-e Simplificado (`<cteSimpProc>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CteSimpProc {
+    #[serde(rename = "@dhConexao", default)]
+    pub dh_conexao: Option<String>,
+    #[serde(rename = "@ipTransmissor", default)]
+    pub ip_transmissor: Option<String>,
+    #[serde(rename = "@nPortaCon", default)]
+    pub n_porta_con: Option<String>,
+    #[serde(rename = "@versao", default)]
+    pub versao: Option<String>,
+    #[serde(rename = "@xmlns", default)]
+    pub xmlns: Option<String>,
+    #[serde(rename = "$text", default)]
+    pub text: Option<String>,
+
+    #[serde(rename = "CTeSimp")]
+    pub cte_simp: CteSimp,
+    #[serde(rename = "protCTe")]
+    pub prot_cte: ProtCte,
+}
+
+impl StructExtension for CteSimpProc {
+    fn get_information(&self, xml_path: &std::path::Path, arguments: &Arguments) -> Information {
+        if arguments.verbose {
+            println!("cteSimp xml_path: {xml_path:?}");
+            println!("cte_simp_proc: {self:#?}\n");
+        }
+        let ch_cte = self
+            .prot_cte
+            .inf_prot
+            .ch_cte
+            .get_key()
+            .or_else(|| self.cte_simp.get_chave_from_id());
+        Information::Cte(Box::new(self.cte_simp.get_info(ch_cte)))
+    }
+}
+
+/// Tag `<CTeSimp>` (avulsa ou dentro de `<cteSimpProc>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CteSimp {
+    #[serde(rename = "@xmlns", default)]
+    pub xmlns: Option<String>,
+    #[serde(rename = "infCte", default)]
+    pub inf_cte: Option<CteSimpInfCte>,
+    #[serde(rename = "infCTeSupl", default)]
+    pub inf_cte_supl: Option<InfCteSupl>,
+    #[serde(rename = "Signature", default)]
+    pub signature: Option<Signature>,
+}
+
+impl StructExtension for CteSimp {
+    fn get_information(&self, xml_path: &std::path::Path, arguments: &Arguments) -> Information {
+        if arguments.verbose {
+            println!("cteSimp xml_path: {xml_path:?}");
+            println!("cte_simp: {self:#?}\n");
+        }
+        Information::Cte(Box::new(self.get_info(self.get_chave_from_id())))
+    }
+}
+
+impl CteSimp {
+    pub fn get_chave_from_id(&self) -> Option<String> {
+        crate::extract_chave_from_id(self.inf_cte.as_ref()?.id.as_deref(), "CTe")
+    }
+
+    pub fn get_info(&self, ch_cte: Option<String>) -> InfoCte {
+        let inf = self.inf_cte.as_ref();
+        let imposto = inf.and_then(|i| i.imposto.as_ref());
+        let compl = inf.and_then(|i| i.compl.as_ref());
+        let dets = inf.and_then(|i| i.det.as_deref()).unwrap_or(&[]);
+        let first_det = dets.first();
+
+        let mut nfes_vinculados: Vec<String> = Vec::new();
+        let mut cte_anteriores: Vec<String> = Vec::new();
+        let mut sum_det_prest = 0.0f64;
+        let mut has_det_prest = false;
+
+        for d in dets {
+            if let Some(vp) = d.v_prest {
+                sum_det_prest += vp;
+                has_det_prest = true;
+            }
+            if let Some(nfes) = &d.inf_nfe {
+                nfes_vinculados.extend(
+                    nfes.iter()
+                        .map(|n| n.chave.trim().to_string())
+                        .filter(|s| !s.is_empty()),
+                );
+            }
+            if let Some(docs_ant) = &d.inf_doc_ant {
+                for ant in docs_ant {
+                    if let Some(ch) = ant.ch_cte.get_key() {
+                        cte_anteriores.push(ch);
+                    }
+                    if let Some(parciais) = &ant.inf_nfe_transp_parcial {
+                        nfes_vinculados.extend(parciais.iter().filter_map(|p| p.ch_nfe.get_key()));
+                    }
+                }
+            }
+        }
+
+        let valor_total = inf
+            .and_then(|i| i.total.as_ref())
+            .and_then(|t| t.v_tprest)
+            .or_else(|| has_det_prest.then_some(sum_det_prest));
+
+        let mut info_cte = InfoCte {
+            versao: inf.and_then(|i| i.versao.clone()),
+
+            emitente_cnpj: inf.and_then(|i| i.emitente.get_ext_cnpj()),
+            emitente_cpf: inf.and_then(|i| i.emitente.get_ext_cpf()),
+            emitente_crt: inf.and_then(|i| i.emitente.get_ext_crt()),
+            emitente_nome: inf.and_then(|i| i.emitente.get_ext_nome()),
+            emitente_fantasia: inf.and_then(|i| i.emitente.get_ext_fantasia()),
+            emitente_ender_municipio: inf.and_then(|i| i.emitente.get_ext_municipio()),
+            emitente_ender_estado: inf.and_then(|i| i.emitente.get_ext_estado()),
+
+            tomador_cnpj: inf
+                .and_then(|i| i.toma.get_ext_cnpj())
+                .or_else(|| inf.and_then(|i| i.ide.get_toma_cnpj())),
+            tomador_cpf: inf
+                .and_then(|i| i.toma.get_ext_cpf())
+                .or_else(|| inf.and_then(|i| i.ide.get_toma_cpf())),
+            tomador_nome: inf
+                .and_then(|i| i.toma.get_ext_nome())
+                .or_else(|| inf.and_then(|i| i.ide.get_toma_nome())),
+            tomador_fantasia: inf
+                .and_then(|i| i.toma.get_ext_fantasia())
+                .or_else(|| inf.and_then(|i| i.ide.get_toma_fantasia())),
+            tomador_ender_municipio: inf
+                .and_then(|i| i.toma.get_ext_municipio())
+                .or_else(|| inf.and_then(|i| i.ide.get_toma_ender_municipio())),
+            tomador_ender_estado: inf
+                .and_then(|i| i.toma.get_ext_estado())
+                .or_else(|| inf.and_then(|i| i.ide.get_toma_ender_estado())),
+            tomador_codigo: inf
+                .and_then(|i| i.ide.get_cod_tomador())
+                .or_else(|| inf.and_then(|i| i.toma.as_ref().and(Some(4)))),
+
+            cte: ch_cte,
+            doc_tipo: "CTeSimp".to_string(),
+            cancelado: None,
+            numero_da_nota: inf.and_then(|i| i.ide.get_num_cte()),
+            nat_operacao: inf.and_then(|i| i.ide.nat_operacao.get_not_empty()),
+            uf_inicio: inf.and_then(|i| i.ide.ufini.get_not_empty()),
+            mun_inicio: inf
+                .and_then(|i| i.ide.x_mun_ini.get_not_empty())
+                .or_else(|| first_det.and_then(|d| d.x_mun_ini.get_not_empty())),
+            uf_termino: inf.and_then(|i| i.ide.uffim.get_not_empty()),
+            mun_termino: inf
+                .and_then(|i| i.ide.x_mun_fim.get_not_empty())
+                .or_else(|| first_det.and_then(|d| d.x_mun_fim.get_not_empty())),
+            local_entrega_nome: compl.and_then(Compl::get_local_entrega_nome),
+            obs_gerais: compl.and_then(Compl::get_obs_gerais),
+            cfop: inf.and_then(|i| i.ide.get_cfop()),
+            data_emissao: inf.and_then(|i| i.ide.get_dt_emissao()),
+            cte_anteriores,
+            nfes_vinculados,
+            valor_total,
+
+            aliq_pis: imposto.and_then(Imposto::get_aliq_pis),
+            aliq_cofins: imposto.and_then(Imposto::get_aliq_cofins),
+            v_pis: imposto.and_then(Imposto::get_v_pis),
+            v_cofins: imposto.and_then(Imposto::get_v_cofins),
+            v_ipi: imposto.and_then(Imposto::get_v_ipi),
+            v_bc_iss: imposto.and_then(Imposto::get_v_bc_iss),
+            v_iss: imposto.and_then(Imposto::get_v_iss),
+            v_bc_icms: imposto.and_then(Imposto::get_v_bc_icms),
+            aliq_icms: imposto.and_then(Imposto::get_aliq_icms),
+            v_icms: imposto.and_then(Imposto::get_v_icms),
+            v_icms_st: imposto.and_then(Imposto::get_v_icms_st),
+            ..Default::default()
+        };
+
+        info_cte.corrigir_codigo_do_tomador();
+        info_cte
+    }
+}
+
+/// Conteúdo `<infCte>` específico do CT-e Simplificado.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CteSimpInfCte {
+    #[serde(rename = "@Id", default)]
+    pub id: Option<String>,
+    #[serde(rename = "@versao", default)]
+    pub versao: Option<String>,
+
+    #[serde(rename = "emit", default)]
+    pub emitente: Option<Agente>,
+    #[serde(rename = "toma", default)]
+    pub toma: Option<Agente>,
+    #[serde(rename = "compl", default)]
+    pub compl: Option<Compl>,
+    #[serde(rename = "infCarga", default)]
+    pub inf_carga: Option<InfCarga>,
+    #[serde(rename = "det", default)]
+    pub det: Option<Vec<DetCteSimp>>,
+    #[serde(rename = "infModal", default)]
+    pub inf_modal: Option<InfModal>,
+    #[serde(rename = "cobr", default)]
+    pub cobr: Option<Cobranca>,
+    #[serde(rename = "infCteSub", default)]
+    pub inf_cte_sub: Option<InfCteSub>,
+    #[serde(rename = "imp", default)]
+    pub imposto: Option<Imposto>,
+    #[serde(rename = "total", default)]
+    pub total: Option<TotalCteSimp>,
+    #[serde(rename = "autXML", default)]
+    pub aut_xml: Option<Vec<AutXML>>,
+    #[serde(rename = "infRespTec", default)]
+    pub inf_resp_tec: Option<InfRespTec>,
+    #[serde(rename = "infSolicNFF", default)]
+    pub inf_solic_nff: Option<InfSolicNff>,
+    #[serde(rename = "infPAA", default)]
+    pub inf_paa: Option<InfPaa>,
+
+    #[serde(rename = "ide")]
+    pub ide: Ide,
+}
+
+/// Detalhamento de cada entrega/prestação no CT-e Simplificado (`<det>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DetCteSimp {
+    #[serde(rename = "@nItem", default)]
+    pub n_item: Option<String>,
+    #[serde(rename = "cMunIni", default)]
+    pub c_mun_ini: Option<String>,
+    #[serde(rename = "xMunIni", default)]
+    pub x_mun_ini: Option<String>,
+    #[serde(rename = "cMunFim", default)]
+    pub c_mun_fim: Option<String>,
+    #[serde(rename = "xMunFim", default)]
+    pub x_mun_fim: Option<String>,
+    #[serde(rename = "vPrest", default)]
+    pub v_prest: Option<f64>,
+    #[serde(rename = "vRec", default)]
+    pub v_rec: Option<f64>,
+    #[serde(rename = "vPrestLiq", default)]
+    pub v_prest_liq: Option<f64>,
+    #[serde(rename = "Comp", default)]
+    pub comp: Option<Vec<Comp>>,
+    #[serde(rename = "infNFe", default)]
+    pub inf_nfe: Option<Vec<InfNfe>>,
+    #[serde(rename = "infDocAnt", default)]
+    pub inf_doc_ant: Option<Vec<InfDocAntSimp>>,
+    #[serde(rename = "IBSCBS", default)]
+    pub ibscbs: Option<Ibscbs>,
+}
+
+/// Documentos anteriores referenciados no item do CT-e Simplificado (`<infDocAnt>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct InfDocAntSimp {
+    #[serde(rename = "chCTe", default)]
+    pub ch_cte: Option<String>,
+    #[serde(rename = "tpPrest", default)]
+    pub tp_prest: Option<String>,
+    #[serde(rename = "infNFeTranspParcial", default)]
+    pub inf_nfe_transp_parcial: Option<Vec<InfNfeTranspParcial>>,
+}
+
+/// NF-e de transporte parcial vinculada a documento anterior no CT-e Simplificado (`<infNFeTranspParcial>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct InfNfeTranspParcial {
+    #[serde(rename = "chNFe", default)]
+    pub ch_nfe: Option<String>,
+}
+
+/// Totais consolidados do CT-e Simplificado (`<total>`).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TotalCteSimp {
+    #[serde(rename = "vTPrest", default)]
+    pub v_tprest: Option<f64>,
+    #[serde(rename = "vTPrestLiq", default)]
+    pub v_tprest_liq: Option<f64>,
+    #[serde(rename = "vTRec", default)]
+    pub v_trec: Option<f64>,
+    #[serde(rename = "vTotDFe", default)]
+    pub v_tot_dfe: Option<f64>,
+    #[serde(rename = "IBSCBSTot", default)]
+    pub ibscbstot: Option<Ibscbstot>,
 }
 
 #[cfg(test)]
@@ -1889,5 +2417,85 @@ mod tests_struct_order_independence {
         // Campos obrigatórios carregados com sucesso independente da posição física na stream
         assert_eq!(info_a.v_prest.v_tprest, 850.50);
         assert_eq!(info_a.ide.c_ct, Some("13221009".to_string()));
+    }
+}
+#[cfg(test)]
+mod tests_gtve_and_cte_simp {
+    use super::*;
+    use quick_xml::de::from_str;
+
+    #[test]
+    fn test_parse_gtve_e_cte_simp() {
+        let gtve_xml = r#"<GTVeProc versao="4.00" xmlns="http://www.portalfiscal.inf.br/cte">
+            <GTVe>
+                <infCte Id="CTe35260111222333000144640010000001001000001001" versao="4.00">
+                    <ide>
+                        <CFOP>5353</CFOP>
+                        <natOp>TRANSPORTE DE VALORES</natOp>
+                        <mod>64</mod>
+                        <nCT>100</nCT>
+                        <dhEmi>2026-01-10T10:00:00-03:00</dhEmi>
+                        <UFIni>SP</UFIni>
+                        <xMunIni>SAO PAULO</xMunIni>
+                        <UFFim>SP</UFFim>
+                        <xMunFim>CAMPINAS</xMunFim>
+                        <toma>0</toma>
+                    </ide>
+                    <emit><CNPJ>11222333000144</CNPJ><xNome>EMPRESA VALORES LTDA</xNome></emit>
+                    <rem><CNPJ>47960950000121</CNPJ><xNome>MAGAZINE LUIZA S/A</xNome></rem>
+                    <detGTV>
+                        <infEspecie><tpEspecie>1</tpEspecie><vEspecie>1500.50</vEspecie></infEspecie>
+                        <infEspecie><tpEspecie>3</tpEspecie><vEspecie>499.50</vEspecie></infEspecie>
+                    </detGTV>
+                </infCte>
+            </GTVe>
+            <protCTe versao="4.00"><infProt><chCTe>35260111222333000144640010000001001000001001</chCTe></infProt></protCTe>
+        </GTVeProc>"#;
+
+        let proc_gtve: GtveProc = from_str(gtve_xml).unwrap();
+        let info_gtve = proc_gtve
+            .gtve
+            .get_info(proc_gtve.prot_cte.inf_prot.ch_cte.get_key());
+        assert_eq!(info_gtve.doc_tipo, "GTVe");
+        assert_eq!(info_gtve.numero_da_nota, Some(100));
+        assert_eq!(info_gtve.valor_total, Some(2000.0));
+        assert_eq!(info_gtve.mun_inicio.as_deref(), Some("SAO PAULO"));
+
+        let simp_xml = r#"<cteSimpProc versao="4.00" xmlns="http://www.portalfiscal.inf.br/cte">
+            <CTeSimp>
+                <infCte Id="CTe35250199888777000166570010000002001000002002" versao="4.00">
+                    <ide>
+                        <CFOP>5352</CFOP>
+                        <natOp>PRESTACAO DE SERVICO SIMPLIFICADO</natOp>
+                        <mod>57</mod>
+                        <nCT>200</nCT>
+                        <dhEmi>2025-05-15T14:00:00-03:00</dhEmi>
+                        <UFIni>SP</UFIni>
+                        <UFFim>SP</UFFim>
+                    </ide>
+                    <emit><CNPJ>99888777000166</CNPJ><xNome>TRANS SIMP LTDA</xNome></emit>
+                    <toma><CNPJ>47964911000100</CNPJ><xNome>USINA JUSSARA SA</xNome></toma>
+                    <det nItem="1">
+                        <xMunIni>FRANCA</xMunIni>
+                        <xMunFim>RIBEIRAO PRETO</xMunFim>
+                        <vPrest>350.00</vPrest>
+                        <infNFe><chave>35250547964911000100550010000000011000000011</chave></infNFe>
+                    </det>
+                    <total><vTPrest>350.00</vTPrest><vTRec>350.00</vTRec></total>
+                </infCte>
+            </CTeSimp>
+            <protCTe versao="4.00"><infProt><chCTe>35250199888777000166570010000002001000002002</chCTe></infProt></protCTe>
+        </cteSimpProc>"#;
+
+        let proc_simp: CteSimpProc = from_str(simp_xml).unwrap();
+        let info_simp = proc_simp
+            .cte_simp
+            .get_info(proc_simp.prot_cte.inf_prot.ch_cte.get_key());
+        assert_eq!(info_simp.doc_tipo, "CTeSimp");
+        assert_eq!(info_simp.numero_da_nota, Some(200));
+        assert_eq!(info_simp.valor_total, Some(350.0));
+        assert_eq!(info_simp.mun_inicio.as_deref(), Some("FRANCA"));
+        assert_eq!(info_simp.mun_termino.as_deref(), Some("RIBEIRAO PRETO"));
+        assert_eq!(info_simp.nfes_vinculados.len(), 1);
     }
 }

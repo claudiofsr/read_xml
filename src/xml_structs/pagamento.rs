@@ -123,6 +123,12 @@ pub struct Card {
     /// Código de autorização gerado pela rede emissora do cartão.
     #[serde(rename = "cAut", default)]
     pub c_aut: Option<String>,
+    /// CNPJ do beneficiário do pagamento (`CNPJReceb`).
+    #[serde(rename = "CNPJReceb", default)]
+    pub cnpj_receb: Option<String>,
+    /// Identificador do terminal de pagamento (`idTermPag`).
+    #[serde(rename = "idTermPag", default)]
+    pub id_term_pag: Option<String>,
 
     /// Conteúdo textual do nó se aplicável.
     #[serde(rename = "$text", default)]
@@ -133,6 +139,22 @@ impl Card {
     /// Retorna uma referência limpa do CNPJ da credenciadora do cartão, caso exista.
     pub fn get_cnpj(&self) -> Option<&str> {
         self.cnpj.as_ref().map(|c| c.trim())
+    }
+
+    /// Retorna o CNPJ do beneficiário do pagamento (`CNPJReceb`), caso exista.
+    pub fn get_cnpj_receb(&self) -> Option<&str> {
+        self.cnpj_receb
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+    }
+
+    /// Retorna o identificador do terminal de pagamento (`idTermPag`), caso exista.
+    pub fn get_id_term_pag(&self) -> Option<&str> {
+        self.id_term_pag
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
     }
 
     /// Tenta extrair o tipo de integração do processo como um valor numérico `u8`.

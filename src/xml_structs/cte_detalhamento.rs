@@ -1196,6 +1196,35 @@ pub struct InfSeg {
     pub cnpj: Option<String>,
 }
 
+impl Occ {
+    /// Retorna o número da Ordem de Coleta, se presente.
+    pub fn get_numero(&self) -> Option<&str> {
+        self.n_occ
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+    }
+}
+
+impl Aquav {
+    /// Retorna o valor do AFRMM informado no modal aquaviário.
+    pub fn get_valor_afrmm(&self) -> Option<f64> {
+        self.v_afrmm
+            .as_deref()
+            .and_then(|s| s.trim().replace(',', ".").parse::<f64>().ok())
+    }
+}
+
+impl Multimodal {
+    /// Retorna o número do Certificado de Operador de Transporte Multimodal (COTM).
+    pub fn get_cotm(&self) -> Option<&str> {
+        self.cotm
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+    }
+}
+
 /// Grupo de informações sobre serviços de transporte vinculados (`<infServVinc>`).
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct InfServVinc {

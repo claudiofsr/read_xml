@@ -125,6 +125,21 @@ impl ProcEventoNfe {
         self.evento.inf_evento.ch_nfe.get_key()
     }
 
+    /// Obtém a chave da NF-e referenciada em eventos `NFE_REFERENCIADA` (`chNFeRefte`).
+    pub fn get_nfe_referenciada(&self) -> Option<String> {
+        self.evento.inf_evento.det_evento.ch_nfe_refte.get_key()
+    }
+
+    /// Obtém a justificativa do evento, se informada.
+    pub fn get_justificativa(&self) -> Option<String> {
+        self.evento.inf_evento.det_evento.x_just.get_not_empty()
+    }
+
+    /// Obtém o texto da carta de correção (`xCorrecao`), se informado.
+    pub fn get_correcao(&self) -> Option<String> {
+        self.evento.inf_evento.det_evento.x_correcao.get_not_empty()
+    }
+
     /// Determina se o evento em questão corresponde a uma homologação de cancelamento.
     pub fn informacao_de_cancelamento(&self) -> bool {
         REGEX_CANCELAMENTO.is_match(&self.evento.inf_evento.det_evento.desc_evento)
@@ -298,6 +313,55 @@ pub struct DetEvento {
     /// Descrição textual correspondente ao tipo de evento (p. ex., "Cancelamento").
     #[serde(rename = "descEvento")]
     pub desc_evento: String,
+    #[serde(rename = "UFDest", default)]
+    pub uf_dest: Option<String>,
+    #[serde(rename = "UFVeic", default)]
+    pub uf_veic: Option<String>,
+    #[serde(rename = "indRet", default)]
+    pub ind_ret: Option<String>,
+    #[serde(rename = "indOffline", default)]
+    pub ind_offline: Option<String>,
+    #[serde(rename = "emailDest", default)]
+    pub email_dest: Option<String>,
+    #[serde(rename = "idPedido", default)]
+    pub id_pedido: Option<String>,
+    #[serde(rename = "idPedidoCancelado", default)]
+    pub id_pedido_cancelado: Option<String>,
+    #[serde(rename = "respCancPedido", default)]
+    pub resp_canc_pedido: Option<String>,
+    #[serde(rename = "statCancPedido", default)]
+    pub stat_canc_pedido: Option<String>,
+    #[serde(rename = "justStatus", default)]
+    pub just_status: Option<String>,
+    #[serde(rename = "respPedido", default)]
+    pub resp_pedido: Option<String>,
+    #[serde(rename = "statPedido", default)]
+    pub stat_pedido: Option<String>,
+    #[serde(rename = "statPrazo", default)]
+    pub stat_prazo: Option<String>,
+    #[serde(rename = "justStaOutra", default)]
+    pub just_sta_outra: Option<String>,
+    #[serde(rename = "itemPedido", default)]
+    pub item_pedido: Option<Vec<ItemPedido>>,
+    #[serde(rename = "NSU", default)]
+    pub nsu: Option<String>,
+    #[serde(rename = "cIdEquip", default)]
+    pub c_id_equip: Option<String>,
+    #[serde(rename = "xIdEquip", default)]
+    pub x_id_equip: Option<String>,
+    #[serde(rename = "tpEquip", default)]
+    pub tp_equip: Option<String>,
+    #[serde(rename = "placaCarreta", default)]
+    pub placa_carreta: Option<String>,
+    #[serde(rename = "UFCarreta", default)]
+    pub uf_carreta: Option<String>,
+    #[serde(rename = "placaCarreta2", default)]
+    pub placa_carreta2: Option<String>,
+    #[serde(rename = "UFCarreta2", default)]
+    pub uf_carreta2: Option<String>,
+    /// Chave da NF-e referenciada no evento (`chNFeRefte`).
+    #[serde(rename = "chNFeRefte", default)]
+    pub ch_nfe_refte: Option<String>,
 
     #[serde(rename = "cPostoUF", default)]
     pub c_posto_uf: Option<String>,
@@ -330,10 +394,33 @@ pub struct ModalRodov {
     pub placa_veic: Option<String>,
     #[serde(rename = "UF", default)]
     pub uf: Option<String>,
+    #[serde(rename = "UFVeic", default)]
+    pub uf_veic: Option<String>,
+    #[serde(rename = "placaCarreta", default)]
+    pub placa_carreta: Option<String>,
+    #[serde(rename = "UFCarreta", default)]
+    pub uf_carreta: Option<String>,
+    #[serde(rename = "placaCarreta2", default)]
+    pub placa_carreta2: Option<String>,
+    #[serde(rename = "UFCarreta2", default)]
+    pub uf_carreta2: Option<String>,
     #[serde(rename = "tpRodov", default)]
     pub tp_rodov: Option<String>,
     #[serde(rename = "chMDFe", default)]
     pub ch_mdfe: Option<String>,
+}
+
+/// Item de Pedido de Prorrogação de ICMS (`<itemPedido>`).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ItemPedido {
+    #[serde(rename = "@numItem", default)]
+    pub num_item: Option<String>,
+    #[serde(rename = "qtdeItem", default)]
+    pub qtde_item: Option<String>,
+    #[serde(rename = "statPedido", default)]
+    pub stat_pedido: Option<String>,
+    #[serde(rename = "justStaOutra", default)]
+    pub just_sta_outra: Option<String>,
 }
 
 /// Dados correspondentes a Conhecimento de Transporte vinculado ao Evento (`<CTe>`).
