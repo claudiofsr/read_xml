@@ -1,0 +1,307 @@
+<cteProc versao="3.00" xmlns="http://www.portalfiscal.inf.br/cte">
+    <CTe xmlns="http://www.portalfiscal.inf.br/cte">
+        <infCte Id="CTe12345678901234567890123456789012345678901234" versao="3.00">
+            <ide>
+                <cUF>35</cUF>
+                <cCT>12345678</cCT>
+                <CFOP>6360</CFOP>
+                <natOp>Transp a contrib substituto</natOp>
+                <mod>57</mod>
+                <serie>6</serie>
+                <nCT>123456</nCT>
+                <dhEmi>2022-12-31T23:59:59-03:00</dhEmi>
+                <tpImp>1</tpImp>
+                <tpEmis>1</tpEmis>
+                <cDV>6</cDV>
+                <tpAmb>1</tpAmb>
+                <tpCTe>0</tpCTe>
+                <procEmi>0</procEmi>
+                <verProc>1.0</verProc>
+                <cMunEnv>1234567</cMunEnv>
+                <xMunEnv>CIDADE DAS FLORES</xMunEnv>
+                <UFEnv>SP</UFEnv>
+                <modal>01</modal>
+                <tpServ>1</tpServ>
+                <cMunIni>2345678</cMunIni>
+                <xMunIni>VALE VERDE</xMunIni>
+                <UFIni>SP</UFIni>
+                <cMunFim>3456789</cMunFim>
+                <xMunFim>CAMPOS NOVOS</xMunFim>
+                <UFFim>SC</UFFim>
+                <retira>1</retira>
+                <indIEToma>1</indIEToma>
+                <toma3>
+                    <toma>1</toma>
+                </toma3>
+            </ide>
+            <compl>
+                <Entrega>
+                    <comData>
+                        <tpPer>2</tpPer>
+                        <dProg>2023-01-01</dProg>
+                    </comData>
+                    <semHora>
+                        <tpHor>0</tpHor>
+                    </semHora>
+                </Entrega>
+                <xObs>DATA AGENDADA AGV: 01/01/2023 FAVOR DEVOLVER OS CANHOTOS DAS NFS./ JUNTAMENTE
+                    AO CTE DA TRANSPORTADORA FANTASIA. ASSINADOS/DATADOS/CARIMBADOS FAVOR DEVOLVER OS CANHOTOS DAS
+                    NFS./ JUNTAMENTE AO CTE DA TRANSPORTADORA FANTASIA. ASSINADOS/DATADOS/CARIMBADOS Transporte
+                    subcontratado por LOGISTICA VALE VERDE, CNPJ 78.901.234/5678-90, IE:
+                    890123456789, CT-e: 000-123456789, ICMS: R$ 0.00. **** D E V O L V E R C A N H O
+                    T O A S S I N A D O **** CST: 60 - Apolice seguro: 12345678901234567890 -
+                    Seguradora: 23456789012345 FANTASIA SEGUROS S/A</xObs>
+                <ObsCont xCampo="1">
+                    <xTexto>DATA AGENDADA AGV: 01/01/2023</xTexto>
+                </ObsCont>
+                <ObsCont xCampo="2">
+                    <xTexto>FAVOR DEVOLVER OS CANHOTOS DAS NFS./ JUNTAMENTE AO CTE DA TRANSPORTADORA FANTASIA.
+                        ASSINADOS/DATADOS/CARIMBADOS</xTexto>
+                </ObsCont>
+                <ObsCont xCampo="3">
+                    <xTexto>FAVOR DEVOLVER OS CANHOTOS DAS NFS./ JUNTAMENTE AO CTE DA TRANSPORTADORA FANTASIA.
+                        ASSINADOS/DATADOS/CARIMBADOS</xTexto>
+                </ObsCont>
+                <ObsCont xCampo="4">
+                    <xTexto>Transporte subcontratado por LOGISTICA VALE VERDE, CNPJ
+                        78.901.234/5678-90, IE: 890123456789, CT-e: 000-123456789, ICMS: R$ 0.00.</xTexto>
+                </ObsCont>
+                <ObsCont xCampo="5">
+                    <xTexto>**** D E V O L V E R C A N H O T O A S S I N A D O ****</xTexto>
+                </ObsCont>
+                <ObsCont xCampo="6">
+                    <xTexto>CST: 60 - Apolice seguro: 12345678901234567890 - Seguradora:
+                        23456789012345 FANTASIA SEGUROS S/A</xTexto>
+                </ObsCont>
+                <ObsCont xCampo="RESPSEG">
+                    <xTexto>34567890123456</xTexto>
+                </ObsCont>
+                <ObsCont xCampo="8">
+                    <xTexto>TABELA: COMBINADA CO1234567 - ROTA: AAAA/BBBB - TARIF: 123 - TIPO
+                        MERCAD: PERECIVEL</xTexto>
+                </ObsCont>
+                <ObsCont xCampo="9">
+                    <xTexto>Tratamento de dados pessoais pode ser dado para execucao de contrato de
+                        transporte (LGPD art. 7, V).</xTexto>
+                </ObsCont>
+            </compl>
+            <emit>
+                <CNPJ>34567890123456</CNPJ>
+                <IE>456789012345</IE>
+                <xNome>TRANSPORTE FANTASIA LTDA S/A</xNome>
+                <enderEmit>
+                    <xLgr>RUA DAS ACACIAS</xLgr>
+                    <nro>1234</nro>
+                    <xBairro>BAIRRO INDUSTRIAL</xBairro>
+                    <cMun>1234567</cMun>
+                    <xMun>CIDADE DAS FLORES</xMun>
+                    <CEP>12345678</CEP>
+                    <UF>SP</UF>
+                    <fone>1234567890</fone>
+                </enderEmit>
+                <CRT>3</CRT>
+            </emit>
+            <rem>
+                <CNPJ>56789012345678</CNPJ>
+                <IE>678901234567</IE>
+                <xNome>LABORATORIOS QUIMICOS FANTASIA</xNome>
+                <fone>2345678901</fone>
+                <enderReme>
+                    <xLgr>AVENIDA DO ESTADO</xLgr>
+                    <nro>456</nro>
+                    <xCpl>S/N</xCpl>
+                    <xBairro>JARDIM PRIMAVERA</xBairro>
+                    <cMun>4567890</cMun>
+                    <xMun>PAULINIA</xMun>
+                    <CEP>23456789</CEP>
+                    <UF>SP</UF>
+                    <cPais>1058</cPais>
+                    <xPais>BRASIL</xPais>
+                </enderReme>
+            </rem>
+            <exped>
+                <CNPJ>78901234567890</CNPJ>
+                <IE>890123456789</IE>
+                <xNome>LOGISTICA VALE VERDE</xNome>
+                <fone>3456789012</fone>
+                <enderExped>
+                    <xLgr>RODOVIA DO SOL</xLgr>
+                    <nro>KM10</nro>
+                    <xCpl>[SETOR M]</xCpl>
+                    <xBairro>ZONA INDUSTRIAL</xBairro>
+                    <cMun>2345678</cMun>
+                    <xMun>VALE VERDE</xMun>
+                    <CEP>34567890</CEP>
+                    <UF>SP</UF>
+                    <cPais>1058</cPais>
+                    <xPais>BRASIL</xPais>
+                </enderExped>
+            </exped>
+            <receb>
+                <CNPJ>90123456789012</CNPJ>
+                <IE>123456789</IE>
+                <xNome>DISTRIBUIDORA DE ALIMENTOS AURORA</xNome>
+                <fone>4567890123</fone>
+                <enderReceb>
+                    <xLgr>ESTRADA GERAL</xLgr>
+                    <nro>SN</nro>
+                    <xBairro>INTERIOR</xBairro>
+                    <cMun>3456789</cMun>
+                    <xMun>CAMPOS NOVOS</xMun>
+                    <CEP>45678901</CEP>
+                    <UF>SC</UF>
+                    <cPais>1058</cPais>
+                    <xPais>BRASIL</xPais>
+                </enderReceb>
+            </receb>
+            <dest>
+                <CNPJ>90123456789012</CNPJ>
+                <IE>123456789</IE>
+                <xNome>DISTRIBUIDORA DE ALIMENTOS AURORA</xNome>
+                <fone>4567890123</fone>
+                <enderDest>
+                    <xLgr>ESTRADA GERAL</xLgr>
+                    <nro>S/N</nro>
+                    <xBairro>INTERIOR</xBairro>
+                    <cMun>3456789</cMun>
+                    <xMun>CAMPOS NOVOS</xMun>
+                    <CEP>45678901</CEP>
+                    <UF>SC</UF>
+                    <cPais>1058</cPais>
+                    <xPais>BRASIL</xPais>
+                </enderDest>
+            </dest>
+            <vPrest>
+                <vTPrest>123.45</vTPrest>
+                <vRec>123.45</vRec>
+                <Comp>
+                    <xNome>FRETE PESO</xNome>
+                    <vComp>123.45</vComp>
+                </Comp>
+                <Comp>
+                    <xNome>FRETE VALOR</xNome>
+                    <vComp>234.56</vComp>
+                </Comp>
+                <Comp>
+                    <xNome>GRIS</xNome>
+                    <vComp>345.67</vComp>
+                </Comp>
+                <Comp>
+                    <xNome>PEDAGIO</xNome>
+                    <vComp>4.56</vComp>
+                </Comp>
+            </vPrest>
+            <imp>
+                <ICMS>
+                    <ICMS60>
+                        <CST>60</CST>
+                        <vBCSTRet>0.00</vBCSTRet>
+                        <vICMSSTRet>0.00</vICMSSTRet>
+                        <pICMSSTRet>0.00</pICMSSTRet>
+                        <vCred>0.00</vCred>
+                    </ICMS60>
+                </ICMS>
+                <vTotTrib>0.00</vTotTrib>
+            </imp>
+            <infCTeNorm>
+                <infCarga>
+                    <vCarga>12345.67</vCarga>
+                    <proPred>PERECIVEL</proPred>
+                    <infQ>
+                        <cUnid>03</cUnid>
+                        <tpMed>UNIDADE</tpMed>
+                        <qCarga>4</qCarga>
+                    </infQ>
+                    <infQ>
+                        <cUnid>03</cUnid>
+                        <tpMed>PARES</tpMed>
+                        <qCarga>0</qCarga>
+                    </infQ>
+                    <infQ>
+                        <cUnid>00</cUnid>
+                        <tpMed>M3</tpMed>
+                        <qCarga>0.0000</qCarga>
+                    </infQ>
+                    <infQ>
+                        <cUnid>01</cUnid>
+                        <tpMed>PESO REAL</tpMed>
+                        <qCarga>43.7000</qCarga>
+                    </infQ>
+                    <infQ>
+                        <cUnid>01</cUnid>
+                        <tpMed>PESO BASE DE CALCULO</tpMed>
+                        <qCarga>43.7000</qCarga>
+                    </infQ>
+                    <vCargaAverb>12345.67</vCargaAverb>
+                </infCarga>
+                <infDoc>
+                    <infNFe>
+                        <chave>12345678901234567890123456789012345678901234</chave>
+                    </infNFe>
+                </infDoc>
+                <docAnt>
+                    <emiDocAnt>
+                        <CNPJ>78901234567890</CNPJ>
+                        <IE>890123456789</IE>
+                        <UF>SP</UF>
+                        <xNome>LOGISTICA VALE VERDE</xNome>
+                        <idDocAnt>
+                            <idDocAntEle>
+                                <chCTe>23456789012345678901234567890123456789012345</chCTe>
+                            </idDocAntEle>
+                        </idDocAnt>
+                    </emiDocAnt>
+                </docAnt>
+                <infModal versaoModal="3.00">
+                    <rodo>
+                        <RNTRC>12345678</RNTRC>
+                    </rodo>
+                </infModal>
+            </infCTeNorm>
+            <infRespTec>
+                <CNPJ>12345678901234</CNPJ>
+                <xContato>SUPORTE FANTASIA</xContato>
+                <email>suporte@fantasia.com.br</email>
+                <fone>01234567890</fone>
+            </infRespTec>
+        </infCte>
+        <infCTeSupl>
+            <qrCodCTe>
+                https://nfe.fazenda.sp.gov.br/CTeConsulta/qrCode?chCTe=12345678901234567890123456789012345678901234&amp;tpAmb=1</qrCodCTe>
+        </infCTeSupl>
+        <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+            <SignedInfo>
+                <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />
+                <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" />
+                <Reference URI="#CTe12345678901234567890123456789012345678901234">
+                    <Transforms>
+                        <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" />
+                        <Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />
+                    </Transforms>
+                    <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
+                    <DigestValue>a1b2c3d4e5f6g7h8i9j0</DigestValue>
+                </Reference>
+            </SignedInfo>
+            <SignatureValue>
+                k1l2m3n4o5p6q7r8s9t0</SignatureValue>
+            <KeyInfo>
+                <X509Data>
+                    <X509Certificate>
+                        u1v2w3x4y5z6a7b8c9d0</X509Certificate>
+                </X509Data>
+            </KeyInfo>
+        </Signature>
+    </CTe>
+    <protCTe versao="3.00">
+        <infProt>
+            <tpAmb>1</tpAmb>
+            <verAplic>SP-CTe-2022-08-17-1</verAplic>
+            <chCTe>12345678901234567890123456789012345678901234</chCTe>
+            <dhRecbto>2022-12-31T23:59:59-03:00</dhRecbto>
+            <nProt>123456789012345</nProt>
+            <digVal>a1b2c3d4e5f6g7h8i9j0</digVal>
+            <cStat>100</cStat>
+            <xMotivo>Autorizado o uso do CT-e</xMotivo>
+        </infProt>
+    </protCTe>
+</cteProc>
