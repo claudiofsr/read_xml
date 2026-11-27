@@ -67,7 +67,7 @@ pub static REGEX_CENTER: Lazy<Regex> = Lazy::new(|| {
             Chave|NCM|
             Registro|Identifica|
             Cancelado|
-            Estado
+            Estado|CRT|Nº|Número
         ) # End of anchored group
         | # OR (this is an alternative for the whole pattern, not anchored)
         Código
@@ -83,7 +83,7 @@ pub static REGEX_CENTER: Lazy<Regex> = Lazy::new(|| {
 pub static REGEX_VALUE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(
         r"(?ix)
-        Total|Valor|Base de Cálculo
+        \b(?:Total|Valor)\b|^(?:ICMS|ISS|Valor).*Base\ de\ Cálculo
     ",
     )
     .expect("Failed to compile REGEX_VALUE static regex.")
@@ -123,12 +123,12 @@ pub static FORMAT_RULES: [FormatRule; 4] = [
         regex: &REGEX_CENTER,
     },
     FormatRule {
-        key: "value",
-        regex: &REGEX_VALUE,
-    },
-    FormatRule {
         key: "aliq",
         regex: &REGEX_ALIQ,
+    },
+    FormatRule {
+        key: "value",
+        regex: &REGEX_VALUE,
     },
     FormatRule {
         key: "date",
@@ -249,35 +249,96 @@ mod tests_format_rules {
     // com as chaves lógicas mapeadas em FORMAT_RULES.
     #[test]
     fn test_format_rules_matching_indexes() {
-        // Casos de teste mapeando: (Texto de entrada, Chave esperada, Índice esperado)
+        // Casos: (entrada, chave esperada). O indice esperado e DERIVADO de
+        // FORMAT_RULES (Deep DRY): reordenar regras nao quebra o teste, desde
+        // que o primeiro casamento aponte para a chave correta.
         let test_cases = [
-            ("CNPJ da Empresa", "center", 0),
-            ("Valor do ICMS", "value", 1),
-            ("Alíquota do Simples Nacional", "aliq", 2),
-            ("Data de Emissão do Documento", "date", 3),
+            ("CNPJ da Empresa", "center"),
+            ("Valor do ICMS", "value"),
+            ("Alíquota do Simples Nacional", "aliq"),
+            ("Data de Emissão do Documento", "date"),
         ];
-
-        for (input, expected_key, expected_index) in test_cases {
+        for (input, expected_key) in test_cases {
+            let expected_index = FORMAT_RULES
+                .iter()
+                .position(|rule| rule.key == expected_key)
+                .expect("chave esperada deve existir em FORMAT_RULES");
             let matches: Vec<usize> = REGEX_COLUMN_SET.matches(input).iter().collect();
-
-            // Garante que houve correspondência
             assert!(
                 !matches.is_empty(),
                 "Falha: A entrada '{input}' deveria ter casado com algum padrão."
             );
-
-            // Garante que o primeiro casamento corresponde ao índice esperado
             let matched_index = matches[0];
             assert_eq!(
-                matched_index, expected_index,
-                "Erro de correspondência: A entrada '{input}' retornou o índice {matched_index}, mas esperava-se {expected_index}."
-            );
-
-            // Garante que o índice correspondido aponta para a chave textual correta
-            assert_eq!(
                 FORMAT_RULES[matched_index].key, expected_key,
-                "Desalinhamento: O índice {matched_index} aponta para a chave '{}', mas esperava-se '{}'.",
-                FORMAT_RULES[matched_index].key, expected_key
+                "A entrada '{input}' casou primeiro com '{}', mas esperava-se '{expected_key}'.",
+                FORMAT_RULES[matched_index].key
+            );
+            assert_eq!(
+                matched_index, expected_index,
+                "Desalinhamento entre RegexSet e FORMAT_RULES para '{input}'."
+            );
+        }
+    }
+
+    /// Regressão (Mandamento 03): cabeçalhos reais do layout Receita (56 colunas).
+    /// - Alíquotas ("ad valorem") devem casar com `aliq`, nunca `value`.
+    /// - CRT / Número da Nota / Item / DI devem centralizar (`center`).
+    /// - Colunas textuais não podem casar com `value` (falsos positivos históricos).
+    #[test]
+    fn test_regressao_format_rules_aliq_value_center() {
+        let first_key = |col: &str| -> Option<&'static str> {
+            REGEX_COLUMN_SET
+                .matches(col)
+                .iter()
+                .next()
+                .map(|i| FORMAT_RULES[i].key)
+        };
+        for col in [
+            "COFINS: Alíquota ad valorem - Atributo : NF Item (Todos)",
+            "PIS: Alíquota ad valorem - Atributo : NF Item (Todos)",
+            "ICMS: Alíquota : NF Item (Todos) NOISE OR",
+        ] {
+            assert_eq!(
+                first_key(col),
+                Some("aliq"),
+                "alíquota deve formatar como aliq: {col}"
+            );
+        }
+        for col in [
+            "CRT : NF (Todos)",
+            "Número da Nota : NF Item (Todos)",
+            "Número do Item : NF Item (Todos)",
+            "Número da DI : NF Item (Todos)",
+        ] {
+            assert_eq!(first_key(col), Some("center"), "deve centralizar: {col}");
+        }
+        for col in [
+            "Natureza da Base de Cálculo do Crédito Descrição : NF Item (Todos)",
+            "CTe - UF do início da prestação de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes",
+            "CTe - Informações do Destinatário do CT-e: Nome de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes",
+        ] {
+            let keys: Vec<&str> = REGEX_COLUMN_SET
+                .matches(col)
+                .iter()
+                .map(|i| FORMAT_RULES[i].key)
+                .collect();
+            assert!(
+                !keys.contains(&"value"),
+                "falso positivo de value em: {col}"
+            );
+        }
+        for col in [
+            "Valor Total : NF (Todos) SOMA",
+            "Valor da Nota Proporcional : NF Item (Todos) SOMA",
+            "ICMS: Base de Cálculo : NF Item (Todos) SOMA",
+            "ISS: Base de Cálculo : NF Item (Todos) SOMA",
+            "ICMS: Valor do Tributo : NF Item (Todos) SOMA",
+        ] {
+            assert_eq!(
+                first_key(col),
+                Some("value"),
+                "monetário deve formatar como value: {col}"
             );
         }
     }

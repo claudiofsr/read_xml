@@ -58,7 +58,7 @@ fn run(arguments: &Arguments) -> XmlParserResult<()> {
     if arguments.verificar_consistencia {
         verificar_inconsistencias(&xml_entries)?;
         if arguments.time {
-            timer.print_elapsed_time();
+            eprintln!("Elapsed time: {}", timer.get_elapsed_time());
         }
         return Ok(());
     }
@@ -72,7 +72,7 @@ fn run(arguments: &Arguments) -> XmlParserResult<()> {
     print_key_filter_report(arguments);
 
     if arguments.time {
-        timer.print_elapsed_time();
+        eprintln!("Elapsed time: {}", timer.get_elapsed_time());
     }
 
     Ok(())

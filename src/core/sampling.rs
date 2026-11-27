@@ -7,7 +7,7 @@
 
 use std::{
     cmp::Ordering,
-    collections::{BinaryHeap, HashMap, HashSet},
+    collections::{BinaryHeap, HashSet},
     hash::{Hash, Hasher},
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -461,10 +461,6 @@ pub fn retain_events_for_sampled_docs(docs: &mut DocsFiscais) {
     docs.eventos_nfe = keep_nfe_ev;
     docs.cancel_nfe = keep_nfe_canc;
 }
-
-/// Agrega contadores de eventos de vários `HashMap` se necessário no resumo.
-#[allow(dead_code)]
-fn _sanitize_unused(_: HashMap<String, usize>) {}
 
 #[inline]
 fn sanitize_score(v: f64) -> f64 {

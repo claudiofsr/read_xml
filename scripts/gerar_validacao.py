@@ -16,6 +16,7 @@ from concurrent.futures import ProcessPoolExecutor
 import os
 from pathlib import Path
 import re
+import subprocess
 import sys
 import io
 import xml.parsers.expat
@@ -456,7 +457,6 @@ fn exibir_resumo_consistencia(
         tags_unicas_nao_mapeadas,
         agrupado,
     } = stats;
-    }
 
     let mut agrupado_vec: Vec<(BTreeSet<String>, Vec<PathBuf>)> = agrupado.into_iter().collect();
     agrupado_vec.sort_by(|a, b| b.1.len().cmp(&a.1.len()).then_with(|| a.0.cmp(&b.0)));
@@ -892,6 +892,38 @@ def scan_directories(root: Path, dirs: list[Path]) -> int:
     return 2
 
 
+def _rustfmt_normalize(text: str, root: Path) -> str:
+    """Normaliza o código gerado com rustfmt (mesma formatação do `cargo fmt`).
+
+    O arquivo nasce formatado, tornando `--check` estável após `cargo fmt`
+    (fonte única de verdade da formatação; evita falso "Desatualizado").
+    """
+    edition = "2024"
+    try:
+        m = re.search(
+            r'^edition\s*=\s*"(\d+)"',
+            (root / "Cargo.toml").read_text(encoding="utf-8"),
+            re.MULTILINE,
+        )
+        if m:
+            edition = m.group(1)
+    except OSError:
+        pass
+    try:
+        res = subprocess.run(
+            ["rustfmt", "--edition", edition, "--emit", "stdout", "--quiet"],
+            input=text,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if res.returncode == 0 and res.stdout.strip():
+            return res.stdout
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    return text
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Gera/atualiza src/xml_validation.rs e opcionalmente inspeciona ZIPs que contêm XML."
@@ -915,7 +947,7 @@ def main() -> int:
         print("Erro: não foi possível localizar a raiz do projeto read_xml.", file=sys.stderr)
         return 1
 
-    rendered = render_xml_validation_rs(root)
+    rendered = _rustfmt_normalize(render_xml_validation_rs(root), root)
     out_path = root / OUTPUT_FILE
     current = out_path.read_text(encoding="utf-8") if out_path.exists() else ""
 

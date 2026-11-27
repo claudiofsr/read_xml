@@ -36,9 +36,9 @@ use serde::{Deserialize, Serialize};
 use struct_iterable::Iterable;
 
 use crate::{
-    Arguments, GetID, InfoExtension, Information, OptExt, StructExtension,
+    Arguments, GetID, InfoExtension, Information, OptExt, StructExtension, format_cnpj_alnum,
     get_naive_date_from_yyyy_mm_dd, get_naive_date_from_yyyymm,
-    xml_structs::{agente::format_cnpj_safe, assinaturas::Signature},
+    xml_structs::assinaturas::Signature,
 };
 
 /// Macro auxiliar de exemplo para extração de nomes de campos de structs via reflexão.
@@ -389,7 +389,7 @@ impl EvtMovOpFin {
             .as_deref()
             .map(str::trim)
             .filter(|c| !c.is_empty())
-            .map(format_cnpj_safe)
+            .map(format_cnpj_alnum)
     }
 
     pub fn get_ni_do_declarado(&self) -> Option<String> {
@@ -399,12 +399,12 @@ impl EvtMovOpFin {
         }
         let alnum: String = ni.chars().filter(char::is_ascii_alphanumeric).collect();
         if alnum.len() == 14 && alnum.bytes().any(|b| b.is_ascii_alphabetic()) {
-            return Some(format_cnpj_safe(&alnum));
+            return Some(format_cnpj_alnum(&alnum));
         }
         let digits = ni.remove_non_digits();
         match digits.len() {
             11 => Some(digits.format_cpf()),
-            14 => Some(format_cnpj_safe(&digits)),
+            14 => Some(format_cnpj_alnum(&digits)),
             _ => Some(ni.to_string()),
         }
     }

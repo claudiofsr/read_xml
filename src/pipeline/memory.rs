@@ -8,7 +8,7 @@ use std::{cell::RefCell, path::PathBuf, sync::Mutex};
 
 use crate::{
     Arguments, DocsFiscais, ExcelMemoryMode, FiscalSampler, MultiProgressBar, NumberFormat,
-    OutputFilename, ReceitaOptions, SampleConfig, SanitizeSliceExt, XmlParserResult,
+    OutputFilename, ReceitaOptions, ReceitaXlsx, SampleConfig, SanitizeSliceExt, XmlParserResult,
     adicionar_eventos_cte, adicionar_eventos_nfe, ctes_to_receita, for_each_xml,
     get_xml_serialized_from_bytes, nfes_to_receita, partition_sources_with_xml,
     pipeline::{
@@ -342,7 +342,9 @@ pub fn process_and_export_docs(
             s.spawn(|_| {
                 ctes_res = match &receita_data {
                     Some((ctes_rec, _)) => {
-                        exportar_xlsx(ctes_rec, "CTes", ctes_label, &output.ctes, memory_mode, pb)
+                        let typed: Vec<ReceitaXlsx> =
+                            ctes_rec.iter().map(ReceitaXlsx::from).collect();
+                        exportar_xlsx(&typed, "CTes", ctes_label, &output.ctes, memory_mode, pb)
                     }
                     None => exportar_xlsx(
                         &docs_fiscais.ctes,
@@ -357,7 +359,9 @@ pub fn process_and_export_docs(
             s.spawn(|_| {
                 nfes_res = match &receita_data {
                     Some((_, nfes_rec)) => {
-                        exportar_xlsx(nfes_rec, "NFes", nfes_label, &output.nfes, memory_mode, pb)
+                        let typed: Vec<ReceitaXlsx> =
+                            nfes_rec.iter().map(ReceitaXlsx::from).collect();
+                        exportar_xlsx(&typed, "NFes", nfes_label, &output.nfes, memory_mode, pb)
                     }
                     None => exportar_xlsx(
                         &docs_fiscais.nfes,

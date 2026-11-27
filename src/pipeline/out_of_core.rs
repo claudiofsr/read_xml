@@ -26,9 +26,9 @@ use std::{
 use crate::{
     Arguments, CachedCompNfeSummary, CsvWriter, CteComponents, ExcelMemoryMode, FiscalSampler,
     InfoExtension, InfoReceita, Information, MultiProgressBar, NumberFormat, OutputFilename,
-    RECEITA_ND, ReceitaOptions, SampleConfig, SanitizeText, UniqueIdentification, XmlParserResult,
-    adicionar_eventos_cte, adicionar_eventos_nfe, cmp_info_cte, cmp_info_efin, cmp_info_nfe,
-    consolidate_ncm_items, consolidate_payer_items, convert_cte_to_receita,
+    RECEITA_ND, ReceitaOptions, ReceitaXlsx, SampleConfig, SanitizeText, UniqueIdentification,
+    XmlParserResult, adicionar_eventos_cte, adicionar_eventos_nfe, cmp_info_cte, cmp_info_efin,
+    cmp_info_nfe, consolidate_ncm_items, consolidate_payer_items, convert_cte_to_receita,
     convert_nfe_chunk_to_receita, for_each_xml, get_xml_serialized_from_bytes,
     partition_sources_with_xml,
     pipeline::{
@@ -1314,7 +1314,7 @@ fn export_ctes_ooc(
     }
 
     if arguments.receita {
-        stream_merged_outputs::<InfoReceita, _>(
+        stream_merged_outputs::<InfoReceita, _, _>(
             &sorted_paths,
             arguments,
             "CTes",
@@ -1323,9 +1323,10 @@ fn export_ctes_ooc(
             pb,
             generated,
             Ok,
+            |r| ReceitaXlsx::from(&r),
         )?;
     } else {
-        stream_merged_outputs::<SpillCte, InfoCte>(
+        stream_merged_outputs::<SpillCte, InfoCte, _>(
             &sorted_paths,
             arguments,
             "CTes",
@@ -1334,6 +1335,7 @@ fn export_ctes_ooc(
             pb,
             generated,
             |s| Ok(InfoCte::from(s)),
+            |v| v,
         )?;
     }
 
@@ -1415,7 +1417,7 @@ fn export_nfes_ooc(
     }
 
     if arguments.receita {
-        stream_merged_outputs::<InfoReceita, _>(
+        stream_merged_outputs::<InfoReceita, _, _>(
             &sorted_paths,
             arguments,
             "NFes",
@@ -1424,9 +1426,10 @@ fn export_nfes_ooc(
             pb,
             generated,
             Ok,
+            |r| ReceitaXlsx::from(&r),
         )?;
     } else {
-        stream_merged_outputs::<SpillNfe, InfoNfe>(
+        stream_merged_outputs::<SpillNfe, InfoNfe, _>(
             &sorted_paths,
             arguments,
             "NFes",
@@ -1435,6 +1438,7 @@ fn export_nfes_ooc(
             pb,
             generated,
             |s| Ok(InfoNfe::from(s)),
+            |v| v,
         )?;
     }
 
@@ -1470,7 +1474,7 @@ fn export_efin_ooc(
         let _ = std::fs::remove_file(res_path);
     }
 
-    stream_merged_outputs::<SpillEFinanceira, InfoEFinanceira>(
+    stream_merged_outputs::<SpillEFinanceira, InfoEFinanceira, _>(
         &sorted_paths,
         arguments,
         "eFinanceiras",
@@ -1479,6 +1483,7 @@ fn export_efin_ooc(
         pb,
         generated,
         |s| Ok(InfoEFinanceira::from(s)),
+        |v| v,
     )?;
 
     for p in sorted_paths {
@@ -1534,7 +1539,7 @@ impl InfoCte {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn stream_merged_outputs<'de, S, T>(
+fn stream_merged_outputs<'de, S, T, X>(
     sorted_paths: &[PathBuf],
     arguments: &Arguments,
     sheet_name: &str,
@@ -1543,10 +1548,12 @@ fn stream_merged_outputs<'de, S, T>(
     pb: &mut MultiProgressBar,
     generated: &mut Vec<GeneratedFileSummary>,
     map_fn: impl Fn(S) -> XmlParserResult<T>,
+    xlsx_fn: impl Fn(T) -> X,
 ) -> XmlParserResult<()>
 where
     S: serde::de::DeserializeOwned + MergeOrder,
     T: serde::Serialize + serde::Deserialize<'de> + InfoExtension + struct_iterable::Iterable,
+    X: serde::Serialize + serde::Deserialize<'de> + InfoExtension + struct_iterable::Iterable,
 {
     if sorted_paths.is_empty() {
         return Ok(());
@@ -1579,8 +1586,9 @@ where
 
     if !arguments.avoid {
         let xlsx_path = base_path.with_extension("xlsx");
-        let iter = KWayMergeIter::<S>::open(sorted_paths)?.map(|res| res.and_then(&map_fn));
-        let (rows, logs) = write_xlsx_from_iter::<T, _, _>(
+        let iter =
+            KWayMergeIter::<S>::open(sorted_paths)?.map(|res| res.and_then(&map_fn).map(&xlsx_fn));
+        let (rows, logs) = write_xlsx_from_iter::<X, _, _>(
             iter,
             sheet_name,
             &xlsx_path,

@@ -27,6 +27,78 @@ pub const RECEITA_ND: &str = "<N/D>";
 const ND: &str = RECEITA_ND;
 const DIVERSOS: &str = "*DIVERSOS*";
 
+/// Tipo inteiro para colunas numéricas do layout Receita (CRT, Nº Nota, Nº Item, CFOP, Nº DI).
+/// Serializa como inteiro real em CSV/XLSX; preserva `<N/D>` ou `*DIVERSOS*` como texto.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ReceitaInt {
+    Int(u64),
+    Text(String),
+}
+
+impl Default for ReceitaInt {
+    fn default() -> Self {
+        Self::Text(ND.to_string())
+    }
+}
+
+impl fmt::Display for ReceitaInt {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Int(v) => write!(f, "{v}"),
+            Self::Text(s) => write!(f, "{s}"),
+        }
+    }
+}
+
+/// Tipo float para colunas monetárias e de alíquotas do layout Receita.
+/// Em XLSX: sempre f64 nativo. Em CSV nativo: f64. Em CSV --format-br: formato brasileiro.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ReceitaFloat {
+    Native(f64),
+    Formatted(String),
+}
+
+impl Default for ReceitaFloat {
+    fn default() -> Self {
+        Self::Native(0.0)
+    }
+}
+
+impl fmt::Display for ReceitaFloat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Native(v) => write!(f, "{v}"),
+            Self::Formatted(s) => write!(f, "{s}"),
+        }
+    }
+}
+
+/// Tipo data para a coluna "Dia da Emissão".
+/// Em XLSX: data nativa (dd/mm/yyyy). Em CSV: DD/MM/YYYY ou <N/D>.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ReceitaDate {
+    Date(chrono::NaiveDate),
+    Text(String),
+}
+
+impl Default for ReceitaDate {
+    fn default() -> Self {
+        Self::Text(ND.to_string())
+    }
+}
+
+impl fmt::Display for ReceitaDate {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Date(d) => write!(f, "{}", d.format("%d/%m/%Y")),
+            Self::Text(s) => write!(f, "{s}"),
+        }
+    }
+}
+
 /// Estilo de representação das colunas de ponto flutuante do layout Receita.
 ///
 /// O padrão é o formato **nativo** dos arquivos XML (sem separador de milhar e com
@@ -134,206 +206,131 @@ pub fn format_native_float(val: f64, decimals: usize) -> String {
 /// Registro unificado no formato padrão da Receita Federal (56 colunas).
 ///
 /// Compatível simultaneamente com exportação CSV (`CsvWriter`) e Excel (`write_xlsx`).
-#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, Iterable)]
-pub struct InfoReceita {
-    #[serde(rename = "CNPJ do Contribuinte : NF Item (Todos)")]
-    pub cnpj_contribuinte: String,
-
-    #[serde(rename = "Nome do Contribuinte : NF Item (Todos)")]
-    pub nome_contribuinte: String,
-
-    #[serde(rename = "Entrada/Saída : NF (Todos)")]
-    pub entrada_saida: String,
-
-    #[serde(rename = "CPF/CNPJ do Participante : NF (Todos)")]
-    pub cpf_cnpj_participante: String,
-
-    #[serde(rename = "Nome do Participante : NF (Todos)")]
-    pub nome_participante: String,
-
-    #[serde(rename = "CRT : NF (Todos)")]
-    pub crt: String,
-
-    #[serde(rename = "Observações : NF (Todos)")]
-    pub observacoes: String,
-
-    #[serde(
-        rename = "CTe - Remetente das mercadorias transportadas: CNPJ/CPF de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes"
-    )]
-    pub cte_rem_cnpj_comp: String,
-
-    #[serde(
-        rename = "CTe - Remetente das mercadorias transportadas: CNPJ/CPF de Conhecimento : ConhecimentoInformacaoNFe"
-    )]
-    pub cte_rem_cnpj_nfe: String,
-
-    #[serde(
-        rename = "CTe - Remetente das mercadorias transportadas: Nome de Conhecimento : ConhecimentoInformacaoNFe"
-    )]
-    pub cte_rem_nome_nfe: String,
-
-    #[serde(
-        rename = "CTe - Remetente das mercadorias transportadas: Município de Conhecimento : ConhecimentoInformacaoNFe"
-    )]
-    pub cte_rem_mun_nfe: String,
-
-    #[serde(
-        rename = "Descrição CTe - Indicador do 'papel' do tomador do serviço de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes"
-    )]
-    pub cte_papel_tomador_comp: String,
-
-    #[serde(
-        rename = "Descrição CTe - Indicador do 'papel' do tomador do serviço de Conhecimento : ConhecimentoInformacaoNFe"
-    )]
-    pub cte_papel_tomador_nfe: String,
-
-    #[serde(
-        rename = "CTe - Outro tipo de Tomador: CNPJ/CPF de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes"
-    )]
-    pub cte_outro_tomador_comp: String,
-
-    #[serde(
-        rename = "CTe - Outro tipo de Tomador: CNPJ/CPF de Conhecimento : ConhecimentoInformacaoNFe"
-    )]
-    pub cte_outro_tomador_nfe: String,
-
-    #[serde(
-        rename = "CTe - UF do início da prestação de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes"
-    )]
-    pub cte_uf_inicio: String,
-
-    #[serde(
-        rename = "CTe - Nome do Município do início da prestação de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes"
-    )]
-    pub cte_mun_inicio: String,
-
-    #[serde(
-        rename = "CTe - UF do término da prestação de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes"
-    )]
-    pub cte_uf_termino: String,
-
-    #[serde(
-        rename = "CTe - Nome do Município do término da prestação de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes"
-    )]
-    pub cte_mun_termino: String,
-
-    #[serde(
-        rename = "CTe - Informações do Destinatário do CT-e: CNPJ/CPF de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes"
-    )]
-    pub cte_dest_cnpj: String,
-
-    #[serde(
-        rename = "CTe - Informações do Destinatário do CT-e: Nome de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes"
-    )]
-    pub cte_dest_nome: String,
-
-    #[serde(
-        rename = "CTe - Local de Entrega constante na Nota Fiscal: Nome de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes"
-    )]
-    pub cte_local_entrega_nome: String,
-
-    #[serde(rename = "Descrição da Natureza da Operação : NF Item (Todos)")]
-    pub desc_natureza_operacao: String,
-
-    #[serde(rename = "Cancelada : NF (Todos)")]
-    pub cancelada: String,
-
-    #[serde(rename = "Registro de Origem do Item : NF Item (Todos)")]
-    pub registro_origem_item: String,
-
-    #[serde(rename = "Natureza da Base de Cálculo do Crédito Descrição : NF Item (Todos)")]
-    pub nat_bc_credito_desc: String,
-
-    #[serde(rename = "Modelo - Descrição : NF Item (Todos)")]
-    pub modelo_descricao: String,
-
-    #[serde(rename = "Número da Nota : NF Item (Todos)")]
-    pub numero_nota: String,
-
-    #[serde(rename = "Chave da Nota Fiscal Eletrônica : NF Item (Todos)")]
-    pub chave_nfe: String,
-
-    #[serde(rename = "Inf. NFe - Chave de acesso da NF-e : ConhecimentoInformacaoNFe")]
-    pub inf_nfe_chave: String,
-
-    #[serde(rename = "CTe - Observações Gerais de Conhecimento : ConhecimentoInformacaoNFe")]
-    pub cte_obs_gerais: String,
-
-    #[serde(rename = "Dia da Emissão : NF Item (Todos)")]
-    pub dia_emissao: String,
-
-    #[serde(rename = "Número da DI : NF Item (Todos)")]
-    pub numero_di: String,
-
-    #[serde(rename = "Número do Item : NF Item (Todos)")]
-    pub numero_item: String,
-
-    #[serde(rename = "Código CFOP : NF Item (Todos)")]
-    pub codigo_cfop: String,
-
-    #[serde(rename = "Descrição CFOP : NF Item (Todos)")]
-    pub descricao_cfop: String,
-
-    #[serde(rename = "Descrição da Mercadoria/Serviço : NF Item (Todos)")]
-    pub descricao_mercadoria: String,
-
-    #[serde(rename = "Código NCM : NF Item (Todos)")]
-    pub codigo_ncm: String,
-
-    #[serde(rename = "Descrição NCM : NF Item (Todos)")]
-    pub descricao_ncm: String,
-
-    #[serde(rename = "COFINS: Alíquota ad valorem - Atributo : NF Item (Todos)")]
-    pub cofins_aliq: String,
-
-    #[serde(rename = "PIS: Alíquota ad valorem - Atributo : NF Item (Todos)")]
-    pub pis_aliq: String,
-
-    #[serde(rename = "CST COFINS Descrição : NF Item (Todos)")]
-    pub cst_cofins_desc: String,
-
-    #[serde(rename = "CST PIS Descrição : NF Item (Todos)")]
-    pub cst_pis_desc: String,
-
-    #[serde(rename = "Valor Total : NF (Todos) SOMA")]
-    pub valor_total: String,
-
-    #[serde(rename = "Valor da Nota Proporcional : NF Item (Todos) SOMA")]
-    pub valor_nota_proporcional: String,
-
-    #[serde(rename = "Valor dos Descontos : NF Item (Todos) SOMA")]
-    pub valor_descontos: String,
-
-    #[serde(rename = "Valor Seguro : NF (Todos) SOMA")]
-    pub valor_seguro: String,
-
-    #[serde(rename = "COFINS: Valor do Tributo : NF Item (Todos) SOMA")]
-    pub cofins_valor: String,
-
-    #[serde(rename = "PIS: Valor do Tributo : NF Item (Todos) SOMA")]
-    pub pis_valor: String,
-
-    #[serde(rename = "IPI: Valor do Tributo : NF Item (Todos) SOMA")]
-    pub ipi_valor: String,
-
-    #[serde(rename = "ISS: Base de Cálculo : NF Item (Todos) SOMA")]
-    pub iss_bc: String,
-
-    #[serde(rename = "ISS: Valor do Tributo : NF Item (Todos) SOMA")]
-    pub iss_valor: String,
-
-    #[serde(rename = "ICMS: Alíquota : NF Item (Todos) NOISE OR")]
-    pub icms_aliquota: String,
-
-    #[serde(rename = "ICMS: Base de Cálculo : NF Item (Todos) SOMA")]
-    pub icms_bc: String,
-
-    #[serde(rename = "ICMS: Valor do Tributo : NF Item (Todos) SOMA")]
-    pub icms_valor: String,
-
-    #[serde(rename = "ICMS por Substituição: Valor do Tributo : NF Item (Todos) SOMA")]
-    pub icms_st_valor: String,
+/// Conversão única do texto canônico do layout Receita para o tipo nativo da coluna.
+///
+/// `*DIVERSOS*`, `<N/D>`, chaves de 44 dígitos e NCM com zeros à esquerda permanecem
+/// texto; inteiros, monetários, alíquotas e datas tornam-se nativos no XLSX (Mand. 05-08).
+pub trait FromReceitaText {
+    fn from_receita_text(s: &str) -> Self;
 }
+impl FromReceitaText for String {
+    #[inline]
+    fn from_receita_text(s: &str) -> Self {
+        s.to_string()
+    }
+}
+impl FromReceitaText for ReceitaInt {
+    #[inline]
+    fn from_receita_text(s: &str) -> Self {
+        s.parse::<u64>()
+            .map(Self::Int)
+            .unwrap_or_else(|_| Self::Text(s.to_string()))
+    }
+}
+impl FromReceitaText for ReceitaFloat {
+    #[inline]
+    fn from_receita_text(s: &str) -> Self {
+        if s == ND || s == DIVERSOS {
+            return Self::Formatted(s.to_string());
+        }
+        match crate::OptExt::to_float64(&Some(s)) {
+            Some(v) if v.is_finite() => Self::Native(v),
+            _ => Self::Formatted(s.to_string()),
+        }
+    }
+}
+impl FromReceitaText for ReceitaDate {
+    #[inline]
+    fn from_receita_text(s: &str) -> Self {
+        NaiveDate::parse_from_str(s, "%d/%m/%Y")
+            .map(Self::Date)
+            .unwrap_or_else(|_| Self::Text(s.to_string()))
+    }
+}
+
+/// Especificação única (Deep DRY) das 56 colunas do layout Receita Federal.
+///
+/// Gera [`InfoReceita`] (texto canônico: CSV, ordenação, spill postcard, testes) e
+/// [`ReceitaXlsx`] (projeção nativa p/ XLSX). Os cabeçalhos `serde(rename)` são
+/// declarados uma única vez, garantindo paridade exata CSV/XLSX (Mandamento 04).
+macro_rules! receita_layout {
+    ($( $field:ident : $ty:ty = $header:literal ),+ $(,)?) => {
+        #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, Iterable)]
+        pub struct InfoReceita {
+            $( #[serde(rename = $header)] pub $field: String, )+
+        }
+        #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Iterable)]
+        pub struct ReceitaXlsx {
+            $( #[serde(rename = $header)] pub $field: $ty, )+
+        }
+        impl From<&InfoReceita> for ReceitaXlsx {
+            fn from(r: &InfoReceita) -> Self {
+                Self { $( $field: <$ty as FromReceitaText>::from_receita_text(&r.$field), )+ }
+            }
+        }
+    };
+}
+
+receita_layout! {
+    cnpj_contribuinte: String = "CNPJ do Contribuinte : NF Item (Todos)",
+    nome_contribuinte: String = "Nome do Contribuinte : NF Item (Todos)",
+    entrada_saida: String = "Entrada/Saída : NF (Todos)",
+    cpf_cnpj_participante: String = "CPF/CNPJ do Participante : NF (Todos)",
+    nome_participante: String = "Nome do Participante : NF (Todos)",
+    crt: ReceitaInt = "CRT : NF (Todos)",
+    observacoes: String = "Observações : NF (Todos)",
+    cte_rem_cnpj_comp: String = "CTe - Remetente das mercadorias transportadas: CNPJ/CPF de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes",
+    cte_rem_cnpj_nfe: String = "CTe - Remetente das mercadorias transportadas: CNPJ/CPF de Conhecimento : ConhecimentoInformacaoNFe",
+    cte_rem_nome_nfe: String = "CTe - Remetente das mercadorias transportadas: Nome de Conhecimento : ConhecimentoInformacaoNFe",
+    cte_rem_mun_nfe: String = "CTe - Remetente das mercadorias transportadas: Município de Conhecimento : ConhecimentoInformacaoNFe",
+    cte_papel_tomador_comp: String = "Descrição CTe - Indicador do 'papel' do tomador do serviço de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes",
+    cte_papel_tomador_nfe: String = "Descrição CTe - Indicador do 'papel' do tomador do serviço de Conhecimento : ConhecimentoInformacaoNFe",
+    cte_outro_tomador_comp: String = "CTe - Outro tipo de Tomador: CNPJ/CPF de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes",
+    cte_outro_tomador_nfe: String = "CTe - Outro tipo de Tomador: CNPJ/CPF de Conhecimento : ConhecimentoInformacaoNFe",
+    cte_uf_inicio: String = "CTe - UF do início da prestação de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes",
+    cte_mun_inicio: String = "CTe - Nome do Município do início da prestação de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes",
+    cte_uf_termino: String = "CTe - UF do término da prestação de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes",
+    cte_mun_termino: String = "CTe - Nome do Município do término da prestação de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes",
+    cte_dest_cnpj: String = "CTe - Informações do Destinatário do CT-e: CNPJ/CPF de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes",
+    cte_dest_nome: String = "CTe - Informações do Destinatário do CT-e: Nome de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes",
+    cte_local_entrega_nome: String = "CTe - Local de Entrega constante na Nota Fiscal: Nome de Conhecimento : ConhecimentoValoresPrestacaoServico-Componentes",
+    desc_natureza_operacao: String = "Descrição da Natureza da Operação : NF Item (Todos)",
+    cancelada: String = "Cancelada : NF (Todos)",
+    registro_origem_item: String = "Registro de Origem do Item : NF Item (Todos)",
+    nat_bc_credito_desc: String = "Natureza da Base de Cálculo do Crédito Descrição : NF Item (Todos)",
+    modelo_descricao: String = "Modelo - Descrição : NF Item (Todos)",
+    numero_nota: ReceitaInt = "Número da Nota : NF Item (Todos)",
+    chave_nfe: String = "Chave da Nota Fiscal Eletrônica : NF Item (Todos)",
+    inf_nfe_chave: String = "Inf. NFe - Chave de acesso da NF-e : ConhecimentoInformacaoNFe",
+    cte_obs_gerais: String = "CTe - Observações Gerais de Conhecimento : ConhecimentoInformacaoNFe",
+    dia_emissao: ReceitaDate = "Dia da Emissão : NF Item (Todos)",
+    numero_di: ReceitaInt = "Número da DI : NF Item (Todos)",
+    numero_item: ReceitaInt = "Número do Item : NF Item (Todos)",
+    codigo_cfop: ReceitaInt = "Código CFOP : NF Item (Todos)",
+    descricao_cfop: String = "Descrição CFOP : NF Item (Todos)",
+    descricao_mercadoria: String = "Descrição da Mercadoria/Serviço : NF Item (Todos)",
+    codigo_ncm: String = "Código NCM : NF Item (Todos)",
+    descricao_ncm: String = "Descrição NCM : NF Item (Todos)",
+    cofins_aliq: ReceitaFloat = "COFINS: Alíquota ad valorem - Atributo : NF Item (Todos)",
+    pis_aliq: ReceitaFloat = "PIS: Alíquota ad valorem - Atributo : NF Item (Todos)",
+    cst_cofins_desc: String = "CST COFINS Descrição : NF Item (Todos)",
+    cst_pis_desc: String = "CST PIS Descrição : NF Item (Todos)",
+    valor_total: ReceitaFloat = "Valor Total : NF (Todos) SOMA",
+    valor_nota_proporcional: ReceitaFloat = "Valor da Nota Proporcional : NF Item (Todos) SOMA",
+    valor_descontos: ReceitaFloat = "Valor dos Descontos : NF Item (Todos) SOMA",
+    valor_seguro: ReceitaFloat = "Valor Seguro : NF (Todos) SOMA",
+    cofins_valor: ReceitaFloat = "COFINS: Valor do Tributo : NF Item (Todos) SOMA",
+    pis_valor: ReceitaFloat = "PIS: Valor do Tributo : NF Item (Todos) SOMA",
+    ipi_valor: ReceitaFloat = "IPI: Valor do Tributo : NF Item (Todos) SOMA",
+    iss_bc: ReceitaFloat = "ISS: Base de Cálculo : NF Item (Todos) SOMA",
+    iss_valor: ReceitaFloat = "ISS: Valor do Tributo : NF Item (Todos) SOMA",
+    icms_aliquota: ReceitaFloat = "ICMS: Alíquota : NF Item (Todos) NOISE OR",
+    icms_bc: ReceitaFloat = "ICMS: Base de Cálculo : NF Item (Todos) SOMA",
+    icms_valor: ReceitaFloat = "ICMS: Valor do Tributo : NF Item (Todos) SOMA",
+    icms_st_valor: ReceitaFloat = "ICMS por Substituição: Valor do Tributo : NF Item (Todos) SOMA",
+}
+
+impl InfoExtension for ReceitaXlsx {}
 
 impl InfoExtension for InfoReceita {}
 
@@ -1872,6 +1869,53 @@ mod tests_receita {
         assert_eq!(rec_ext[2].valor_nota_proporcional, "48,00");
     }
 
+    /// Regressão com dados REAIS auditados no XML original (parser independente).
+    ///
+    /// Chave 15231205057690000139570010002216911002293061:
+    ///   <ICMSOutraUF> vBCOutraUF=115.35 pICMSOutraUF=7.00 vICMSOutraUF=8.07
+    ///   emit/xNome = "OPAL ORGANIZACAO PARAENSE - EIRELI - ME"
+    ///   rem/enderReme/xMun = "Indaiatuba" ; ide/xMunIni = "Indaiatuba"
+    ///
+    /// O ContÁgil zerou os três valores e sobrescreveu o nome histórico por
+    /// "OPAL ORGANIZACAO PARAENSE LTDA" (cadastro RFB atual). Mandamentos 05/06/07.
+    #[test]
+    fn test_regressao_auditoria_xml_real_opal_icms_outra_uf_7pct() {
+        let xml = r#"<cteProc versao="4.00" xmlns="http://www.portalfiscal.inf.br/cte">
+<CTe><infCte Id="CTe15231205057690000139570010002216911002293061" versao="4.00">
+<ide><CFOP>6352</CFOP><nCT>221691</nCT><dhEmi>2023-12-05T10:00:00-03:00</dhEmi><xMunIni>Indaiatuba</xMunIni></ide>
+<emit><xNome>OPAL ORGANIZACAO PARAENSE - EIRELI - ME</xNome><CRT>3</CRT></emit>
+<rem><enderReme><xMun>Indaiatuba</xMun><UF>SP</UF></enderReme></rem>
+<vPrest><vTPrest>115.35</vTPrest><vRec>115.35</vRec></vPrest>
+<imp><ICMS><ICMSOutraUF><CST>90</CST><vBCOutraUF>115.35</vBCOutraUF><pICMSOutraUF>7.00</pICMSOutraUF><vICMSOutraUF>8.07</vICMSOutraUF></ICMSOutraUF></ICMS></imp>
+</infCte></CTe>
+<protCTe versao="4.00"><infProt><chCTe>15231205057690000139570010002216911002293061</chCTe><cStat>100</cStat></infProt></protCTe>
+</cteProc>"#;
+        let proc: crate::xml_structs::cte::CteProc = quick_xml::de::from_str(xml).unwrap();
+        let info = proc.get_info();
+        let rec = ctes_to_receita(&[info], ReceitaOptions::new(NumberFormat::Brazilian, true));
+        let r = &rec[0];
+
+        // ICMSOutraUF preservado (ContÁgil zerava): alíquota 7% -> fração 0,0700
+        assert_eq!(r.icms_bc, "115,35");
+        assert_eq!(r.icms_aliquota, "0,0700");
+        assert_eq!(r.icms_valor, "8,07");
+
+        // Nome histórico do XML nunca sobrescrito por cadastro atual
+        assert_eq!(
+            r.nome_contribuinte,
+            "OPAL ORGANIZACAO PARAENSE - EIRELI - ME"
+        );
+        assert_ne!(r.nome_contribuinte, "OPAL ORGANIZACAO PARAENSE LTDA");
+
+        // Município do remetente (Endereco normaliza caixa alta) vs ide (caixa original)
+        assert_eq!(r.cte_rem_mun_nfe, "INDAIATUBA");
+        assert_eq!(r.cte_mun_inicio, "Indaiatuba");
+
+        // Sem <infNFe> no XML: coluna de chaves fica <N/D>, mas os dados de
+        // conhecimento permanecem preenchidos (o ContÁgil omitia ambos).
+        assert_eq!(r.inf_nfe_chave, "<N/D>");
+    }
+
     #[test]
     fn test_regressao_contagil_vs_xml_tetra_pak_icms_outra_uf_e_mandamentos() {
         // 1. Caso real Tetra Pak (35250161528030000160550010011719411291219973):
@@ -1968,5 +2012,125 @@ mod tests_receita {
             .collect();
         assert!(nomes.contains(&"NORTE BRASIL LOGISTICA LTDA"));
         assert!(nomes.contains(&"NORTE BRASIL LOGISTICA EIRELI"));
+    }
+}
+
+#[cfg(test)]
+mod tests_receita_xlsx {
+    use super::*;
+
+    #[test]
+    fn test_receita_xlsx_tipagem_nativa_preserva_chaves_ncm_e_sentinelas() {
+        let base = InfoNfe {
+            emitente_cnpj: Some("00.206.861/0013-64".to_string()),
+            emitente_crt: Some(3),
+            nfe: Some("35250500206861001364550010001321681637262329".to_string()),
+            numero_da_nota: Some(132168),
+            data_emissao: NaiveDate::from_ymd_opt(2025, 5, 30),
+            valor_total_nfe: Some(412.34),
+            valor_total_itens: Some(400.0),
+            ..Default::default()
+        };
+        let itens = [
+            InfoNfe {
+                n_item: Some(1),
+                cfop: Some(5102),
+                ncm: Some("04012090".to_string()),
+                v_prod: Some(100.0),
+                aliq_icms: Some(18.0),
+                ..base.clone()
+            },
+            InfoNfe {
+                n_item: Some(2),
+                cfop: Some(5405),
+                ncm: Some("04012090".to_string()),
+                v_prod: Some(300.0),
+                ..base
+            },
+        ];
+        let rows = nfes_to_receita(&itens, NumberFormat::Brazilian);
+        let typed: Vec<ReceitaXlsx> = rows.iter().map(ReceitaXlsx::from).collect();
+        // Paridade exata de cabeçalhos CSV/XLSX (56 colunas, mesma ordem).
+        assert_eq!(ReceitaXlsx::get_headers(), InfoReceita::get_headers());
+        let r0 = &typed[0];
+        assert_eq!(r0.numero_item, ReceitaInt::Int(0));
+        assert_eq!(r0.crt, ReceitaInt::Int(3));
+        assert_eq!(r0.numero_nota, ReceitaInt::Int(132168));
+        assert_eq!(r0.codigo_cfop, ReceitaInt::Text("*DIVERSOS*".to_string()));
+        assert_eq!(
+            r0.dia_emissao,
+            ReceitaDate::Date(NaiveDate::from_ymd_opt(2025, 5, 30).unwrap())
+        );
+        assert_eq!(r0.valor_total, ReceitaFloat::Native(412.34));
+        // Segurança: chave 44d e NCM com zeros à esquerda NUNCA viram número.
+        assert_eq!(r0.chave_nfe, "35250500206861001364550010001321681637262329");
+        assert_eq!(r0.codigo_ncm, "04012090");
+        let r1 = &typed[1];
+        assert_eq!(r1.codigo_cfop, ReceitaInt::Int(5102));
+        assert_eq!(r1.icms_aliquota, ReceitaFloat::Native(0.18));
+        assert_eq!(r1.numero_di, ReceitaInt::Text("<N/D>".to_string()));
+        // Serialização nativa: números como números (proxy do tipo de célula XLSX).
+        let v = serde_json::to_value(r1).unwrap();
+        assert!(v["CRT : NF (Todos)"].is_number());
+        assert!(v["ICMS: Alíquota : NF Item (Todos) NOISE OR"].is_number());
+        assert!(v["Chave da Nota Fiscal Eletrônica : NF Item (Todos)"].is_string());
+    }
+
+    #[test]
+    fn test_receita_conversao_segura_overflow_e_sentinelas() {
+        let huge = "9".repeat(44);
+        assert_eq!(
+            ReceitaInt::from_receita_text(&huge),
+            ReceitaInt::Text(huge.clone())
+        );
+        assert_eq!(
+            ReceitaInt::from_receita_text("<N/D>"),
+            ReceitaInt::Text("<N/D>".to_string())
+        );
+        assert_eq!(
+            ReceitaFloat::from_receita_text("<N/D>"),
+            ReceitaFloat::Formatted("<N/D>".to_string())
+        );
+        assert_eq!(
+            ReceitaFloat::from_receita_text("*DIVERSOS*"),
+            ReceitaFloat::Formatted("*DIVERSOS*".to_string())
+        );
+        assert_eq!(
+            ReceitaFloat::from_receita_text("1.234,56"),
+            ReceitaFloat::Native(1234.56)
+        );
+        assert_eq!(
+            ReceitaDate::from_receita_text("<N/D>"),
+            ReceitaDate::Text("<N/D>".to_string())
+        );
+        assert_eq!(
+            ReceitaDate::from_receita_text("12/01/2026"),
+            ReceitaDate::Date(NaiveDate::from_ymd_opt(2026, 1, 12).unwrap())
+        );
+    }
+
+    #[test]
+    fn test_receita_csv_permanece_textual_formatado_apos_tipagem_xlsx() {
+        let cte = InfoCte {
+            cte: Some("25260107189259001909570030003777801014957634".to_string()),
+            emitente_crt: Some(3),
+            numero_da_nota: Some(377780),
+            cfop: Some(6352),
+            valor_total: Some(11.36),
+            aliq_icms: Some(12.0),
+            v_bc_icms: Some(11.36),
+            v_icms: Some(1.36),
+            ..Default::default()
+        };
+        let rows = ctes_to_receita(&[cte], NumberFormat::Brazilian);
+        let mut wtr = csv::WriterBuilder::new()
+            .delimiter(b';')
+            .from_writer(vec![]);
+        wtr.serialize(&rows[0]).unwrap();
+        let out = String::from_utf8(wtr.into_inner().unwrap()).unwrap();
+        // CSV intacto: alíquota 4 casas BR e valores monetários BR (não nativos).
+        assert!(out.contains("0,1200"));
+        assert!(out.contains("11,36"));
+        assert!(out.contains("1,36"));
     }
 }

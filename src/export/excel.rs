@@ -447,54 +447,73 @@ where
         .enumerate()
         .for_each(|(index, (_field_name, field_value))| {
             let field_value_len: usize = match_cast!(field_value {
-                // Tipos Inteiros (Cálculo via contagem de dígitos ilog10)
-                val as Option<u8> => {
-                    val.map(|v| count_u64_digits(v as u64))
-                },
-                val as Option<u16> => {
-                    val.map(|v| count_u64_digits(v as u64))
-                },
-                val as Option<u32> => {
-                    val.map(|v| count_u64_digits(v as u64))
-                },
-                val as Option<u64> => {
-                    val.map(count_u64_digits)
-                },
-                val as Option<usize> => {
-                    val.map(|v| count_u64_digits(v as u64))
-                },
+                                        // Tipos Inteiros (Cálculo via contagem de dígitos ilog10)
+                                        val as Option<u8> => {
+                                            val.map(|v| count_u64_digits(v as u64))
+                                        },
+                                        val as Option<u16> => {
+                                            val.map(|v| count_u64_digits(v as u64))
+                                        },
+                                        val as Option<u32> => {
+                                            val.map(|v| count_u64_digits(v as u64))
+                                        },
+                                        val as Option<u64> => {
+                                            val.map(count_u64_digits)
+                                        },
+                                        val as Option<usize> => {
+                                            val.map(|v| count_u64_digits(v as u64))
+                                        },
 
-                // Ponto Flutuante (Cálculo da máscara monetária com separadores de milhar)
-                val as Option<f64> => {
-                    val.map(count_f64_formatted_len)
-                },
+                                        // Ponto Flutuante (Cálculo da máscara monetária com separadores de milhar)
+                                        val as Option<f64> => {
+                                            val.map(count_f64_formatted_len)
+                                        },
 
-                // Datas (Tamanho constante "DD/MM/YYYY" ou cálculo matemático)
-                val as Option<NaiveDate> => {
-                    val.map(count_date_len)
-                },
+                                        // Datas (Tamanho constante "DD/MM/YYYY" ou cálculo matemático)
+                                        val as Option<NaiveDate> => {
+                                            val.map(count_date_len)
+                                        },
 
-                // Strings Primitivas e Opcionais (Medição de caracteres direta por referência)
-                val as Option<String> => {
-                    val.as_deref().map(|s| s.chars_count())
-                },
-                val as String => {
-                    Some(val.chars_count())
-                },
+                                        // Strings Primitivas e Opcionais (Medição de caracteres direta por referência)
+                                        val as Option<String> => {
+                                            val.as_deref().map(|s| s.chars_count())
+                                        },
+                                        val as String => {
+                                            Some(val.chars_count())
+                                        },
 
-                // Coleção de Strings (Calcula "[item1, item2]" sem criar String via join)
-                val as Vec<String> => {
-                    Some(count_vec_str_len(val))
-                },
-                val as Option<Vec<String>> => {
-                    val.as_deref().map(count_vec_str_len)
-                },
+                                        // Coleção de Strings (Calcula "[item1, item2]" sem criar String via join)
+                                        val as Vec<String> => {
+                                            Some(count_vec_str_len(val))
+                                        },
+                                        val as Option<Vec<String>> => {
+                                            val.as_deref().map(count_vec_str_len)
+                                        },
 
-                // Booleanos
-                val as Option<bool> => {
-                    val.map(|_b| 5) // "Sim" / "Não" / "True" / "False"
-                },
+                                        // Booleanos
+                                        val as Option<bool> => {
+                                            val.map(|_b| 5) // "Sim" / "Não" / "True" / "False"
+                                        },
+            // Tipos Receita nativos (projeção XLSX) — medição zero-allocation
+            val as crate::ReceitaInt => {
+            Some(match val {
+            crate::ReceitaInt::Int(v) => count_u64_digits(*v),
+            crate::ReceitaInt::Text(s) => s.chars_count(),
             })
+            },
+            val as crate::ReceitaFloat => {
+            Some(match val {
+            crate::ReceitaFloat::Native(v) => count_f64_formatted_len(*v),
+            crate::ReceitaFloat::Formatted(s) => s.chars_count(),
+            })
+            },
+            val as crate::ReceitaDate => {
+            Some(match val {
+            crate::ReceitaDate::Date(_) => 10,
+            crate::ReceitaDate::Text(s) => s.chars_count(),
+            })
+            },
+                                    })
             // Fallback constante sem invocar format!
             .unwrap_or(10);
 

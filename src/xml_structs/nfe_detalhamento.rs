@@ -379,6 +379,9 @@ pub struct Di {
     /// CNPJ do adquirente ou encomendante se aplicável.
     #[serde(rename = "CNPJ", default)]
     pub cnpj: Option<String>,
+    /// CPF do adquirente pessoa física (`DI/CPF` - NT 2023.004).
+    #[serde(rename = "CPF", default)]
+    pub cpf_di: Option<String>,
 
     /// Unidade Federativa do adquirente.
     #[serde(rename = "UFTerceiro", default)]

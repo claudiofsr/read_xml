@@ -159,8 +159,6 @@ pub struct Agente {
     pub loc_coleta: Option<Box<crate::xml_structs::entrega::Entrega>>,
 }
 
-pub use crate::format_cnpj_alnum as format_cnpj_safe;
-
 impl Agente {
     /// Obtém o CNPJ do participante formatado com a máscara padrão (suporta CNPJ alfanumérico).
     pub fn get_cnpj(&self) -> Option<String> {
@@ -168,7 +166,7 @@ impl Agente {
             .as_deref()
             .map(str::trim)
             .filter(|c| !c.is_empty())
-            .map(format_cnpj_safe)
+            .map(crate::format_cnpj_alnum)
     }
 
     /// Obtém o CPF do participante formatado com a máscara padrão.
@@ -305,34 +303,6 @@ impl AgenteExtension for Option<Agente> {
         self.as_ref().and_then(|tomador| tomador.parse_tomador())
     }
 }
-
-/*
-#[derive(Debug, Serialize, Deserialize)]
-pub enum Agentes {
-    #[serde(rename = "dest")]
-    Destinatario(Agente),
-
-    #[serde(rename = "emit")]
-    Emitente(Agente),
-
-    #[serde(rename = "exped")]
-    Expedidor(Agente),
-
-    #[serde(rename = "receb")]
-    Recebedor(Agente),
-
-    #[serde(rename = "rem")]
-    Remetente(Agente),
-
-    #[serde(
-        alias = "toma3",
-        alias = "toma4",
-        alias = "toma03",
-        alias = "toma04"
-    )]
-    Tomador(Agente),
-}
-*/
 
 #[cfg(test)]
 mod agentes {

@@ -561,6 +561,9 @@ pub struct NFref {
     /// Chave de acesso de uma NF-e referenciada.
     #[serde(rename = "refNFe", default)]
     pub ref_nfe: Option<String>,
+    /// Chave de acesso com código numérico zerado (`refNFeSig` - NT 2022.003).
+    #[serde(rename = "refNFeSig", default)]
+    pub ref_nfe_sig: Option<String>,
 
     /// Informações de cupom fiscal referenciado emitido por ECF.
     #[serde(rename = "refECF", default)]
