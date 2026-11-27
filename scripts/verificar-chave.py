@@ -12,9 +12,9 @@ Uso:
 
 # Reauditar com Descrição CFOP agora verificada (57ª checagem efetiva)
 cd ~/Documents/Derat_SPO/Magazine\ Luiza\ SA/Info\ da\ Receita
-~/Documents/Rust/projects/read_xml/scripts/verificar-chave.py \
-  --receita DadosAdicionais-CTe.csv --gerado documentos_fiscais-ctes.csv \
-  -n 30 --seed 1973 --so-divergentes
+
+~/Documents/Rust/projects/read_xml/scripts/verificar-chave.py --receita DadosAdicionais-CTe.csv --gerado documentos_fiscais-ctes.csv -n 30 --seed 1973 --so-divergentes
+~/Documents/Rust/projects/read_xml/scripts/verificar-chave.py --receita DadosAdicionais-NFe.csv --gerado documentos_fiscais-nfes.csv -n 30 --seed 1973 --so-divergentes
 
 ~/Documents/Rust/projects/read_xml/scripts/verificar-chave.py --receita DadosAdicionais-CTe.csv --gerado documentos_fiscais-ctes.csv --zip-dir . -n 10 --seed 1973
 
