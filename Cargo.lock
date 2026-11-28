@@ -105,9 +105,9 @@ dependencies = [
 
 [[package]]
 name = "arrayvec"
-version = "0.7.8"
+version = "0.7.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56"
+checksum = "47a64a0fd06e123e9e3cf3ad01432af17dcab8185e8023edcf184fe696f9675d"
 
 [[package]]
 name = "atomic-polyfill"
@@ -2305,9 +2305,9 @@ dependencies = [
 
 [[package]]
 name = "zip"
-version = "9.8.2"
+version = "9.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d8dbe089cf6b0448b78f5fc50139ab5aaa40d08ac07cdc1baf2c13add35fcce"
+checksum = "07db37dec4a7c468df4723fba4cadb4822d1d0f10dbea367100b6a6881b2a9c9"
 dependencies = [
  "aes",
  "bzip2",
